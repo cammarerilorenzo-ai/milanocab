@@ -181,6 +181,7 @@ export function RideBookingForm() {
 
       const { data, error } = await supabase.functions.invoke("send-ride-notification", {
         body: {
+          customerEmail: formData.email.trim(),
           pickup: formData.pickup.trim(),
           destination: formData.destination.trim(),
           dateTime: rideDateTime,
@@ -188,6 +189,8 @@ export function RideBookingForm() {
           estimatedKm: routeEstimate.distanceKm,
           estimatedMin: routeEstimate.durationMin,
           mapsLink: routeEstimate.mapsLink,
+          pickupCoords: routeEstimate.pickupCoords,
+          destCoords: routeEstimate.destCoords,
         },
       });
 

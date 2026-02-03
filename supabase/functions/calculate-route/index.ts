@@ -35,9 +35,21 @@ interface RouteResult {
   }>;
 }
 
+// Normalize address to always include Milano
+function normalizeAddress(address: string): string {
+  const normalized = address.trim();
+  // If address already contains Milano/Milan, return as is
+  if (/milan[oi]?/i.test(normalized)) {
+    return normalized;
+  }
+  // Otherwise append Milano
+  return `${normalized}, Milano, Italia`;
+}
+
 // Geocode an address to coordinates
 async function geocodeAddress(address: string, apiKey: string): Promise<[number, number] | null> {
-  const url = `${ORS_BASE_URL}/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(address)}&boundary.country=IT&size=1`;
+  const normalizedAddress = normalizeAddress(address);
+  const url = `${ORS_BASE_URL}/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(normalizedAddress)}&boundary.country=IT&size=1`;
   
   const response = await fetch(url);
   if (!response.ok) {

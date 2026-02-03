@@ -8,12 +8,12 @@ const corsHeaders = {
 
 const ORS_BASE_URL = "https://api.openrouteservice.org";
 
-// Milan bounding box (approximate)
+// Milan bounding box (larger area to include suburbs)
 const MILAN_BOUNDS = {
   minLon: 9.04,
   minLat: 45.39,
-  maxLon: 9.28,
-  maxLat: 45.54,
+  maxLon: 9.35,
+  maxLat: 45.55,
 };
 
 // Milan center for focus point
@@ -36,12 +36,41 @@ interface GeocodingFeature {
     street?: string;
     housenumber?: string;
     locality?: string;
+    localadmin?: string;
+    county?: string;
     region?: string;
   };
 }
 
 interface GeocodingResult {
   features: GeocodingFeature[];
+}
+
+// Check if coordinates are within Milan bounds
+function isWithinMilanBounds(lon: number, lat: number): boolean {
+  return (
+    lon >= MILAN_BOUNDS.minLon &&
+    lon <= MILAN_BOUNDS.maxLon &&
+    lat >= MILAN_BOUNDS.minLat &&
+    lat <= MILAN_BOUNDS.maxLat
+  );
+}
+
+// Check if location is in Milan based on properties
+function isInMilan(properties: GeocodingFeature["properties"]): boolean {
+  const milanKeywords = ["milano", "milan"];
+  const checkFields = [
+    properties.locality,
+    properties.localadmin,
+    properties.county,
+    properties.label,
+  ];
+  
+  return checkFields.some(field => 
+    field && milanKeywords.some(keyword => 
+      field.toLowerCase().includes(keyword)
+    )
+  );
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -64,10 +93,15 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Append "Milano" to query if not already present to improve results
+    const searchQuery = query.toLowerCase().includes("milan") 
+      ? query.trim() 
+      : `${query.trim()}, Milano`;
+
     // Build autocomplete URL with Milan boundaries
     const params = new URLSearchParams({
       api_key: OPENROUTE_API_KEY,
-      text: query.trim(),
+      text: searchQuery,
       "boundary.rect.min_lon": MILAN_BOUNDS.minLon.toString(),
       "boundary.rect.min_lat": MILAN_BOUNDS.minLat.toString(),
       "boundary.rect.max_lon": MILAN_BOUNDS.maxLon.toString(),
@@ -75,12 +109,13 @@ const handler = async (req: Request): Promise<Response> => {
       "focus.point.lat": MILAN_CENTER.lat.toString(),
       "focus.point.lon": MILAN_CENTER.lon.toString(),
       "boundary.country": "IT",
-      size: "5",
+      layers: "address,venue,street",
+      size: "8", // Request more to filter
     });
 
     const url = `${ORS_BASE_URL}/geocode/autocomplete?${params.toString()}`;
     
-    console.log(`Autocomplete query: "${query}"`);
+    console.log(`Autocomplete query: "${query}" -> "${searchQuery}"`);
     
     const response = await fetch(url);
     if (!response.ok) {
@@ -90,16 +125,25 @@ const handler = async (req: Request): Promise<Response> => {
 
     const data: GeocodingResult = await response.json();
 
-    const suggestions = data.features.map((feature) => ({
-      label: feature.properties.label,
-      name: feature.properties.name,
-      coordinates: {
-        lat: feature.geometry.coordinates[1],
-        lon: feature.geometry.coordinates[0],
-      },
-    }));
+    // Filter results to only include Milan locations
+    const suggestions = data.features
+      .filter((feature) => {
+        const [lon, lat] = feature.geometry.coordinates;
+        const withinBounds = isWithinMilanBounds(lon, lat);
+        const inMilan = isInMilan(feature.properties);
+        return withinBounds && inMilan;
+      })
+      .slice(0, 5) // Limit to 5 results
+      .map((feature) => ({
+        label: feature.properties.label,
+        name: feature.properties.name,
+        coordinates: {
+          lat: feature.geometry.coordinates[1],
+          lon: feature.geometry.coordinates[0],
+        },
+      }));
 
-    console.log(`Found ${suggestions.length} suggestions for "${query}"`);
+    console.log(`Found ${suggestions.length} Milan suggestions for "${query}"`);
 
     return new Response(
       JSON.stringify({ success: true, suggestions }),

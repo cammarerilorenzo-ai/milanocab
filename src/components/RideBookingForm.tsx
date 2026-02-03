@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { RideConfirmationDialog } from "@/components/RideConfirmationDialog";
 
 interface RideFormData {
   pickup: string;
@@ -21,6 +22,8 @@ interface RouteEstimate {
   durationMin: number;
   mapsLink: string;
   price: number;
+  pickupCoords: { lat: number; lon: number };
+  destCoords: { lat: number; lon: number };
 }
 
 // Pricing configuration
@@ -53,6 +56,12 @@ export function RideBookingForm() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [routeEstimate, setRouteEstimate] = useState<RouteEstimate | null>(null);
   const [routeError, setRouteError] = useState<string | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmedRide, setConfirmedRide] = useState<{
+    pickup: string;
+    destination: string;
+    routeEstimate: RouteEstimate;
+  } | null>(null);
   
   const [formData, setFormData] = useState<RideFormData>({
     pickup: "",
@@ -102,6 +111,8 @@ export function RideBookingForm() {
           durationMin: data.durationMin,
           mapsLink: data.mapsLink,
           price: Math.round(price * 100) / 100,
+          pickupCoords: data.pickupCoords,
+          destCoords: data.destCoords,
         });
         setRouteError(null);
       } else {
@@ -172,10 +183,13 @@ export function RideBookingForm() {
 
       if (error) throw error;
 
-      toast({
-        title: "Richiesta inviata! 🚗",
-        description: "Ti contatteremo a breve per confermare la corsa",
+      // Save confirmed ride data and show confirmation dialog
+      setConfirmedRide({
+        pickup: formData.pickup.trim(),
+        destination: formData.destination.trim(),
+        routeEstimate: routeEstimate,
       });
+      setShowConfirmation(true);
 
       // Reset form
       setFormData({
@@ -339,6 +353,24 @@ export function RideBookingForm() {
           </>
         )}
       </Button>
+
+      {/* Confirmation Dialog with Map */}
+      {confirmedRide && (
+        <RideConfirmationDialog
+          open={showConfirmation}
+          onClose={() => {
+            setShowConfirmation(false);
+            setConfirmedRide(null);
+          }}
+          pickup={confirmedRide.pickup}
+          destination={confirmedRide.destination}
+          distanceKm={confirmedRide.routeEstimate.distanceKm}
+          durationMin={confirmedRide.routeEstimate.durationMin}
+          price={confirmedRide.routeEstimate.price}
+          pickupCoords={confirmedRide.routeEstimate.pickupCoords}
+          destCoords={confirmedRide.routeEstimate.destCoords}
+        />
+      )}
     </form>
   );
 }

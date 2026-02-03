@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { RideConfirmationDialog } from "@/components/RideConfirmationDialog";
 
 interface RideFormData {
@@ -218,26 +217,41 @@ export function RideBookingForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Pickup Location */}
-      <AddressAutocomplete
-        id="pickup"
-        label="Punto di partenza"
-        placeholder="Es: Via Roma 1, Milano"
-        value={formData.pickup}
-        onChange={(value) => setFormData({ ...formData, pickup: value })}
-        icon={<MapPin className="h-5 w-5" />}
-        iconClassName="text-primary"
-      />
+      <div className="space-y-2">
+        <Label htmlFor="pickup" className="text-sm font-medium text-foreground">
+          Punto di partenza
+        </Label>
+        <div className="relative">
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
+          <Input
+            id="pickup"
+            placeholder="Es: Via Fanti 2"
+            value={formData.pickup}
+            onChange={(e) => setFormData({ ...formData, pickup: e.target.value })}
+            className="pl-11 h-12 bg-card border-border"
+            maxLength={200}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">Solo indirizzi a Milano</p>
+      </div>
 
       {/* Destination */}
-      <AddressAutocomplete
-        id="destination"
-        label="Destinazione"
-        placeholder="Es: Piazza Duomo, Milano"
-        value={formData.destination}
-        onChange={(value) => setFormData({ ...formData, destination: value })}
-        icon={<Navigation className="h-5 w-5" />}
-        iconClassName="text-accent"
-      />
+      <div className="space-y-2">
+        <Label htmlFor="destination" className="text-sm font-medium text-foreground">
+          Destinazione
+        </Label>
+        <div className="relative">
+          <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-accent" />
+          <Input
+            id="destination"
+            placeholder="Es: Piazza Duomo"
+            value={formData.destination}
+            onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
+            className="pl-11 h-12 bg-card border-border"
+            maxLength={200}
+          />
+        </div>
+      </div>
 
       {/* Route Calculation Status */}
       {isCalculating && (

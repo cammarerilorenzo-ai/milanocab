@@ -13,6 +13,7 @@ interface RideNotificationRequest {
   estimatedPrice: number;
   estimatedKm: number;
   estimatedMin: number;
+  mapsLink?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -38,7 +39,8 @@ const handler = async (req: Request): Promise<Response> => {
       dateTime, 
       estimatedPrice,
       estimatedKm,
-      estimatedMin 
+      estimatedMin,
+      mapsLink: providedMapsLink
     }: RideNotificationRequest = await req.json();
 
     // Validate required fields
@@ -51,8 +53,8 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Address fields exceed maximum length");
     }
 
-    // Generate Google Maps directions link
-    const mapsLink = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(destination)}`;
+    // Use provided maps link or generate one
+    const mapsLink = providedMapsLink || `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(destination)}`;
 
     // Format the email content
     const emailHtml = `

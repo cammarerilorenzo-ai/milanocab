@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Calendar, Clock, MapPin, Navigation, Car, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,18 +15,44 @@ interface RideFormData {
   scheduledTime: string;
 }
 
+interface RouteEstimate {
+  distanceKm: number;
+  durationMin: number;
+  mapsLink: string;
+  price: number;
+}
+
 // Pricing configuration
 const PRICING = {
   basePrice: 5.0, // € prezzo minimo
   pricePerKm: 1.5, // € per km
   pricePerMin: 0.3, // € per minuto
-  estimatedKmPerAddress: 8, // stima km media (senza Google Maps)
-  estimatedMinPerKm: 2, // minuti per km stimati
 };
+
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 export function RideBookingForm() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [routeEstimate, setRouteEstimate] = useState<RouteEstimate | null>(null);
+  const [routeError, setRouteError] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState<RideFormData>({
     pickup: "",
     destination: "",
@@ -35,27 +61,64 @@ export function RideBookingForm() {
     scheduledTime: "",
   });
 
-  // Calculate estimated price based on inputs
-  const calculateEstimatedPrice = () => {
-    if (!formData.pickup || !formData.destination) return null;
-    
-    // Stima basata sulla lunghezza degli indirizzi (euristica semplice)
-    const addressComplexity = (formData.pickup.length + formData.destination.length) / 20;
-    const estimatedKm = Math.max(PRICING.estimatedKmPerAddress, addressComplexity * 3);
-    const estimatedMin = estimatedKm * PRICING.estimatedMinPerKm;
-    
-    const price = PRICING.basePrice + 
-      (estimatedKm * PRICING.pricePerKm) + 
-      (estimatedMin * PRICING.pricePerMin);
-    
-    return {
-      price: Math.round(price * 100) / 100,
-      estimatedKm: Math.round(estimatedKm),
-      estimatedMin: Math.round(estimatedMin),
-    };
-  };
+  // Debounce addresses for API calls
+  const debouncedPickup = useDebounce(formData.pickup, 800);
+  const debouncedDestination = useDebounce(formData.destination, 800);
 
-  const estimate = calculateEstimatedPrice();
+  // Calculate route when addresses change
+  const calculateRoute = useCallback(async () => {
+    if (!debouncedPickup.trim() || !debouncedDestination.trim()) {
+      setRouteEstimate(null);
+      setRouteError(null);
+      return;
+    }
+
+    // Minimum address length to avoid unnecessary API calls
+    if (debouncedPickup.length < 5 || debouncedDestination.length < 5) {
+      return;
+    }
+
+    setIsCalculating(true);
+    setRouteError(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("calculate-route", {
+        body: {
+          pickup: debouncedPickup.trim(),
+          destination: debouncedDestination.trim(),
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        const price = PRICING.basePrice + 
+          (data.distanceKm * PRICING.pricePerKm) + 
+          (data.durationMin * PRICING.pricePerMin);
+
+        setRouteEstimate({
+          distanceKm: data.distanceKm,
+          durationMin: data.durationMin,
+          mapsLink: data.mapsLink,
+          price: Math.round(price * 100) / 100,
+        });
+        setRouteError(null);
+      } else {
+        setRouteError(data.error);
+        setRouteEstimate(null);
+      }
+    } catch (error) {
+      console.error("Error calculating route:", error);
+      setRouteError("Errore nel calcolo del percorso");
+      setRouteEstimate(null);
+    } finally {
+      setIsCalculating(false);
+    }
+  }, [debouncedPickup, debouncedDestination]);
+
+  useEffect(() => {
+    calculateRoute();
+  }, [calculateRoute]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +141,15 @@ export function RideBookingForm() {
       return;
     }
 
+    if (!routeEstimate) {
+      toast({
+        title: "Percorso non calcolato",
+        description: "Attendi il calcolo del percorso o verifica gli indirizzi",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -90,9 +162,10 @@ export function RideBookingForm() {
           pickup: formData.pickup.trim(),
           destination: formData.destination.trim(),
           dateTime: rideDateTime,
-          estimatedPrice: estimate?.price || 0,
-          estimatedKm: estimate?.estimatedKm || 0,
-          estimatedMin: estimate?.estimatedMin || 0,
+          estimatedPrice: routeEstimate.price,
+          estimatedKm: routeEstimate.distanceKm,
+          estimatedMin: routeEstimate.durationMin,
+          mapsLink: routeEstimate.mapsLink,
         },
       });
 
@@ -111,6 +184,7 @@ export function RideBookingForm() {
         scheduledDate: "",
         scheduledTime: "",
       });
+      setRouteEstimate(null);
     } catch (error) {
       console.error("Error submitting ride request:", error);
       toast({
@@ -123,9 +197,8 @@ export function RideBookingForm() {
     }
   };
 
-  // Get minimum date (today) and time for scheduling
+  // Get minimum date (today) for scheduling
   const today = new Date().toISOString().split("T")[0];
-  const now = new Date().toTimeString().slice(0, 5);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -138,7 +211,7 @@ export function RideBookingForm() {
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
           <Input
             id="pickup"
-            placeholder="Inserisci indirizzo di partenza"
+            placeholder="Es: Via Roma 1, Milano"
             value={formData.pickup}
             onChange={(e) => setFormData({ ...formData, pickup: e.target.value })}
             className="pl-11 h-12 bg-card border-border"
@@ -156,7 +229,7 @@ export function RideBookingForm() {
           <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-accent" />
           <Input
             id="destination"
-            placeholder="Inserisci destinazione"
+            placeholder="Es: Piazza Duomo, Milano"
             value={formData.destination}
             onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
             className="pl-11 h-12 bg-card border-border"
@@ -164,6 +237,20 @@ export function RideBookingForm() {
           />
         </div>
       </div>
+
+      {/* Route Calculation Status */}
+      {isCalculating && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground animate-in fade-in">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Calcolo percorso in corso...</span>
+        </div>
+      )}
+
+      {routeError && (
+        <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive animate-in fade-in">
+          {routeError}
+        </div>
+      )}
 
       {/* Scheduled Ride Toggle */}
       <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
@@ -218,25 +305,39 @@ export function RideBookingForm() {
       )}
 
       {/* Price Estimate */}
-      {estimate && (
+      {routeEstimate && (
         <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border border-primary/20 animate-in fade-in">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Prezzo stimato</p>
-              <p className="text-2xl font-bold text-foreground">€{estimate.price.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-foreground">€{routeEstimate.price.toFixed(2)}</p>
             </div>
             <div className="text-right text-sm text-muted-foreground">
-              <p>~{estimate.estimatedKm} km</p>
-              <p>~{estimate.estimatedMin} min</p>
+              <div className="flex items-center gap-1 justify-end">
+                <Route className="h-4 w-4" />
+                <span>{routeEstimate.distanceKm} km</span>
+              </div>
+              <div className="flex items-center gap-1 justify-end">
+                <Clock className="h-4 w-4" />
+                <span>{routeEstimate.durationMin} min</span>
+              </div>
             </div>
           </div>
+          <a 
+            href={routeEstimate.mapsLink} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="mt-3 block text-center text-sm text-primary hover:underline"
+          >
+            🗺️ Visualizza percorso su Google Maps
+          </a>
         </div>
       )}
 
       {/* Submit Button */}
       <Button
         type="submit"
-        disabled={isLoading || !formData.pickup || !formData.destination}
+        disabled={isLoading || isCalculating || !routeEstimate}
         className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-lg shadow-primary/25 transition-all"
       >
         {isLoading ? (

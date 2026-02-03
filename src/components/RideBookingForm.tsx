@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route } from "lucide-react";
+import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { RideConfirmationDialog } from "@/components/RideConfirmationDialog";
 
 interface RideFormData {
+  email: string;
   pickup: string;
   destination: string;
   isScheduled: boolean;
@@ -63,6 +64,7 @@ export function RideBookingForm() {
   } | null>(null);
   
   const [formData, setFormData] = useState<RideFormData>({
+    email: "",
     pickup: "",
     destination: "",
     isScheduled: false,
@@ -134,6 +136,15 @@ export function RideBookingForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast({
+        title: "Email non valida",
+        description: "Inserisci un indirizzo email valido",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!formData.pickup.trim() || !formData.destination.trim()) {
       toast({
         title: "Campi obbligatori",
@@ -192,6 +203,7 @@ export function RideBookingForm() {
 
       // Reset form
       setFormData({
+        email: "",
         pickup: "",
         destination: "",
         isScheduled: false,
@@ -216,6 +228,25 @@ export function RideBookingForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Email */}
+      <div className="space-y-2">
+        <Label htmlFor="email" className="text-sm font-medium text-foreground">
+          Email
+        </Label>
+        <div className="relative">
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            id="email"
+            type="email"
+            placeholder="Es: mario.rossi@email.com"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            className="pl-11 h-12 bg-card border-border"
+            maxLength={255}
+          />
+        </div>
+      </div>
+
       {/* Pickup Location */}
       <div className="space-y-2">
         <Label htmlFor="pickup" className="text-sm font-medium text-foreground">

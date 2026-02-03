@@ -14,7 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ride_requests: {
+        Row: {
+          admin_lat: number | null
+          admin_lon: number | null
+          confirmation_token: string
+          confirmed_at: string | null
+          created_at: string
+          customer_email: string
+          date_time: string
+          dest_lat: number
+          dest_lon: number
+          destination: string
+          estimated_km: number
+          estimated_min: number
+          estimated_price: number
+          eta_min: number | null
+          id: string
+          maps_link: string | null
+          pickup: string
+          pickup_lat: number
+          pickup_lon: number
+          status: string
+        }
+        Insert: {
+          admin_lat?: number | null
+          admin_lon?: number | null
+          confirmation_token?: string
+          confirmed_at?: string | null
+          created_at?: string
+          customer_email: string
+          date_time: string
+          dest_lat: number
+          dest_lon: number
+          destination: string
+          estimated_km: number
+          estimated_min: number
+          estimated_price: number
+          eta_min?: number | null
+          id?: string
+          maps_link?: string | null
+          pickup: string
+          pickup_lat: number
+          pickup_lon: number
+          status?: string
+        }
+        Update: {
+          admin_lat?: number | null
+          admin_lon?: number | null
+          confirmation_token?: string
+          confirmed_at?: string | null
+          created_at?: string
+          customer_email?: string
+          date_time?: string
+          dest_lat?: number
+          dest_lon?: number
+          destination?: string
+          estimated_km?: number
+          estimated_min?: number
+          estimated_price?: number
+          eta_min?: number | null
+          id?: string
+          maps_link?: string | null
+          pickup?: string
+          pickup_lat?: number
+          pickup_lon?: number
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

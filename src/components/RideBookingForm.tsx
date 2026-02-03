@@ -225,7 +225,7 @@ export function RideBookingForm() {
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
           <Input
             id="pickup"
-            placeholder="Es: Via Fanti 2"
+            placeholder="Es: Corso Vercelli 1"
             value={formData.pickup}
             onChange={(e) => setFormData({ ...formData, pickup: e.target.value })}
             className="pl-11 h-12 bg-card border-border"
@@ -244,7 +244,7 @@ export function RideBookingForm() {
           <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-accent" />
           <Input
             id="destination"
-            placeholder="Es: Piazza Duomo"
+            placeholder="Es: Piazza San Babila"
             value={formData.destination}
             onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
             className="pl-11 h-12 bg-card border-border"

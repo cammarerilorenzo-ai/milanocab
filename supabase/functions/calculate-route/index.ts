@@ -8,6 +8,24 @@ const corsHeaders = {
 
 const ORS_BASE_URL = "https://api.openrouteservice.org";
 
+// Milan bounding box (approximate city limits)
+const MILAN_BOUNDS = {
+  minLat: 45.40,
+  maxLat: 45.54,
+  minLon: 9.04,
+  maxLon: 9.30,
+};
+
+// Check if coordinates are within Milan
+function isInMilan(lon: number, lat: number): boolean {
+  return (
+    lat >= MILAN_BOUNDS.minLat &&
+    lat <= MILAN_BOUNDS.maxLat &&
+    lon >= MILAN_BOUNDS.minLon &&
+    lon <= MILAN_BOUNDS.maxLon
+  );
+}
+
 interface RouteRequest {
   pickup: string;
   destination: string;
@@ -46,10 +64,12 @@ function normalizeAddress(address: string): string {
   return `${normalized}, Milano, Italia`;
 }
 
-// Geocode an address to coordinates
+// Geocode an address to coordinates (restricted to Milan)
 async function geocodeAddress(address: string, apiKey: string): Promise<[number, number] | null> {
   const normalizedAddress = normalizeAddress(address);
-  const url = `${ORS_BASE_URL}/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(normalizedAddress)}&boundary.country=IT&size=1`;
+  
+  // Use boundary.rect to restrict search to Milan area
+  const url = `${ORS_BASE_URL}/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(normalizedAddress)}&boundary.country=IT&boundary.rect.min_lon=${MILAN_BOUNDS.minLon}&boundary.rect.min_lat=${MILAN_BOUNDS.minLat}&boundary.rect.max_lon=${MILAN_BOUNDS.maxLon}&boundary.rect.max_lat=${MILAN_BOUNDS.maxLat}&size=5`;
   
   const response = await fetch(url);
   if (!response.ok) {
@@ -60,7 +80,21 @@ async function geocodeAddress(address: string, apiKey: string): Promise<[number,
   const data: GeocodingResult = await response.json();
   
   if (data.features && data.features.length > 0) {
-    return data.features[0].geometry.coordinates;
+    // Find the first result that is actually in Milan
+    for (const feature of data.features) {
+      const [lon, lat] = feature.geometry.coordinates;
+      const label = feature.properties.label.toLowerCase();
+      
+      // Check if coordinates are within Milan and label contains Milano
+      if (isInMilan(lon, lat) && label.includes("milan")) {
+        console.log(`Found address "${address}" at [${lon}, ${lat}] - ${feature.properties.label}`);
+        return [lon, lat];
+      }
+    }
+    
+    // If no Milan result found, log and return null
+    console.error(`No Milan location found for "${address}". Results were outside Milan bounds.`);
+    return null;
   }
   
   return null;

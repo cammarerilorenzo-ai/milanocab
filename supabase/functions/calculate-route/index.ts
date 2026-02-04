@@ -12,6 +12,13 @@ const ORS_BASE_URL = "https://api.openrouteservice.org";
 const BASE_LOCATION = "Via Manfredo Fanti 2, Milano, Italia";
 const ETA_BUFFER_MINUTES = 3; // Buffer time to add to ETA
 
+// Fixed airport prices
+const AIRPORT_PRICES: Record<string, number> = {
+  malpensa: 75,
+  "orio al serio": 75,
+  bergamo: 75, // Bergamo airport
+};
+
 // Milan bounding box (approximate city limits) - for pickup only
 const MILAN_BOUNDS = {
   minLat: 45.40,
@@ -46,6 +53,29 @@ function isInLombardy(lon: number, lat: number): boolean {
     lon >= LOMBARDY_BOUNDS.minLon &&
     lon <= LOMBARDY_BOUNDS.maxLon
   );
+}
+
+// Check if destination is an airport with fixed price
+function getAirportFixedPrice(destination: string): number | null {
+  const normalizedDest = destination.toLowerCase();
+  
+  for (const [keyword, price] of Object.entries(AIRPORT_PRICES)) {
+    if (normalizedDest.includes(keyword)) {
+      return price;
+    }
+  }
+  
+  // Also check for "aeroporto" keyword combined with city names
+  if (normalizedDest.includes("aeroporto")) {
+    if (normalizedDest.includes("bergamo") || normalizedDest.includes("orio")) {
+      return 75;
+    }
+    if (normalizedDest.includes("malpensa") || normalizedDest.includes("varese")) {
+      return 75;
+    }
+  }
+  
+  return null;
 }
 
 interface RouteRequest {
@@ -261,10 +291,13 @@ const handler = async (req: Request): Promise<Response> => {
     const distanceKm = Math.round(route.distance / 100) / 10; // Round to 1 decimal
     const durationMin = Math.round(route.duration / 60);
 
+    // Check for fixed airport price
+    const fixedPrice = getAirportFixedPrice(destination);
+
     // Generate Google Maps link
     const mapsLink = `https://www.google.com/maps/dir/?api=1&origin=${pickupCoords[1]},${pickupCoords[0]}&destination=${destCoords[1]},${destCoords[0]}`;
 
-    console.log(`Route calculated: ${distanceKm}km, ${durationMin}min, ETA: ${etaMin}min`);
+    console.log(`Route calculated: ${distanceKm}km, ${durationMin}min, ETA: ${etaMin}min${fixedPrice ? `, Fixed airport price: €${fixedPrice}` : ''}`);
 
     return new Response(
       JSON.stringify({
@@ -275,6 +308,7 @@ const handler = async (req: Request): Promise<Response> => {
         mapsLink,
         pickupCoords: { lat: pickupCoords[1], lon: pickupCoords[0] },
         destCoords: { lat: destCoords[1], lon: destCoords[0] },
+        fixedPrice: fixedPrice, // null if not an airport, price if it is
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );

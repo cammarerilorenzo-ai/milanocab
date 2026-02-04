@@ -32,11 +32,13 @@ export function RideConfirmationDialog({
 }: RideConfirmationDialogProps) {
   // Create Google Maps embed URL with directions
   const mapsEmbedUrl = `https://www.google.com/maps/embed/v1/directions?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&origin=${pickupCoords.lat},${pickupCoords.lon}&destination=${destCoords.lat},${destCoords.lon}&mode=driving`;
-
-  // Create Google Maps link for external navigation
-  const mapsLink = `https://www.google.com/maps/dir/?api=1&origin=${pickupCoords.lat},${pickupCoords.lon}&destination=${destCoords.lat},${destCoords.lon}`;
-  return <Dialog open={open} onOpenChange={isOpen => !isOpen && onClose()}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden">
+  return <Dialog open={open} onOpenChange={() => {}}>
+      <DialogContent 
+        className="max-w-lg p-0 overflow-hidden" 
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader className="p-4 pb-2 bg-primary/10">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <CheckCircle className="h-5 w-5 text-primary" />
@@ -110,11 +112,8 @@ export function RideConfirmationDialog({
 
           {/* Actions */}
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => window.open(mapsLink, "_blank")}>
-              🗺️ Apri in Maps
-            </Button>
             <Button className="flex-1" onClick={onClose}>
-              Chiudi
+              Ho capito
             </Button>
           </div>
         </div>

@@ -21,8 +21,8 @@ const Index = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center gap-3">
-          <img src={logo} alt="Milano's Cab" className="h-10 w-auto" />
-          <h1 className="text-xl font-bold text-foreground">Milano's Cab</h1>
+          <img src={logo} alt="Milano Cab" className="h-10 w-auto" />
+          <h1 className="text-xl font-bold text-foreground">Milano Cab</h1>
         </div>
       </header>
 
@@ -63,7 +63,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border py-3">
         <p className="text-center text-sm text-muted-foreground">
-          © 2025 Milano's Cab - Tutti i diritti riservati
+          © 2025 Milano Cab - Tutti i diritti riservati
         </p>
       </footer>
     </div>

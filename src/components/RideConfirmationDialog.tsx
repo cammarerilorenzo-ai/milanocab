@@ -58,7 +58,7 @@ export function RideConfirmationDialog({
             title="Percorso della corsa"
           />
           {/* Logo overlay with extended white box to cover the Google box */}
-          <div className="absolute top-2 left-2 bg-white rounded-lg shadow-md p-1 pr-24">
+          <div className="absolute top-2 left-2 bg-white rounded-lg shadow-md p-1 pr-48">
             <img src={logo} alt="Milano Cab" className="h-10 w-auto" />
           </div>
         </div>

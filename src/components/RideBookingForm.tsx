@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { RideConfirmationDialog } from "@/components/RideConfirmationDialog";
-
 interface RideFormData {
   phone: string;
   pickup: string;
@@ -16,43 +15,48 @@ interface RideFormData {
   scheduledDate: string;
   scheduledTime: string;
 }
-
 interface RouteEstimate {
   distanceKm: number;
   durationMin: number;
   etaMin: number;
   mapsLink: string;
   price: number;
-  pickupCoords: { lat: number; lon: number };
-  destCoords: { lat: number; lon: number };
+  pickupCoords: {
+    lat: number;
+    lon: number;
+  };
+  destCoords: {
+    lat: number;
+    lon: number;
+  };
 }
 
 // Pricing configuration
 const PRICING = {
-  basePrice: 5.0, // € prezzo minimo
-  pricePerKm: 1.5, // € per km
-  pricePerMin: 0.3, // € per minuto
+  basePrice: 5.0,
+  // € prezzo minimo
+  pricePerKm: 1.5,
+  // € per km
+  pricePerMin: 0.3 // € per minuto
 };
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
-
     return () => {
       clearTimeout(handler);
     };
   }, [value, delay]);
-
   return debouncedValue;
 }
-
 export function RideBookingForm() {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [routeEstimate, setRouteEstimate] = useState<RouteEstimate | null>(null);
@@ -63,7 +67,6 @@ export function RideBookingForm() {
     destination: string;
     routeEstimate: RouteEstimate;
   } | null>(null);
-  
   const [formData, setFormData] = useState<RideFormData>(() => {
     // Initialize with minimum time (30 minutes from now)
     const minDate = new Date(Date.now() + 30 * 60 * 1000);
@@ -71,9 +74,10 @@ export function RideBookingForm() {
       phone: "",
       pickup: "",
       destination: "",
-      isScheduled: true, // Always scheduled
+      isScheduled: true,
+      // Always scheduled
       scheduledDate: minDate.toISOString().split("T")[0],
-      scheduledTime: minDate.toTimeString().slice(0, 5),
+      scheduledTime: minDate.toTimeString().slice(0, 5)
     };
   });
 
@@ -93,25 +97,21 @@ export function RideBookingForm() {
     if (debouncedPickup.length < 5 || debouncedDestination.length < 5) {
       return;
     }
-
     setIsCalculating(true);
     setRouteError(null);
-
     try {
-      const { data, error } = await supabase.functions.invoke("calculate-route", {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke("calculate-route", {
         body: {
           pickup: debouncedPickup.trim(),
-          destination: debouncedDestination.trim(),
-        },
+          destination: debouncedDestination.trim()
+        }
       });
-
       if (error) throw error;
-
       if (data.success) {
-        const price = PRICING.basePrice + 
-          (data.distanceKm * PRICING.pricePerKm) + 
-          (data.durationMin * PRICING.pricePerMin);
-
+        const price = PRICING.basePrice + data.distanceKm * PRICING.pricePerKm + data.durationMin * PRICING.pricePerMin;
         setRouteEstimate({
           distanceKm: data.distanceKm,
           durationMin: data.durationMin,
@@ -119,7 +119,7 @@ export function RideBookingForm() {
           mapsLink: data.mapsLink,
           price: Math.round(price * 100) / 100,
           pickupCoords: data.pickupCoords,
-          destCoords: data.destCoords,
+          destCoords: data.destCoords
         });
         setRouteError(null);
       } else {
@@ -134,39 +134,35 @@ export function RideBookingForm() {
       setIsCalculating(false);
     }
   }, [debouncedPickup, debouncedDestination]);
-
   useEffect(() => {
     calculateRoute();
   }, [calculateRoute]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate phone number (Italian format, at least 9 digits)
     const phoneDigits = formData.phone.replace(/\D/g, "");
     if (phoneDigits.length < 9 || phoneDigits.length > 15) {
       toast({
         title: "Numero non valido",
         description: "Inserisci un numero di telefono valido",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     if (!formData.pickup.trim() || !formData.destination.trim()) {
       toast({
         title: "Campi obbligatori",
         description: "Inserisci punto di partenza e destinazione",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     if (!formData.scheduledDate || !formData.scheduledTime) {
       toast({
         title: "Data e ora richieste",
         description: "Inserisci data e ora della corsa",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -174,31 +170,29 @@ export function RideBookingForm() {
     // Validate minimum 30 minutes advance booking
     const scheduledDateTime = new Date(`${formData.scheduledDate}T${formData.scheduledTime}`);
     const minBookingTime = new Date(Date.now() + 30 * 60 * 1000);
-    
     if (scheduledDateTime < minBookingTime) {
       toast({
         title: "Orario non valido",
         description: "La prenotazione deve essere almeno 30 minuti in anticipo",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     if (!routeEstimate) {
       toast({
         title: "Percorso non calcolato",
         description: "Attendi il calcolo del percorso o verifica gli indirizzi",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     setIsLoading(true);
-
     try {
       const rideDateTime = `${formData.scheduledDate} - ${formData.scheduledTime}`;
-
-      const { data, error } = await supabase.functions.invoke("send-ride-notification", {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke("send-ride-notification", {
         body: {
           customerPhone: formData.phone.replace(/\D/g, ""),
           pickup: formData.pickup.trim(),
@@ -209,17 +203,16 @@ export function RideBookingForm() {
           estimatedMin: routeEstimate.durationMin,
           mapsLink: routeEstimate.mapsLink,
           pickupCoords: routeEstimate.pickupCoords,
-          destCoords: routeEstimate.destCoords,
-        },
+          destCoords: routeEstimate.destCoords
+        }
       });
-
       if (error) throw error;
 
       // Save confirmed ride data and show confirmation dialog
       setConfirmedRide({
         pickup: formData.pickup.trim(),
         destination: formData.destination.trim(),
-        routeEstimate: routeEstimate,
+        routeEstimate: routeEstimate
       });
       setShowConfirmation(true);
 
@@ -231,7 +224,7 @@ export function RideBookingForm() {
         destination: "",
         isScheduled: true,
         scheduledDate: newMinDate.toISOString().split("T")[0],
-        scheduledTime: newMinDate.toTimeString().slice(0, 5),
+        scheduledTime: newMinDate.toTimeString().slice(0, 5)
       });
       setRouteEstimate(null);
     } catch (error) {
@@ -239,7 +232,7 @@ export function RideBookingForm() {
       toast({
         title: "Errore",
         description: "Impossibile inviare la richiesta. Riprova.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -248,27 +241,9 @@ export function RideBookingForm() {
 
   // Get minimum date (today) for scheduling
   const today = new Date().toISOString().split("T")[0];
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+  return <form onSubmit={handleSubmit} className="space-y-6">
       {/* Phone */}
-      <div className="space-y-2">
-        <Label htmlFor="phone" className="text-sm font-medium text-foreground">
-          Telefono
-        </Label>
-        <div className="relative">
-          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            id="phone"
-            type="tel"
-            placeholder="Es: 333 1234567"
-            value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className="pl-11 h-12 bg-card border-border"
-            maxLength={20}
-          />
-        </div>
-      </div>
+      
 
       {/* Pickup Location */}
       <div className="space-y-2">
@@ -277,14 +252,10 @@ export function RideBookingForm() {
         </Label>
         <div className="relative">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
-          <Input
-            id="pickup"
-            placeholder="Es: Corso Vercelli 1"
-            value={formData.pickup}
-            onChange={(e) => setFormData({ ...formData, pickup: e.target.value })}
-            className="pl-11 h-12 bg-card border-border"
-            maxLength={200}
-          />
+          <Input id="pickup" placeholder="Es: Corso Vercelli 1" value={formData.pickup} onChange={e => setFormData({
+          ...formData,
+          pickup: e.target.value
+        })} className="pl-11 h-12 bg-card border-border" maxLength={200} />
         </div>
         <p className="text-xs text-muted-foreground">Solo indirizzi a Milano</p>
       </div>
@@ -296,30 +267,22 @@ export function RideBookingForm() {
         </Label>
         <div className="relative">
           <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-accent" />
-          <Input
-            id="destination"
-            placeholder="Es: Piazza San Babila"
-            value={formData.destination}
-            onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
-            className="pl-11 h-12 bg-card border-border"
-            maxLength={200}
-          />
+          <Input id="destination" placeholder="Es: Piazza San Babila" value={formData.destination} onChange={e => setFormData({
+          ...formData,
+          destination: e.target.value
+        })} className="pl-11 h-12 bg-card border-border" maxLength={200} />
         </div>
       </div>
 
       {/* Route Calculation Status */}
-      {isCalculating && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground animate-in fade-in">
+      {isCalculating && <div className="flex items-center gap-2 text-sm text-muted-foreground animate-in fade-in">
           <Loader2 className="h-4 w-4 animate-spin" />
           <span>Calcolo percorso in corso...</span>
-        </div>
-      )}
+        </div>}
 
-      {routeError && (
-        <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive animate-in fade-in">
+      {routeError && <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive animate-in fade-in">
           {routeError}
-        </div>
-      )}
+        </div>}
 
       {/* Scheduled Date/Time - Always visible and required */}
       <div className="p-4 bg-card rounded-xl border border-border space-y-4">
@@ -337,15 +300,10 @@ export function RideBookingForm() {
             </Label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                id="date"
-                type="date"
-                min={today}
-                value={formData.scheduledDate}
-                onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
-                className="pl-11 h-12 bg-card border-border"
-                required
-              />
+              <Input id="date" type="date" min={today} value={formData.scheduledDate} onChange={e => setFormData({
+              ...formData,
+              scheduledDate: e.target.value
+            })} className="pl-11 h-12 bg-card border-border" required />
             </div>
           </div>
           <div className="space-y-2">
@@ -354,22 +312,17 @@ export function RideBookingForm() {
             </Label>
             <div className="relative">
               <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                id="time"
-                type="time"
-                value={formData.scheduledTime}
-                onChange={(e) => setFormData({ ...formData, scheduledTime: e.target.value })}
-                className="pl-11 h-12 bg-card border-border"
-                required
-              />
+              <Input id="time" type="time" value={formData.scheduledTime} onChange={e => setFormData({
+              ...formData,
+              scheduledTime: e.target.value
+            })} className="pl-11 h-12 bg-card border-border" required />
             </div>
           </div>
         </div>
       </div>
 
       {/* Price Estimate */}
-      {routeEstimate && (
-        <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border border-primary/20 animate-in fade-in">
+      {routeEstimate && <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border border-primary/20 animate-in fade-in">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Prezzo stimato</p>
@@ -390,53 +343,26 @@ export function RideBookingForm() {
               </div>
             </div>
           </div>
-          <a 
-            href={routeEstimate.mapsLink} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="mt-3 block text-center text-sm text-primary hover:underline"
-          >
+          <a href={routeEstimate.mapsLink} target="_blank" rel="noopener noreferrer" className="mt-3 block text-center text-sm text-primary hover:underline">
             🗺️ Visualizza percorso su Google Maps
           </a>
-        </div>
-      )}
+        </div>}
 
       {/* Submit Button */}
-      <Button
-        type="submit"
-        disabled={isLoading || isCalculating || !routeEstimate}
-        className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-lg shadow-primary/25 transition-all"
-      >
-        {isLoading ? (
-          <>
+      <Button type="submit" disabled={isLoading || isCalculating || !routeEstimate} className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-lg shadow-primary/25 transition-all">
+        {isLoading ? <>
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             Invio in corso...
-          </>
-        ) : (
-          <>
+          </> : <>
             <Car className="mr-2 h-5 w-5" />
             Richiedi corsa
-          </>
-        )}
+          </>}
       </Button>
 
       {/* Confirmation Dialog with Map */}
-      {confirmedRide && (
-        <RideConfirmationDialog
-          open={showConfirmation}
-          onClose={() => {
-            setShowConfirmation(false);
-            setConfirmedRide(null);
-          }}
-          pickup={confirmedRide.pickup}
-          destination={confirmedRide.destination}
-          distanceKm={confirmedRide.routeEstimate.distanceKm}
-          durationMin={confirmedRide.routeEstimate.durationMin}
-          price={confirmedRide.routeEstimate.price}
-          pickupCoords={confirmedRide.routeEstimate.pickupCoords}
-          destCoords={confirmedRide.routeEstimate.destCoords}
-        />
-      )}
-    </form>
-  );
+      {confirmedRide && <RideConfirmationDialog open={showConfirmation} onClose={() => {
+      setShowConfirmation(false);
+      setConfirmedRide(null);
+    }} pickup={confirmedRide.pickup} destination={confirmedRide.destination} distanceKm={confirmedRide.routeEstimate.distanceKm} durationMin={confirmedRide.routeEstimate.durationMin} price={confirmedRide.routeEstimate.price} pickupCoords={confirmedRide.routeEstimate.pickupCoords} destCoords={confirmedRide.routeEstimate.destCoords} />}
+    </form>;
 }

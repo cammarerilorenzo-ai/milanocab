@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route, Phone } from "lucide-react";
+import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -8,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { RideConfirmationDialog } from "@/components/RideConfirmationDialog";
 interface RideFormData {
-  phone: string;
   pickup: string;
   destination: string;
   isScheduled: boolean;
@@ -54,9 +54,8 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 export function RideBookingForm() {
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [routeEstimate, setRouteEstimate] = useState<RouteEstimate | null>(null);
@@ -68,7 +67,6 @@ export function RideBookingForm() {
     routeEstimate: RouteEstimate;
   } | null>(null);
   const [formData, setFormData] = useState<RideFormData>({
-    phone: "",
     pickup: "",
     destination: "",
     isScheduled: false,
@@ -135,16 +133,15 @@ export function RideBookingForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate phone number (Italian format, at least 9 digits)
-    const phoneDigits = formData.phone.replace(/\D/g, "");
-    if (phoneDigits.length < 9 || phoneDigits.length > 15) {
+    if (!user?.phone) {
       toast({
-        title: "Numero non valido",
-        description: "Inserisci un numero di telefono valido",
+        title: "Errore",
+        description: "Devi essere autenticato per prenotare una corsa",
         variant: "destructive"
       });
       return;
     }
+
     if (!formData.pickup.trim() || !formData.destination.trim()) {
       toast({
         title: "Campi obbligatori",
@@ -191,7 +188,7 @@ export function RideBookingForm() {
         error
       } = await supabase.functions.invoke("send-ride-notification", {
         body: {
-          customerPhone: formData.phone.replace(/\D/g, ""),
+          customerPhone: user.phone.replace(/\D/g, ""),
           pickup: formData.pickup.trim(),
           destination: formData.destination.trim(),
           dateTime: rideDateTime,
@@ -215,7 +212,6 @@ export function RideBookingForm() {
 
       // Reset form
       setFormData({
-        phone: "",
         pickup: "",
         destination: "",
         isScheduled: false,

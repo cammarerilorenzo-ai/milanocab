@@ -278,21 +278,21 @@ export function RideBookingForm() {
           <button
             type="button"
             onClick={() => setFormData({ ...formData, destination: "Aeroporto Malpensa" })}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent/10 hover:bg-accent/20 text-accent-foreground rounded-full border border-accent/20 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent/10 hover:bg-accent/20 text-destructive rounded-full border border-accent/20 transition-colors"
           >
-            ✈️ Malpensa <span className="text-red-500 font-semibold">€75</span>
+            ✈️ Malpensa <span className="font-semibold">€75</span>
           </button>
           <button
             type="button"
             onClick={() => setFormData({ ...formData, destination: "Aeroporto Orio al Serio" })}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent/10 hover:bg-accent/20 text-accent-foreground rounded-full border border-accent/20 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent/10 hover:bg-accent/20 text-destructive rounded-full border border-accent/20 transition-colors"
           >
-            ✈️ Bergamo Orio <span className="text-red-500 font-semibold">€75</span>
+            ✈️ Bergamo Orio <span className="font-semibold">€75</span>
           </button>
           <button
             type="button"
             onClick={() => setFormData({ ...formData, destination: "Aeroporto Linate" })}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent/10 hover:bg-accent/20 text-accent-foreground rounded-full border border-accent/20 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent/10 hover:bg-accent/20 text-destructive rounded-full border border-accent/20 transition-colors"
           >
             ✈️ Linate
           </button>

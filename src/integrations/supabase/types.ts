@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      authorized_phones: {
+        Row: {
+          created_at: string
+          id: string
+          name: string | null
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          phone?: string
+        }
+        Relationships: []
+      }
       ride_requests: {
         Row: {
           admin_lat: number | null

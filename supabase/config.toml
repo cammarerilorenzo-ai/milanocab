@@ -1,1 +1,7 @@
 project_id = "uffrfyirwynvxweqknka"
+
+[functions.send-ride-notification]
+verify_jwt = false
+
+[functions.verify-phone]
+verify_jwt = false

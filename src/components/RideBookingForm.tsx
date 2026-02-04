@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route, Mail } from "lucide-react";
+import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { RideConfirmationDialog } from "@/components/RideConfirmationDialog";
 
 interface RideFormData {
-  email: string;
+  phone: string;
   pickup: string;
   destination: string;
   isScheduled: boolean;
@@ -64,7 +64,7 @@ export function RideBookingForm() {
   } | null>(null);
   
   const [formData, setFormData] = useState<RideFormData>({
-    email: "",
+    phone: "",
     pickup: "",
     destination: "",
     isScheduled: false,
@@ -136,10 +136,12 @@ export function RideBookingForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    // Validate phone number (Italian format, at least 9 digits)
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+    if (phoneDigits.length < 9 || phoneDigits.length > 15) {
       toast({
-        title: "Email non valida",
-        description: "Inserisci un indirizzo email valido",
+        title: "Numero non valido",
+        description: "Inserisci un numero di telefono valido",
         variant: "destructive",
       });
       return;
@@ -181,7 +183,7 @@ export function RideBookingForm() {
 
       const { data, error } = await supabase.functions.invoke("send-ride-notification", {
         body: {
-          customerEmail: formData.email.trim(),
+          customerPhone: formData.phone.replace(/\D/g, ""),
           pickup: formData.pickup.trim(),
           destination: formData.destination.trim(),
           dateTime: rideDateTime,
@@ -206,7 +208,7 @@ export function RideBookingForm() {
 
       // Reset form
       setFormData({
-        email: "",
+        phone: "",
         pickup: "",
         destination: "",
         isScheduled: false,
@@ -231,21 +233,21 @@ export function RideBookingForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Email */}
+      {/* Phone */}
       <div className="space-y-2">
-        <Label htmlFor="email" className="text-sm font-medium text-foreground">
-          Email
+        <Label htmlFor="phone" className="text-sm font-medium text-foreground">
+          Telefono
         </Label>
         <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
-            id="email"
-            type="email"
-            placeholder="Es: mario.rossi@email.com"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            id="phone"
+            type="tel"
+            placeholder="Es: 333 1234567"
+            value={formData.phone}
+            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             className="pl-11 h-12 bg-card border-border"
-            maxLength={255}
+            maxLength={20}
           />
         </div>
       </div>

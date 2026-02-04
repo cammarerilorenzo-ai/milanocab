@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 interface RideNotificationRequest {
-  customerEmail: string;
+  customerPhone: string;
   pickup: string;
   destination: string;
   dateTime: string;
@@ -46,7 +46,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const { 
-      customerEmail,
+      customerPhone,
       pickup, 
       destination, 
       dateTime, 
@@ -59,29 +59,36 @@ const handler = async (req: Request): Promise<Response> => {
     }: RideNotificationRequest = await req.json();
 
     // Validate required fields
-    if (!customerEmail || !pickup || !destination || !dateTime || !pickupCoords || !destCoords) {
+    if (!customerPhone || !pickup || !destination || !dateTime || !pickupCoords || !destCoords) {
       throw new Error("Missing required fields");
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(customerEmail)) {
-      throw new Error("Invalid email format");
+    // Validate phone number (at least 9 digits)
+    const phoneDigits = customerPhone.replace(/\D/g, "");
+    if (phoneDigits.length < 9 || phoneDigits.length > 15) {
+      throw new Error("Invalid phone number format");
     }
 
     // Validate field lengths
-    if (pickup.length > 200 || destination.length > 200 || customerEmail.length > 255) {
+    if (pickup.length > 200 || destination.length > 200 || customerPhone.length > 20) {
       throw new Error("Fields exceed maximum length");
     }
 
     // Use provided maps link or generate one
     const mapsLink = providedMapsLink || `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(destination)}`;
 
+    // Format phone for WhatsApp (add Italy country code if not present)
+    const formattedPhone = phoneDigits.startsWith("39") ? phoneDigits : `39${phoneDigits}`;
+    
+    // Create WhatsApp click-to-chat link with pre-filled message
+    const whatsappMessage = `Ciao! Ho ricevuto la tua richiesta di corsa:\n📍 Da: ${pickup}\n🎯 A: ${destination}\n🗓 ${dateTime}\n💰 €${estimatedPrice.toFixed(2)}\n\nTi confermo la corsa!`;
+    const whatsappLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(whatsappMessage)}`;
+
     // Save ride request to database
     const { data: rideRequest, error: dbError } = await supabase
       .from("ride_requests")
       .insert({
-        customer_email: customerEmail,
+        customer_phone: phoneDigits,
         pickup,
         destination,
         pickup_lat: pickupCoords.lat,
@@ -121,9 +128,9 @@ const handler = async (req: Request): Promise<Response> => {
               <h1 style="color: white; margin: 0; font-size: 24px;">🚗 Nuova Richiesta Corsa</h1>
             </div>
             <div style="padding: 24px;">
-              <div style="margin-bottom: 20px; padding: 16px; background: #fef3c7; border-radius: 12px; border-left: 4px solid #f59e0b;">
-                <p style="margin: 0 0 8px 0; color: #92400e; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">✉️ Cliente</p>
-                <p style="margin: 0; color: #1e293b; font-size: 16px; font-weight: 500;">${escapeHtml(customerEmail)}</p>
+              <div style="margin-bottom: 20px; padding: 16px; background: #dcfce7; border-radius: 12px; border-left: 4px solid #22c55e;">
+                <p style="margin: 0 0 8px 0; color: #166534; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">📱 Telefono Cliente</p>
+                <p style="margin: 0; color: #1e293b; font-size: 18px; font-weight: 600;">+39 ${phoneDigits}</p>
               </div>
               <div style="margin-bottom: 20px; padding: 16px; background: #f8fafc; border-radius: 12px; border-left: 4px solid #3b82f6;">
                 <p style="margin: 0 0 8px 0; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">📍 Partenza</p>
@@ -142,11 +149,14 @@ const handler = async (req: Request): Promise<Response> => {
                 <p style="margin: 0; color: #1e293b; font-size: 28px; font-weight: 700;">€${estimatedPrice.toFixed(2)}</p>
                 <p style="margin: 8px 0 0 0; color: #64748b; font-size: 14px;">~${estimatedKm} km • ~${estimatedMin} min</p>
               </div>
+              <a href="${whatsappLink}" target="_blank" style="display: block; text-align: center; background: linear-gradient(135deg, #25d366, #128c7e); color: white; text-decoration: none; padding: 16px 24px; border-radius: 12px; font-weight: 600; font-size: 16px; margin-bottom: 12px;">
+                📱 Contatta su WhatsApp
+              </a>
               <a href="${mapsLink}" target="_blank" style="display: block; text-align: center; background: #64748b; color: white; text-decoration: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; font-size: 14px; margin-bottom: 12px;">
                 🗺 Visualizza Percorso
               </a>
-              <a href="${confirmationLink}" target="_blank" style="display: block; text-align: center; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; text-decoration: none; padding: 16px 24px; border-radius: 12px; font-weight: 600; font-size: 16px;">
-                ✅ Conferma e Invia Tempo di Attesa
+              <a href="${confirmationLink}" target="_blank" style="display: block; text-align: center; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; text-decoration: none; padding: 16px 24px; border-radius: 12px; font-weight: 600; font-size: 16px;">
+                ✅ Conferma Corsa (GPS)
               </a>
             </div>
             <div style="padding: 16px 24px; background: #f8fafc; text-align: center;">

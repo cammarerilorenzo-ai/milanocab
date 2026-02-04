@@ -61,11 +61,6 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!RESEND_API_KEY) {
-      throw new Error("RESEND_API_KEY is not configured");
-    }
-
     const OPENROUTE_API_KEY = Deno.env.get("OPENROUTE_API_KEY");
     if (!OPENROUTE_API_KEY) {
       throw new Error("OPENROUTE_API_KEY is not configured");
@@ -139,76 +134,21 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to update ride request");
     }
 
-    // Send confirmation email to customer
-    const customerEmailHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Corsa Confermata</title>
-        </head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px;">
-          <div style="max-width: 500px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-            <div style="background: linear-gradient(135deg, #22c55e, #16a34a); padding: 24px; text-align: center;">
-              <h1 style="color: white; margin: 0; font-size: 24px;">✅ Corsa Confermata!</h1>
-            </div>
-            <div style="padding: 24px;">
-              <div style="margin-bottom: 20px; padding: 24px; background: linear-gradient(135deg, #dcfce7, #bbf7d0); border-radius: 12px; text-align: center;">
-                <p style="margin: 0 0 8px 0; color: #166534; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">⏱ Tempo di Attesa Stimato</p>
-                <p style="margin: 0; color: #166534; font-size: 48px; font-weight: 700;">${route.durationMin} min</p>
-                <p style="margin: 8px 0 0 0; color: #166534; font-size: 14px;">L'autista è a circa ${route.distanceKm} km da te</p>
-              </div>
-              <div style="margin-bottom: 20px; padding: 16px; background: #f8fafc; border-radius: 12px; border-left: 4px solid #3b82f6;">
-                <p style="margin: 0 0 8px 0; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">📍 Ti aspettiamo a</p>
-                <p style="margin: 0; color: #1e293b; font-size: 16px; font-weight: 500;">${escapeHtml(rideRequest.pickup)}</p>
-              </div>
-              <div style="margin-bottom: 20px; padding: 16px; background: #f8fafc; border-radius: 12px; border-left: 4px solid #22c55e;">
-                <p style="margin: 0 0 8px 0; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Destinazione</p>
-                <p style="margin: 0; color: #1e293b; font-size: 16px; font-weight: 500;">${escapeHtml(rideRequest.destination)}</p>
-              </div>
-              <div style="padding: 16px; background: linear-gradient(135deg, #dbeafe, #e0f2fe); border-radius: 12px; text-align: center;">
-                <p style="margin: 0 0 8px 0; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">💰 Prezzo Stimato</p>
-                <p style="margin: 0; color: #1e293b; font-size: 28px; font-weight: 700;">€${Number(rideRequest.estimated_price).toFixed(2)}</p>
-              </div>
-            </div>
-            <div style="padding: 16px 24px; background: #f8fafc; text-align: center;">
-              <p style="margin: 0; color: #94a3b8; font-size: 12px;">RideNow - Grazie per aver scelto il nostro servizio!</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
+    // Generate WhatsApp link for admin to contact customer
+    const customerPhone = rideRequest.customer_phone;
+    const formattedPhone = customerPhone.startsWith("39") ? customerPhone : `39${customerPhone}`;
+    const whatsappMessage = `Ciao! La tua corsa è confermata! 🚗\n\n⏱ Arrivo tra circa ${route.durationMin} minuti\n📍 Ti aspetto a: ${rideRequest.pickup}\n🎯 Destinazione: ${rideRequest.destination}\n💰 Prezzo: €${Number(rideRequest.estimated_price).toFixed(2)}`;
+    const whatsappLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(whatsappMessage)}`;
 
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "RideNow <onboarding@resend.dev>",
-        to: [rideRequest.customer_email],
-        subject: `✅ Corsa confermata - Arrivo in ${route.durationMin} minuti!`,
-        html: customerEmailHtml,
-      }),
-    });
-
-    if (!emailResponse.ok) {
-      const errorData = await emailResponse.json();
-      console.error("Email send error:", errorData);
-      // Don't throw, ride is already confirmed
-    } else {
-      const emailResult = await emailResponse.json();
-      console.log("Customer confirmation email sent:", emailResult);
-    }
+    console.log("Ride confirmed, WhatsApp link generated for customer contact");
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         etaMin: route.durationMin,
         distanceKm: route.distanceKm,
-        customerEmail: rideRequest.customer_email 
+        customerPhone: customerPhone,
+        whatsappLink: whatsappLink
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );

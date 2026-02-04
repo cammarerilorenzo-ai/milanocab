@@ -63,13 +63,17 @@ export function RideBookingForm() {
     routeEstimate: RouteEstimate;
   } | null>(null);
   
-  const [formData, setFormData] = useState<RideFormData>({
-    phone: "",
-    pickup: "",
-    destination: "",
-    isScheduled: false,
-    scheduledDate: "",
-    scheduledTime: "",
+  const [formData, setFormData] = useState<RideFormData>(() => {
+    // Initialize with minimum time (30 minutes from now)
+    const minDate = new Date(Date.now() + 30 * 60 * 1000);
+    return {
+      phone: "",
+      pickup: "",
+      destination: "",
+      isScheduled: true, // Always scheduled
+      scheduledDate: minDate.toISOString().split("T")[0],
+      scheduledTime: minDate.toTimeString().slice(0, 5),
+    };
   });
 
   // Debounce addresses for API calls
@@ -156,10 +160,23 @@ export function RideBookingForm() {
       return;
     }
 
-    if (formData.isScheduled && (!formData.scheduledDate || !formData.scheduledTime)) {
+    if (!formData.scheduledDate || !formData.scheduledTime) {
       toast({
         title: "Data e ora richieste",
-        description: "Per una corsa programmata, inserisci data e ora",
+        description: "Inserisci data e ora della corsa",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate minimum 30 minutes advance booking
+    const scheduledDateTime = new Date(`${formData.scheduledDate}T${formData.scheduledTime}`);
+    const minBookingTime = new Date(Date.now() + 30 * 60 * 1000);
+    
+    if (scheduledDateTime < minBookingTime) {
+      toast({
+        title: "Orario non valido",
+        description: "La prenotazione deve essere almeno 30 minuti in anticipo",
         variant: "destructive",
       });
       return;
@@ -177,9 +194,7 @@ export function RideBookingForm() {
     setIsLoading(true);
 
     try {
-      const rideDateTime = formData.isScheduled 
-        ? `${formData.scheduledDate} - ${formData.scheduledTime}`
-        : "Immediata";
+      const rideDateTime = `${formData.scheduledDate} - ${formData.scheduledTime}`;
 
       const { data, error } = await supabase.functions.invoke("send-ride-notification", {
         body: {
@@ -206,14 +221,15 @@ export function RideBookingForm() {
       });
       setShowConfirmation(true);
 
-      // Reset form
+      // Reset form with new minimum time
+      const newMinDate = new Date(Date.now() + 30 * 60 * 1000);
       setFormData({
         phone: "",
         pickup: "",
         destination: "",
-        isScheduled: false,
-        scheduledDate: "",
-        scheduledTime: "",
+        isScheduled: true,
+        scheduledDate: newMinDate.toISOString().split("T")[0],
+        scheduledTime: newMinDate.toTimeString().slice(0, 5),
       });
       setRouteEstimate(null);
     } catch (error) {
@@ -303,24 +319,16 @@ export function RideBookingForm() {
         </div>
       )}
 
-      {/* Scheduled Ride Toggle */}
-      <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
+      {/* Scheduled Date/Time - Always visible and required */}
+      <div className="p-4 bg-card rounded-xl border border-border space-y-4">
         <div className="flex items-center gap-3">
-          <Clock className="h-5 w-5 text-muted-foreground" />
+          <Clock className="h-5 w-5 text-primary" />
           <div>
             <p className="font-medium text-foreground">Programma corsa</p>
-            <p className="text-sm text-muted-foreground">Prenota per dopo</p>
+            <p className="text-sm text-muted-foreground">Minimo 30 minuti di anticipo</p>
           </div>
         </div>
-        <Switch
-          checked={formData.isScheduled}
-          onCheckedChange={(checked) => setFormData({ ...formData, isScheduled: checked })}
-        />
-      </div>
-
-      {/* Scheduled Date/Time */}
-      {formData.isScheduled && (
-        <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="date" className="text-sm font-medium text-foreground">
               Data
@@ -334,6 +342,7 @@ export function RideBookingForm() {
                 value={formData.scheduledDate}
                 onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
                 className="pl-11 h-12 bg-card border-border"
+                required
               />
             </div>
           </div>
@@ -349,11 +358,12 @@ export function RideBookingForm() {
                 value={formData.scheduledTime}
                 onChange={(e) => setFormData({ ...formData, scheduledTime: e.target.value })}
                 className="pl-11 h-12 bg-card border-border"
+                required
               />
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Price Estimate */}
       {routeEstimate && (

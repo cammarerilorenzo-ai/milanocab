@@ -402,9 +402,6 @@ export function RideBookingForm() {
       </Button>
 
       {/* Confirmation Dialog with Map */}
-      {confirmedRide && <RideConfirmationDialog open={showConfirmation} onClose={() => {
-      setShowConfirmation(false);
-      setConfirmedRide(null);
-    }} pickup={confirmedRide.pickup} destination={confirmedRide.destination} distanceKm={confirmedRide.routeEstimate.distanceKm} durationMin={confirmedRide.routeEstimate.durationMin} price={confirmedRide.routeEstimate.price} pickupCoords={confirmedRide.routeEstimate.pickupCoords} destCoords={confirmedRide.routeEstimate.destCoords} />}
+      {confirmedRide && <RideConfirmationDialog open={showConfirmation} pickup={confirmedRide.pickup} destination={confirmedRide.destination} distanceKm={confirmedRide.routeEstimate.distanceKm} durationMin={confirmedRide.routeEstimate.durationMin} price={confirmedRide.routeEstimate.price} pickupCoords={confirmedRide.routeEstimate.pickupCoords} destCoords={confirmedRide.routeEstimate.destCoords} />}
     </form>;
 }

@@ -20,6 +20,7 @@ interface RideFormData {
 interface RouteEstimate {
   distanceKm: number;
   durationMin: number;
+  etaMin: number;
   mapsLink: string;
   price: number;
   pickupCoords: { lat: number; lon: number };
@@ -114,6 +115,7 @@ export function RideBookingForm() {
         setRouteEstimate({
           distanceKm: data.distanceKm,
           durationMin: data.durationMin,
+          etaMin: data.etaMin,
           mapsLink: data.mapsLink,
           price: Math.round(price * 100) / 100,
           pickupCoords: data.pickupCoords,
@@ -381,6 +383,10 @@ export function RideBookingForm() {
               <div className="flex items-center gap-1 justify-end">
                 <Clock className="h-4 w-4" />
                 <span>{routeEstimate.durationMin} min</span>
+              </div>
+              <div className="flex items-center gap-1 justify-end mt-1 text-primary font-medium">
+                <Car className="h-4 w-4" />
+                <span>Arrivo in ~{routeEstimate.etaMin} min</span>
               </div>
             </div>
           </div>

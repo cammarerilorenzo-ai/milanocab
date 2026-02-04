@@ -33,7 +33,7 @@ const Index = () => {
             {user && (
               <>
                 <span className="text-sm text-muted-foreground hidden sm:inline">
-                  {user.name || user.phone}
+                  {user.phone}
                 </span>
                 <Button variant="ghost" size="icon" onClick={logout} title="Logout">
                   <LogOut className="h-4 w-4" />

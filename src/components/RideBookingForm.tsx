@@ -100,12 +100,17 @@ export function RideBookingForm() {
     setIsCalculating(true);
     setRouteError(null);
     try {
+      // Aggiungi sempre ", Milano" al pickup per assicurare geocodifica corretta
+      const pickupAddress = debouncedPickup.trim().toLowerCase().includes("milano") 
+        ? debouncedPickup.trim() 
+        : `${debouncedPickup.trim()}, Milano`;
+      
       const {
         data,
         error
       } = await supabase.functions.invoke("calculate-route", {
         body: {
-          pickup: debouncedPickup.trim(),
+          pickup: pickupAddress,
           destination: debouncedDestination.trim()
         }
       });

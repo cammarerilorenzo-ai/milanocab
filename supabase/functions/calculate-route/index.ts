@@ -127,7 +127,11 @@ function normalizeAddressLombardy(address: string): string {
 async function geocodeAddressMilan(address: string, apiKey: string): Promise<[number, number] | null> {
   const normalizedAddress = normalizeAddressMilan(address);
   
-  const url = `${ORS_BASE_URL}/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(normalizedAddress)}&boundary.country=IT&boundary.rect.min_lon=${MILAN_BOUNDS.minLon}&boundary.rect.min_lat=${MILAN_BOUNDS.minLat}&boundary.rect.max_lon=${MILAN_BOUNDS.maxLon}&boundary.rect.max_lat=${MILAN_BOUNDS.maxLat}&size=5`;
+  // Usa focus.point per prioritizzare risultati vicino al centro di Milano
+  const milanCenterLat = 45.4642;
+  const milanCenterLon = 9.1900;
+  
+  const url = `${ORS_BASE_URL}/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(normalizedAddress)}&boundary.country=IT&boundary.rect.min_lon=${MILAN_BOUNDS.minLon}&boundary.rect.min_lat=${MILAN_BOUNDS.minLat}&boundary.rect.max_lon=${MILAN_BOUNDS.maxLon}&boundary.rect.max_lat=${MILAN_BOUNDS.maxLat}&focus.point.lat=${milanCenterLat}&focus.point.lon=${milanCenterLon}&size=10`;
   
   const response = await fetch(url);
   if (!response.ok) {
@@ -138,12 +142,23 @@ async function geocodeAddressMilan(address: string, apiKey: string): Promise<[nu
   const data: GeocodingResult = await response.json();
   
   if (data.features && data.features.length > 0) {
+    // Prima cerca risultati esplicitamente a Milano
     for (const feature of data.features) {
       const [lon, lat] = feature.geometry.coordinates;
       const label = feature.properties.label.toLowerCase();
       
       if (isInMilan(lon, lat) && label.includes("milan")) {
         console.log(`Found address "${address}" at [${lon}, ${lat}] - ${feature.properties.label}`);
+        return [lon, lat];
+      }
+    }
+    
+    // Se non trova "milan" nel label, prendi il primo risultato dentro i bounds di Milano
+    for (const feature of data.features) {
+      const [lon, lat] = feature.geometry.coordinates;
+      
+      if (isInMilan(lon, lat)) {
+        console.log(`Found address "${address}" at [${lon}, ${lat}] (in Milan bounds) - ${feature.properties.label}`);
         return [lon, lat];
       }
     }

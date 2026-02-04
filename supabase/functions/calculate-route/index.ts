@@ -8,6 +8,10 @@ const corsHeaders = {
 
 const ORS_BASE_URL = "https://api.openrouteservice.org";
 
+// Base location (driver's starting point)
+const BASE_LOCATION = "Via Manfredo Fanti 2, Milano, Italia";
+const ETA_BUFFER_MINUTES = 3; // Buffer time to add to ETA
+
 // Milan bounding box (approximate city limits)
 const MILAN_BOUNDS = {
   minLat: 45.40,
@@ -171,7 +175,11 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Calculate route
+    // Geocode base location for ETA calculation
+    console.log(`Geocoding base location: "${BASE_LOCATION}"`);
+    const baseCoords = await geocodeAddress(BASE_LOCATION, OPENROUTE_API_KEY);
+
+    // Calculate route from pickup to destination
     console.log(`Calculating route from [${pickupCoords}] to [${destCoords}]`);
     const route = await calculateRoute(pickupCoords, destCoords, OPENROUTE_API_KEY);
 
@@ -185,6 +193,17 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Calculate ETA from base to pickup (driver arrival time)
+    let etaMin = ETA_BUFFER_MINUTES; // Default buffer if base geocoding fails
+    if (baseCoords) {
+      console.log(`Calculating ETA from base [${baseCoords}] to pickup [${pickupCoords}]`);
+      const etaRoute = await calculateRoute(baseCoords, pickupCoords, OPENROUTE_API_KEY);
+      if (etaRoute) {
+        etaMin = Math.round(etaRoute.duration / 60) + ETA_BUFFER_MINUTES;
+        console.log(`ETA calculated: ${etaMin} min (including ${ETA_BUFFER_MINUTES} min buffer)`);
+      }
+    }
+
     // Convert to km and minutes
     const distanceKm = Math.round(route.distance / 100) / 10; // Round to 1 decimal
     const durationMin = Math.round(route.duration / 60);
@@ -192,13 +211,14 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate Google Maps link
     const mapsLink = `https://www.google.com/maps/dir/?api=1&origin=${pickupCoords[1]},${pickupCoords[0]}&destination=${destCoords[1]},${destCoords[0]}`;
 
-    console.log(`Route calculated: ${distanceKm}km, ${durationMin}min`);
+    console.log(`Route calculated: ${distanceKm}km, ${durationMin}min, ETA: ${etaMin}min`);
 
     return new Response(
       JSON.stringify({
         success: true,
         distanceKm,
         durationMin,
+        etaMin,
         mapsLink,
         pickupCoords: { lat: pickupCoords[1], lon: pickupCoords[0] },
         destCoords: { lat: destCoords[1], lon: destCoords[0] },

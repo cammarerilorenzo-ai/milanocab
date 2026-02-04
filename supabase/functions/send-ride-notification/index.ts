@@ -160,7 +160,7 @@ const handler = async (req: Request): Promise<Response> => {
               </a>
             </div>
             <div style="padding: 16px 24px; background: #f8fafc; text-align: center;">
-              <p style="margin: 0; color: #94a3b8; font-size: 12px;">RideNow - Sistema di Prenotazione Corse</p>
+              <p style="margin: 0; color: #94a3b8; font-size: 12px;">Milano's Cab - Sistema di Prenotazione Corse</p>
             </div>
           </div>
         </body>
@@ -175,7 +175,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "RideNow <onboarding@resend.dev>",
+        from: "Milano's Cab <onboarding@resend.dev>",
         to: [ADMIN_EMAIL],
         subject: `🚗 Nuova richiesta corsa - €${estimatedPrice.toFixed(2)}`,
         html: emailHtml,

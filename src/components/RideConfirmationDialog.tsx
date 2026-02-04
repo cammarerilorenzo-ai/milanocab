@@ -95,7 +95,7 @@ export function RideConfirmationDialog({
 
           {/* Info message */}
           <p className="text-sm text-muted-foreground text-center">
-            Ti contatteremo a breve per confermare la corsa
+            Ti contatteremo a breve su WhatsApp per confermare la corsa
           </p>
 
           {/* Actions */}

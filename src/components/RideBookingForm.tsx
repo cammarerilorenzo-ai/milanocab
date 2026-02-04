@@ -34,13 +34,12 @@ interface RouteEstimate {
 
 // Pricing configuration
 const PRICING = {
-  basePrice: 5.0,
-  // € prezzo minimo
-  pricePerKm: 1.5,
-  // € per km
-  pricePerMin: 0.3,
-  // € per minuto
-  discount: 0.95 // 5% discount
+  basePrice: 5.0,      // € prezzo minimo
+  pricePerKm: 1.5,     // € per km
+  pricePerMin: 0.3,    // € per minuto
+  discountUnder5km: 0.95,  // 5% sconto sotto i 5km
+  discountOver5km: 0.50,   // 50% sconto sopra i 5km
+  distanceThreshold: 5     // km soglia per sconto maggiore
 };
 
 // Debounce hook
@@ -128,7 +127,9 @@ export function RideBookingForm() {
         // Use fixed price if available, otherwise calculate
         const isFixedPrice = data.fixedPrice !== null && data.fixedPrice !== undefined;
         const calculatedPrice = PRICING.basePrice + data.distanceKm * PRICING.pricePerKm + data.durationMin * PRICING.pricePerMin;
-        const rawPrice = isFixedPrice ? data.fixedPrice : calculatedPrice * PRICING.discount;
+        // Applica sconto 50% se oltre 5km, altrimenti 5%
+        const discount = data.distanceKm > PRICING.distanceThreshold ? PRICING.discountOver5km : PRICING.discountUnder5km;
+        const rawPrice = isFixedPrice ? data.fixedPrice : calculatedPrice * discount;
         // Round down to nearest 50 cents
         const price = Math.floor(rawPrice * 2) / 2;
         setRouteEstimate({

@@ -362,7 +362,7 @@ export function RideBookingForm() {
               <p className="text-sm text-muted-foreground">
                 {routeEstimate.isFixedPrice ? "Tariffa fissa aeroporto" : "Prezzo stimato"}
               </p>
-              <p className="text-2xl font-bold text-foreground">€{routeEstimate.price.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-green-600">€{routeEstimate.price.toFixed(2)}</p>
             </div>
             <div className="text-right text-sm text-muted-foreground">
               <div className="flex items-center gap-1 justify-end">

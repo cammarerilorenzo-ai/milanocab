@@ -190,6 +190,20 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResult = await emailResponse.json();
     console.log("Ride notification email sent successfully:", emailResult);
 
+    // Redact phone number after email is sent for privacy
+    const lastFourDigits = phoneDigits.slice(-4);
+    const { error: redactError } = await supabase
+      .from("ride_requests")
+      .update({ customer_phone: `***${lastFourDigits}` })
+      .eq("confirmation_token", rideRequest.confirmation_token);
+
+    if (redactError) {
+      console.error("Failed to redact phone number:", redactError);
+      // Don't fail the request, email was already sent successfully
+    } else {
+      console.log("Phone number redacted successfully");
+    }
+
     return new Response(JSON.stringify({ success: true, emailId: emailResult.id }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },

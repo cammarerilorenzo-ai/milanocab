@@ -114,13 +114,15 @@ export function RideBookingForm() {
         // Use fixed price if available, otherwise calculate
         const isFixedPrice = data.fixedPrice !== null && data.fixedPrice !== undefined;
         const calculatedPrice = PRICING.basePrice + data.distanceKm * PRICING.pricePerKm + data.durationMin * PRICING.pricePerMin;
-        const price = isFixedPrice ? data.fixedPrice : calculatedPrice * PRICING.discount;
+        const rawPrice = isFixedPrice ? data.fixedPrice : calculatedPrice * PRICING.discount;
+        // Round down to nearest 50 cents
+        const price = Math.floor(rawPrice * 2) / 2;
         setRouteEstimate({
           distanceKm: data.distanceKm,
           durationMin: data.durationMin,
           etaMin: data.etaMin,
           mapsLink: data.mapsLink,
-          price: Math.round(price * 100) / 100,
+          price,
           isFixedPrice,
           pickupCoords: data.pickupCoords,
           destCoords: data.destCoords

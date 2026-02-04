@@ -28,8 +28,8 @@ export function RideConfirmationDialog({
   pickupCoords,
   destCoords
 }: RideConfirmationDialogProps) {
-  // Create Google Maps embed URL with directions
-  const mapsEmbedUrl = `https://www.google.com/maps/embed/v1/directions?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&origin=${pickupCoords.lat},${pickupCoords.lon}&destination=${destCoords.lat},${destCoords.lon}&mode=driving`;
+  // Create Google Maps embed URL with directions - satellite view with higher zoom
+  const mapsEmbedUrl = `https://www.google.com/maps/embed/v1/directions?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&origin=${pickupCoords.lat},${pickupCoords.lon}&destination=${destCoords.lat},${destCoords.lon}&mode=driving&maptype=satellite&zoom=15`;
   return <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent 
         className="max-w-lg p-0 overflow-hidden" 

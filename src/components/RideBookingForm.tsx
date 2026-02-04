@@ -105,13 +105,22 @@ export function RideBookingForm() {
         ? debouncedPickup.trim() 
         : `${debouncedPickup.trim()}, Milano`;
       
+      // Località che indicano una destinazione specifica (non Milano di default)
+      const specificLocations = ["malpensa", "orio", "bergamo", "linate", "aeroporto", "monza", "como", "brescia", "varese", "pavia", "lecco", "cremona", "mantova", "lodi", "sondrio"];
+      const destLower = debouncedDestination.trim().toLowerCase();
+      const hasSpecificLocation = specificLocations.some(loc => destLower.includes(loc)) || destLower.includes("milano");
+      
+      const destinationAddress = hasSpecificLocation
+        ? debouncedDestination.trim()
+        : `${debouncedDestination.trim()}, Milano`;
+      
       const {
         data,
         error
       } = await supabase.functions.invoke("calculate-route", {
         body: {
           pickup: pickupAddress,
-          destination: debouncedDestination.trim()
+          destination: destinationAddress
         }
       });
       if (error) throw error;

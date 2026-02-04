@@ -373,7 +373,13 @@ export function RideBookingForm() {
                 <Clock className="h-4 w-4" />
                 <span>{routeEstimate.durationMin} min</span>
               </div>
-              <div className="flex items-center gap-1 justify-end mt-1 text-primary font-medium">
+              <div className={`flex items-center gap-1 justify-end mt-1 font-medium ${
+                routeEstimate.etaMin < 10 
+                  ? 'text-green-600' 
+                  : routeEstimate.etaMin <= 20 
+                    ? 'text-yellow-600' 
+                    : 'text-red-600'
+              }`}>
                 <Car className="h-4 w-4" />
                 <span>Arrivo in ~{routeEstimate.etaMin} min</span>
               </div>

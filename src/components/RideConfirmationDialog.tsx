@@ -106,7 +106,7 @@ export function RideConfirmationDialog({
           </div>
 
           {/* Info message */}
-          <p className="text-sm text-muted-foreground text-center">Per info contatta cabmila@proton.me</p>
+          <p className="text-sm text-muted-foreground text-center">Per info contatta cabmilan@proton.me</p>
 
           {/* Actions */}
           <div className="flex gap-3">

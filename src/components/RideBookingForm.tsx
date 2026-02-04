@@ -38,7 +38,9 @@ const PRICING = {
   // € prezzo minimo
   pricePerKm: 1.5,
   // € per km
-  pricePerMin: 0.3 // € per minuto
+  pricePerMin: 0.3,
+  // € per minuto
+  discount: 0.95 // 5% discount
 };
 
 // Debounce hook
@@ -107,9 +109,10 @@ export function RideBookingForm() {
       if (data.success) {
         // Use fixed price if available, otherwise calculate
         const isFixedPrice = data.fixedPrice !== null && data.fixedPrice !== undefined;
+        const calculatedPrice = PRICING.basePrice + data.distanceKm * PRICING.pricePerKm + data.durationMin * PRICING.pricePerMin;
         const price = isFixedPrice 
           ? data.fixedPrice 
-          : PRICING.basePrice + data.distanceKm * PRICING.pricePerKm + data.durationMin * PRICING.pricePerMin;
+          : calculatedPrice * PRICING.discount;
         
         setRouteEstimate({
           distanceKm: data.distanceKm,

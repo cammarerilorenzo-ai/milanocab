@@ -20,9 +20,8 @@ const Index = () => {
 
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
-        <div className="container mx-auto px-4 py-3 flex items-center gap-3">
-          <img src={logo} alt="Milano Cab" className="h-10 w-auto" />
-          <h1 className="text-xl font-bold text-foreground">Milano Cab</h1>
+        <div className="container mx-auto px-4 py-3 flex items-center justify-center">
+          <img src={logo} alt="Milano Cab" className="h-12 w-auto" />
         </div>
       </header>
 

@@ -67,18 +67,13 @@ export function RideBookingForm() {
     destination: string;
     routeEstimate: RouteEstimate;
   } | null>(null);
-  const [formData, setFormData] = useState<RideFormData>(() => {
-    // Initialize with minimum time (30 minutes from now)
-    const minDate = new Date(Date.now() + 30 * 60 * 1000);
-    return {
-      phone: "",
-      pickup: "",
-      destination: "",
-      isScheduled: true,
-      // Always scheduled
-      scheduledDate: minDate.toISOString().split("T")[0],
-      scheduledTime: minDate.toTimeString().slice(0, 5)
-    };
+  const [formData, setFormData] = useState<RideFormData>({
+    phone: "",
+    pickup: "",
+    destination: "",
+    isScheduled: false,
+    scheduledDate: "",
+    scheduledTime: ""
   });
 
   // Debounce addresses for API calls
@@ -158,25 +153,27 @@ export function RideBookingForm() {
       });
       return;
     }
-    if (!formData.scheduledDate || !formData.scheduledTime) {
-      toast({
-        title: "Data e ora richieste",
-        description: "Inserisci data e ora della corsa",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (formData.isScheduled) {
+      if (!formData.scheduledDate || !formData.scheduledTime) {
+        toast({
+          title: "Data e ora richieste",
+          description: "Inserisci data e ora della corsa programmata",
+          variant: "destructive"
+        });
+        return;
+      }
 
-    // Validate minimum 30 minutes advance booking
-    const scheduledDateTime = new Date(`${formData.scheduledDate}T${formData.scheduledTime}`);
-    const minBookingTime = new Date(Date.now() + 30 * 60 * 1000);
-    if (scheduledDateTime < minBookingTime) {
-      toast({
-        title: "Orario non valido",
-        description: "La prenotazione deve essere almeno 30 minuti in anticipo",
-        variant: "destructive"
-      });
-      return;
+      // Validate minimum 30 minutes advance booking for scheduled rides
+      const scheduledDateTime = new Date(`${formData.scheduledDate}T${formData.scheduledTime}`);
+      const minBookingTime = new Date(Date.now() + 30 * 60 * 1000);
+      if (scheduledDateTime < minBookingTime) {
+        toast({
+          title: "Orario non valido",
+          description: "La prenotazione deve essere almeno 30 minuti in anticipo",
+          variant: "destructive"
+        });
+        return;
+      }
     }
     if (!routeEstimate) {
       toast({
@@ -188,7 +185,9 @@ export function RideBookingForm() {
     }
     setIsLoading(true);
     try {
-      const rideDateTime = `${formData.scheduledDate} - ${formData.scheduledTime}`;
+      const rideDateTime = formData.isScheduled 
+        ? `${formData.scheduledDate} - ${formData.scheduledTime}`
+        : "Immediata";
       const {
         data,
         error
@@ -216,15 +215,14 @@ export function RideBookingForm() {
       });
       setShowConfirmation(true);
 
-      // Reset form with new minimum time
-      const newMinDate = new Date(Date.now() + 30 * 60 * 1000);
+      // Reset form
       setFormData({
         phone: "",
         pickup: "",
         destination: "",
-        isScheduled: true,
-        scheduledDate: newMinDate.toISOString().split("T")[0],
-        scheduledTime: newMinDate.toTimeString().slice(0, 5)
+        isScheduled: false,
+        scheduledDate: "",
+        scheduledTime: ""
       });
       setRouteEstimate(null);
     } catch (error) {
@@ -243,7 +241,26 @@ export function RideBookingForm() {
   const today = new Date().toISOString().split("T")[0];
   return <form onSubmit={handleSubmit} className="space-y-6">
       {/* Phone */}
-      
+      <div className="space-y-2">
+        <Label htmlFor="phone" className="text-sm font-medium text-foreground">
+          Numero di telefono
+        </Label>
+        <div className="relative">
+          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input 
+            id="phone" 
+            type="tel"
+            placeholder="Es: 333 1234567" 
+            value={formData.phone} 
+            onChange={e => setFormData({
+              ...formData,
+              phone: e.target.value
+            })} 
+            className="pl-11 h-12 bg-card border-border" 
+            maxLength={20} 
+          />
+        </div>
+      </div>
 
       {/* Pickup Location */}
       <div className="space-y-2">
@@ -284,42 +301,59 @@ export function RideBookingForm() {
           {routeError}
         </div>}
 
-      {/* Scheduled Date/Time - Always visible and required */}
-      <div className="p-4 bg-card rounded-xl border border-border space-y-4">
+      {/* Schedule Toggle */}
+      <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
         <div className="flex items-center gap-3">
           <Clock className="h-5 w-5 text-primary" />
           <div>
             <p className="font-medium text-foreground">Programma corsa</p>
-            <p className="text-sm text-muted-foreground">Minimo 30 minuti di anticipo</p>
+            <p className="text-sm text-muted-foreground">
+              {formData.isScheduled ? "Minimo 30 min di anticipo" : "Corsa immediata"}
+            </p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="date" className="text-sm font-medium text-foreground">
-              Data
-            </Label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input id="date" type="date" min={today} value={formData.scheduledDate} onChange={e => setFormData({
-              ...formData,
-              scheduledDate: e.target.value
-            })} className="pl-11 h-12 bg-card border-border" required />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="time" className="text-sm font-medium text-foreground">
-              Ora
-            </Label>
-            <div className="relative">
-              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input id="time" type="time" value={formData.scheduledTime} onChange={e => setFormData({
-              ...formData,
-              scheduledTime: e.target.value
-            })} className="pl-11 h-12 bg-card border-border" required />
-            </div>
-          </div>
-        </div>
+        <Switch
+          checked={formData.isScheduled}
+          onCheckedChange={(checked) => setFormData({
+            ...formData,
+            isScheduled: checked,
+            scheduledDate: checked ? today : "",
+            scheduledTime: ""
+          })}
+        />
       </div>
+
+      {/* Scheduled Date/Time - Only visible when scheduled */}
+      {formData.isScheduled && (
+        <div className="p-4 bg-card rounded-xl border border-border space-y-4 animate-in fade-in">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="date" className="text-sm font-medium text-foreground">
+                Data
+              </Label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input id="date" type="date" min={today} value={formData.scheduledDate} onChange={e => setFormData({
+                ...formData,
+                scheduledDate: e.target.value
+              })} className="pl-11 h-12 bg-card border-border" required />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="time" className="text-sm font-medium text-foreground">
+                Ora
+              </Label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input id="time" type="time" value={formData.scheduledTime} onChange={e => setFormData({
+                ...formData,
+                scheduledTime: e.target.value
+              })} className="pl-11 h-12 bg-card border-border" required />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Price Estimate */}
       {routeEstimate && <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border border-primary/20 animate-in fade-in">

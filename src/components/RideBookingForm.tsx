@@ -57,8 +57,12 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 export function RideBookingForm() {
-  const { toast } = useToast();
-  const { user } = useAuth();
+  const {
+    toast
+  } = useToast();
+  const {
+    user
+  } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [routeEstimate, setRouteEstimate] = useState<RouteEstimate | null>(null);
@@ -110,10 +114,7 @@ export function RideBookingForm() {
         // Use fixed price if available, otherwise calculate
         const isFixedPrice = data.fixedPrice !== null && data.fixedPrice !== undefined;
         const calculatedPrice = PRICING.basePrice + data.distanceKm * PRICING.pricePerKm + data.durationMin * PRICING.pricePerMin;
-        const price = isFixedPrice 
-          ? data.fixedPrice 
-          : calculatedPrice * PRICING.discount;
-        
+        const price = isFixedPrice ? data.fixedPrice : calculatedPrice * PRICING.discount;
         setRouteEstimate({
           distanceKm: data.distanceKm,
           durationMin: data.durationMin,
@@ -142,7 +143,6 @@ export function RideBookingForm() {
   }, [calculateRoute]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!user?.phone) {
       toast({
         title: "Errore",
@@ -151,7 +151,6 @@ export function RideBookingForm() {
       });
       return;
     }
-
     if (!formData.pickup.trim() || !formData.destination.trim()) {
       toast({
         title: "Campi obbligatori",
@@ -268,7 +267,7 @@ export function RideBookingForm() {
           <Label htmlFor="destination" className="text-sm font-medium text-foreground">
             Destinazione
           </Label>
-          <span className="text-xs text-muted-foreground">Aggiungi correttamente indirizzo e civico</span>
+          <span className="text-xs text-muted-foreground">Aggiungi indirizzo e civico</span>
         </div>
         <div className="relative">
           <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-accent" />
@@ -281,27 +280,19 @@ export function RideBookingForm() {
         
         {/* Airport suggestions */}
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setFormData({ ...formData, destination: "Aeroporto Malpensa" })}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent/10 hover:bg-accent/20 text-destructive rounded-full border border-accent/20 transition-colors"
-          >
+          <button type="button" onClick={() => setFormData({
+          ...formData,
+          destination: "Aeroporto Malpensa"
+        })} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent/10 hover:bg-accent/20 text-destructive rounded-full border border-accent/20 transition-colors">
             ✈️ Malpensa <span className="font-semibold">€75</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setFormData({ ...formData, destination: "Aeroporto Orio al Serio" })}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent/10 hover:bg-accent/20 text-destructive rounded-full border border-accent/20 transition-colors"
-          >
+          <button type="button" onClick={() => setFormData({
+          ...formData,
+          destination: "Aeroporto Orio al Serio"
+        })} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent/10 hover:bg-accent/20 text-destructive rounded-full border border-accent/20 transition-colors">
             ✈️ Bergamo Orio <span className="font-semibold">€75</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setFormData({ ...formData, destination: "Aeroporto Linate" })}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent/10 hover:bg-accent/20 text-destructive rounded-full border border-accent/20 transition-colors"
-          >
-            ✈️ Linate
-          </button>
+          
         </div>
       </div>
 

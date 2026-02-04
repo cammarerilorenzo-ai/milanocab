@@ -21,7 +21,7 @@ export type Database = {
           confirmation_token: string
           confirmed_at: string | null
           created_at: string
-          customer_email: string
+          customer_phone: string
           date_time: string
           dest_lat: number
           dest_lon: number
@@ -43,7 +43,7 @@ export type Database = {
           confirmation_token?: string
           confirmed_at?: string | null
           created_at?: string
-          customer_email: string
+          customer_phone: string
           date_time: string
           dest_lat: number
           dest_lon: number
@@ -65,7 +65,7 @@ export type Database = {
           confirmation_token?: string
           confirmed_at?: string | null
           created_at?: string
-          customer_email?: string
+          customer_phone?: string
           date_time?: string
           dest_lat?: number
           dest_lon?: number

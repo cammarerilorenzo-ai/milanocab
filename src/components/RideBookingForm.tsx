@@ -185,9 +185,7 @@ export function RideBookingForm() {
     }
     setIsLoading(true);
     try {
-      const rideDateTime = formData.isScheduled 
-        ? `${formData.scheduledDate} - ${formData.scheduledTime}`
-        : "Immediata";
+      const rideDateTime = formData.isScheduled ? `${formData.scheduledDate} - ${formData.scheduledTime}` : "Immediata";
       const {
         data,
         error
@@ -241,26 +239,7 @@ export function RideBookingForm() {
   const today = new Date().toISOString().split("T")[0];
   return <form onSubmit={handleSubmit} className="space-y-6">
       {/* Phone */}
-      <div className="space-y-2">
-        <Label htmlFor="phone" className="text-sm font-medium text-foreground">
-          Numero di telefono
-        </Label>
-        <div className="relative">
-          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input 
-            id="phone" 
-            type="tel"
-            placeholder="Es: 333 1234567" 
-            value={formData.phone} 
-            onChange={e => setFormData({
-              ...formData,
-              phone: e.target.value
-            })} 
-            className="pl-11 h-12 bg-card border-border" 
-            maxLength={20} 
-          />
-        </div>
-      </div>
+      
 
       {/* Pickup Location */}
       <div className="space-y-2">
@@ -312,20 +291,16 @@ export function RideBookingForm() {
             </p>
           </div>
         </div>
-        <Switch
-          checked={formData.isScheduled}
-          onCheckedChange={(checked) => setFormData({
-            ...formData,
-            isScheduled: checked,
-            scheduledDate: checked ? today : "",
-            scheduledTime: ""
-          })}
-        />
+        <Switch checked={formData.isScheduled} onCheckedChange={checked => setFormData({
+        ...formData,
+        isScheduled: checked,
+        scheduledDate: checked ? today : "",
+        scheduledTime: ""
+      })} />
       </div>
 
       {/* Scheduled Date/Time - Only visible when scheduled */}
-      {formData.isScheduled && (
-        <div className="p-4 bg-card rounded-xl border border-border space-y-4 animate-in fade-in">
+      {formData.isScheduled && <div className="p-4 bg-card rounded-xl border border-border space-y-4 animate-in fade-in">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="date" className="text-sm font-medium text-foreground">
@@ -334,9 +309,9 @@ export function RideBookingForm() {
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input id="date" type="date" min={today} value={formData.scheduledDate} onChange={e => setFormData({
-                ...formData,
-                scheduledDate: e.target.value
-              })} className="pl-11 h-12 bg-card border-border" required />
+              ...formData,
+              scheduledDate: e.target.value
+            })} className="pl-11 h-12 bg-card border-border" required />
               </div>
             </div>
             <div className="space-y-2">
@@ -346,14 +321,13 @@ export function RideBookingForm() {
               <div className="relative">
                 <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input id="time" type="time" value={formData.scheduledTime} onChange={e => setFormData({
-                ...formData,
-                scheduledTime: e.target.value
-              })} className="pl-11 h-12 bg-card border-border" required />
+              ...formData,
+              scheduledTime: e.target.value
+            })} className="pl-11 h-12 bg-card border-border" required />
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </div>}
 
       {/* Price Estimate */}
       {routeEstimate && <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border border-primary/20 animate-in fade-in">

@@ -271,7 +271,32 @@ export function RideBookingForm() {
           destination: e.target.value
         })} className="pl-11 h-12 bg-card border-border" maxLength={200} />
         </div>
-        <p className="text-xs text-muted-foreground">Qualsiasi destinazione in Lombardia</p>
+        <p className="text-xs text-muted-foreground mb-2">Qualsiasi destinazione in Lombardia</p>
+        
+        {/* Airport suggestions */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, destination: "Aeroporto Malpensa" })}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent/10 hover:bg-accent/20 text-accent-foreground rounded-full border border-accent/20 transition-colors"
+          >
+            ✈️ Malpensa <span className="text-primary font-semibold">€75</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, destination: "Aeroporto Orio al Serio" })}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent/10 hover:bg-accent/20 text-accent-foreground rounded-full border border-accent/20 transition-colors"
+          >
+            ✈️ Bergamo Orio <span className="text-primary font-semibold">€75</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, destination: "Aeroporto Linate" })}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent/10 hover:bg-accent/20 text-accent-foreground rounded-full border border-accent/20 transition-colors"
+          >
+            ✈️ Linate
+          </button>
+        </div>
       </div>
 
       {/* Route Calculation Status */}

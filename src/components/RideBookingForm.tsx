@@ -21,6 +21,7 @@ interface RouteEstimate {
   etaMin: number;
   mapsLink: string;
   price: number;
+  isFixedPrice: boolean;
   pickupCoords: {
     lat: number;
     lon: number;
@@ -104,13 +105,19 @@ export function RideBookingForm() {
       });
       if (error) throw error;
       if (data.success) {
-        const price = PRICING.basePrice + data.distanceKm * PRICING.pricePerKm + data.durationMin * PRICING.pricePerMin;
+        // Use fixed price if available, otherwise calculate
+        const isFixedPrice = data.fixedPrice !== null && data.fixedPrice !== undefined;
+        const price = isFixedPrice 
+          ? data.fixedPrice 
+          : PRICING.basePrice + data.distanceKm * PRICING.pricePerKm + data.durationMin * PRICING.pricePerMin;
+        
         setRouteEstimate({
           distanceKm: data.distanceKm,
           durationMin: data.durationMin,
           etaMin: data.etaMin,
           mapsLink: data.mapsLink,
           price: Math.round(price * 100) / 100,
+          isFixedPrice,
           pickupCoords: data.pickupCoords,
           destCoords: data.destCoords
         });
@@ -330,7 +337,9 @@ export function RideBookingForm() {
       {routeEstimate && <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border border-primary/20 animate-in fade-in">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Prezzo stimato</p>
+              <p className="text-sm text-muted-foreground">
+                {routeEstimate.isFixedPrice ? "Tariffa fissa aeroporto" : "Prezzo stimato"}
+              </p>
               <p className="text-2xl font-bold text-foreground">€{routeEstimate.price.toFixed(2)}</p>
             </div>
             <div className="text-right text-sm text-muted-foreground">

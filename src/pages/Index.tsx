@@ -1,7 +1,13 @@
+import { Link } from "react-router-dom";
 import { RideBookingForm } from "@/components/RideBookingForm";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserPlus, LogOut } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const Index = () => {
+  const { user, logout } = useAuth();
+
   return (
     <div className="min-h-screen relative">
       {/* Google Maps Background */}
@@ -20,8 +26,21 @@ const Index = () => {
 
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-center">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex-1" />
           <img src={logo} alt="Milano Cab" className="h-12 w-auto" />
+          <div className="flex-1 flex justify-end items-center gap-2">
+            {user && (
+              <>
+                <span className="text-sm text-muted-foreground hidden sm:inline">
+                  {user.name || user.phone}
+                </span>
+                <Button variant="ghost" size="icon" onClick={logout} title="Logout">
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -40,6 +59,16 @@ const Index = () => {
         {/* Booking Form */}
         <div className="bg-card/90 backdrop-blur-md rounded-2xl border border-border p-6 shadow-2xl">
           <RideBookingForm />
+        </div>
+
+        {/* Referral Button */}
+        <div className="mt-6 text-center">
+          <Link to="/referral">
+            <Button variant="outline" className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Inserisci numero referral
+            </Button>
+          </Link>
         </div>
 
         {/* Features */}

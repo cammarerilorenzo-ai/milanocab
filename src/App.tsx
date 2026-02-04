@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ConfirmRide from "./pages/ConfirmRide";
 import Auth from "./pages/Auth";
+import Referral from "./pages/Referral";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -21,6 +22,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/referral" element={<Referral />} />
             <Route
               path="/"
               element={

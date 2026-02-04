@@ -1,4 +1,5 @@
-import { MapPin, Navigation, Clock, Route, X, CheckCircle } from "lucide-react";
+import { MapPin, Navigation, Clock, Route, CheckCircle } from "lucide-react";
+import logo from "@/assets/logo.png";
 import {
   Dialog,
   DialogContent,
@@ -56,6 +57,10 @@ export function RideConfirmationDialog({
             referrerPolicy="no-referrer-when-downgrade"
             title="Percorso della corsa"
           />
+          {/* Logo overlay to cover the Google box */}
+          <div className="absolute top-2 left-2 bg-white rounded-lg shadow-md p-1">
+            <img src={logo} alt="Milano Cab" className="h-10 w-auto" />
+          </div>
         </div>
 
         {/* Trip Details */}

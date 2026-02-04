@@ -264,6 +264,7 @@ export function RideBookingForm() {
           destination: e.target.value
         })} className="pl-11 h-12 bg-card border-border" maxLength={200} />
         </div>
+        <p className="text-xs text-muted-foreground">Qualsiasi destinazione in Lombardia</p>
       </div>
 
       {/* Route Calculation Status */}

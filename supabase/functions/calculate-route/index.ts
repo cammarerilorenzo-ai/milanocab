@@ -12,12 +12,20 @@ const ORS_BASE_URL = "https://api.openrouteservice.org";
 const BASE_LOCATION = "Via Manfredo Fanti 2, Milano, Italia";
 const ETA_BUFFER_MINUTES = 3; // Buffer time to add to ETA
 
-// Milan bounding box (approximate city limits)
+// Milan bounding box (approximate city limits) - for pickup only
 const MILAN_BOUNDS = {
   minLat: 45.40,
   maxLat: 45.54,
   minLon: 9.04,
   maxLon: 9.30,
+};
+
+// Lombardy bounding box - for destinations
+const LOMBARDY_BOUNDS = {
+  minLat: 44.68,
+  maxLat: 46.64,
+  minLon: 8.50,
+  maxLon: 11.43,
 };
 
 // Check if coordinates are within Milan
@@ -27,6 +35,16 @@ function isInMilan(lon: number, lat: number): boolean {
     lat <= MILAN_BOUNDS.maxLat &&
     lon >= MILAN_BOUNDS.minLon &&
     lon <= MILAN_BOUNDS.maxLon
+  );
+}
+
+// Check if coordinates are within Lombardy
+function isInLombardy(lon: number, lat: number): boolean {
+  return (
+    lat >= LOMBARDY_BOUNDS.minLat &&
+    lat <= LOMBARDY_BOUNDS.maxLat &&
+    lon >= LOMBARDY_BOUNDS.minLon &&
+    lon <= LOMBARDY_BOUNDS.maxLon
   );
 }
 
@@ -57,22 +75,28 @@ interface RouteResult {
   }>;
 }
 
-// Normalize address to always include Milano
-function normalizeAddress(address: string): string {
+// Normalize address for Milan (pickup)
+function normalizeAddressMilan(address: string): string {
   const normalized = address.trim();
-  // If address already contains Milano/Milan, return as is
   if (/milan[oi]?/i.test(normalized)) {
     return normalized;
   }
-  // Otherwise append Milano
   return `${normalized}, Milano, Italia`;
 }
 
-// Geocode an address to coordinates (restricted to Milan)
-async function geocodeAddress(address: string, apiKey: string): Promise<[number, number] | null> {
-  const normalizedAddress = normalizeAddress(address);
+// Normalize address for Lombardy (destination)
+function normalizeAddressLombardy(address: string): string {
+  const normalized = address.trim();
+  if (/lombard/i.test(normalized) || /italia/i.test(normalized)) {
+    return normalized;
+  }
+  return `${normalized}, Lombardia, Italia`;
+}
+
+// Geocode an address to coordinates (restricted to Milan - for pickup)
+async function geocodeAddressMilan(address: string, apiKey: string): Promise<[number, number] | null> {
+  const normalizedAddress = normalizeAddressMilan(address);
   
-  // Use boundary.rect to restrict search to Milan area
   const url = `${ORS_BASE_URL}/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(normalizedAddress)}&boundary.country=IT&boundary.rect.min_lon=${MILAN_BOUNDS.minLon}&boundary.rect.min_lat=${MILAN_BOUNDS.minLat}&boundary.rect.max_lon=${MILAN_BOUNDS.maxLon}&boundary.rect.max_lat=${MILAN_BOUNDS.maxLat}&size=5`;
   
   const response = await fetch(url);
@@ -84,20 +108,48 @@ async function geocodeAddress(address: string, apiKey: string): Promise<[number,
   const data: GeocodingResult = await response.json();
   
   if (data.features && data.features.length > 0) {
-    // Find the first result that is actually in Milan
     for (const feature of data.features) {
       const [lon, lat] = feature.geometry.coordinates;
       const label = feature.properties.label.toLowerCase();
       
-      // Check if coordinates are within Milan and label contains Milano
       if (isInMilan(lon, lat) && label.includes("milan")) {
         console.log(`Found address "${address}" at [${lon}, ${lat}] - ${feature.properties.label}`);
         return [lon, lat];
       }
     }
     
-    // If no Milan result found, log and return null
     console.error(`No Milan location found for "${address}". Results were outside Milan bounds.`);
+    return null;
+  }
+  
+  return null;
+}
+
+// Geocode an address to coordinates (restricted to Lombardy - for destination)
+async function geocodeAddressLombardy(address: string, apiKey: string): Promise<[number, number] | null> {
+  const normalizedAddress = normalizeAddressLombardy(address);
+  
+  const url = `${ORS_BASE_URL}/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(normalizedAddress)}&boundary.country=IT&boundary.rect.min_lon=${LOMBARDY_BOUNDS.minLon}&boundary.rect.min_lat=${LOMBARDY_BOUNDS.minLat}&boundary.rect.max_lon=${LOMBARDY_BOUNDS.maxLon}&boundary.rect.max_lat=${LOMBARDY_BOUNDS.maxLat}&size=5`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    console.error(`Geocoding failed for "${address}": ${response.status}`);
+    return null;
+  }
+  
+  const data: GeocodingResult = await response.json();
+  
+  if (data.features && data.features.length > 0) {
+    for (const feature of data.features) {
+      const [lon, lat] = feature.geometry.coordinates;
+      
+      if (isInLombardy(lon, lat)) {
+        console.log(`Found destination "${address}" at [${lon}, ${lat}] - ${feature.properties.label}`);
+        return [lon, lat];
+      }
+    }
+    
+    console.error(`No Lombardy location found for "${address}". Results were outside Lombardy bounds.`);
     return null;
   }
   
@@ -148,12 +200,13 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Missing required fields: pickup or destination");
     }
 
-    // Geocode both addresses
+    // Geocode pickup (Milan only)
     console.log(`Geocoding pickup: "${pickup}"`);
-    const pickupCoords = await geocodeAddress(pickup, OPENROUTE_API_KEY);
+    const pickupCoords = await geocodeAddressMilan(pickup, OPENROUTE_API_KEY);
     
+    // Geocode destination (all Lombardy)
     console.log(`Geocoding destination: "${destination}"`);
-    const destCoords = await geocodeAddress(destination, OPENROUTE_API_KEY);
+    const destCoords = await geocodeAddressLombardy(destination, OPENROUTE_API_KEY);
 
     if (!pickupCoords) {
       return new Response(
@@ -169,7 +222,7 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: "Impossibile trovare l'indirizzo di destinazione. Prova con un indirizzo più specifico." 
+          error: "Impossibile trovare l'indirizzo di destinazione. Prova con un indirizzo in Lombardia." 
         }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
@@ -177,7 +230,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Geocode base location for ETA calculation
     console.log(`Geocoding base location: "${BASE_LOCATION}"`);
-    const baseCoords = await geocodeAddress(BASE_LOCATION, OPENROUTE_API_KEY);
+    const baseCoords = await geocodeAddressMilan(BASE_LOCATION, OPENROUTE_API_KEY);
 
     // Calculate route from pickup to destination
     console.log(`Calculating route from [${pickupCoords}] to [${destCoords}]`);

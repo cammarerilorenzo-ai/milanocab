@@ -57,8 +57,8 @@ export function RideConfirmationDialog({
             referrerPolicy="no-referrer-when-downgrade"
             title="Percorso della corsa"
           />
-          {/* Logo overlay to cover the Google box */}
-          <div className="absolute top-2 left-2 bg-white rounded-lg shadow-md p-1">
+          {/* Logo overlay with extended white box to cover the Google box */}
+          <div className="absolute top-2 left-2 bg-white rounded-lg shadow-md p-1 pr-8">
             <img src={logo} alt="Milano Cab" className="h-10 w-auto" />
           </div>
         </div>

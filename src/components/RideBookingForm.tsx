@@ -264,9 +264,12 @@ export function RideBookingForm() {
 
       {/* Destination */}
       <div className="space-y-2">
-        <Label htmlFor="destination" className="text-sm font-medium text-foreground">
-          Destinazione
-        </Label>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="destination" className="text-sm font-medium text-foreground">
+            Destinazione
+          </Label>
+          <span className="text-xs text-muted-foreground">Aggiungi correttamente indirizzo e civico</span>
+        </div>
         <div className="relative">
           <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-accent" />
           <Input id="destination" placeholder="Es: Piazza San Babila" value={formData.destination} onChange={e => setFormData({

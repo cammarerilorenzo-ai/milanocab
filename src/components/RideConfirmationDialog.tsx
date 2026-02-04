@@ -1,13 +1,7 @@
 import { MapPin, Navigation, Clock, Route, CheckCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-
 interface RideConfirmationDialogProps {
   open: boolean;
   onClose: () => void;
@@ -16,10 +10,15 @@ interface RideConfirmationDialogProps {
   distanceKm: number;
   durationMin: number;
   price: number;
-  pickupCoords: { lat: number; lon: number };
-  destCoords: { lat: number; lon: number };
+  pickupCoords: {
+    lat: number;
+    lon: number;
+  };
+  destCoords: {
+    lat: number;
+    lon: number;
+  };
 }
-
 export function RideConfirmationDialog({
   open,
   onClose,
@@ -29,16 +28,14 @@ export function RideConfirmationDialog({
   durationMin,
   price,
   pickupCoords,
-  destCoords,
+  destCoords
 }: RideConfirmationDialogProps) {
   // Create Google Maps embed URL with directions
   const mapsEmbedUrl = `https://www.google.com/maps/embed/v1/directions?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&origin=${pickupCoords.lat},${pickupCoords.lon}&destination=${destCoords.lat},${destCoords.lon}&mode=driving`;
 
   // Create Google Maps link for external navigation
   const mapsLink = `https://www.google.com/maps/dir/?api=1&origin=${pickupCoords.lat},${pickupCoords.lon}&destination=${destCoords.lat},${destCoords.lon}`;
-
-  return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+  return <Dialog open={open} onOpenChange={isOpen => !isOpen && onClose()}>
       <DialogContent className="max-w-lg p-0 overflow-hidden">
         <DialogHeader className="p-4 pb-2 bg-primary/10">
           <DialogTitle className="flex items-center gap-2 text-lg">
@@ -49,14 +46,7 @@ export function RideConfirmationDialog({
 
         {/* Map */}
         <div className="relative w-full h-64">
-          <iframe
-            src={mapsEmbedUrl}
-            className="w-full h-full border-0"
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title="Percorso della corsa"
-          />
+          <iframe src={mapsEmbedUrl} className="w-full h-full border-0" allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" title="Percorso della corsa" />
           {/* Logo overlay with trip info */}
           <div className="absolute top-2 left-2 bg-white rounded-lg shadow-md p-2 flex items-center gap-3">
             <img src={logo} alt="Milano Cab" className="h-10 w-auto" />
@@ -70,7 +60,10 @@ export function RideConfirmationDialog({
                 <Navigation className="h-3.5 w-3.5 text-primary" />
                 <span className="text-xs text-muted-foreground">Arrivo</span>
                 <span className="text-sm font-semibold">
-                  {new Date(Date.now() + 15 * 60000 + durationMin * 60000).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(Date.now() + 15 * 60000 + durationMin * 60000).toLocaleTimeString('it-IT', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
                 </span>
               </div>
             </div>
@@ -113,17 +106,11 @@ export function RideConfirmationDialog({
           </div>
 
           {/* Info message */}
-          <p className="text-sm text-muted-foreground text-center">
-            Ti contatteremo a breve su WhatsApp per confermare la corsa
-          </p>
+          <p className="text-sm text-muted-foreground text-center">Per info contatta cabmila@proton.me</p>
 
           {/* Actions */}
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => window.open(mapsLink, "_blank")}
-            >
+            <Button variant="outline" className="flex-1" onClick={() => window.open(mapsLink, "_blank")}>
               🗺️ Apri in Maps
             </Button>
             <Button className="flex-1" onClick={onClose}>
@@ -132,6 +119,5 @@ export function RideConfirmationDialog({
           </div>
         </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 }

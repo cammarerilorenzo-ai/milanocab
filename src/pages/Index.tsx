@@ -1,8 +1,7 @@
-import { Link } from "react-router-dom";
 import { RideBookingForm } from "@/components/RideBookingForm";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserPlus, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const Index = () => {
@@ -61,15 +60,6 @@ const Index = () => {
           <RideBookingForm />
         </div>
 
-        {/* Referral Button */}
-        <div className="mt-6 text-center">
-          <Link to="/referral">
-            <Button variant="outline" className="gap-2">
-              <UserPlus className="h-4 w-4" />
-              Inserisci numero referral
-            </Button>
-          </Link>
-        </div>
 
         {/* Features */}
         <div className="mt-8 grid grid-cols-3 gap-4 text-center">

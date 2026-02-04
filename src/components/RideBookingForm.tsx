@@ -379,9 +379,7 @@ export function RideBookingForm() {
               </div>
             </div>
           </div>
-          <a href={routeEstimate.mapsLink} target="_blank" rel="noopener noreferrer" className="mt-3 block text-center text-sm text-primary hover:underline">
-            🗺️ Visualizza percorso su Google Maps
-          </a>
+          
         </div>}
 
       {/* Submit Button */}

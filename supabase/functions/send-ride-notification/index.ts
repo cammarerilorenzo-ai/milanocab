@@ -74,8 +74,9 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Fields exceed maximum length");
     }
 
-    // Use provided maps link or generate one
-    const mapsLink = providedMapsLink || `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(destination)}`;
+    // Generate Google Maps link with admin's current position as start, pickup as waypoint, destination as end
+    // Omitting origin makes Google Maps use the user's current location automatically
+    const mapsLink = `https://www.google.com/maps/dir/?api=1&waypoints=${pickupCoords.lat},${pickupCoords.lon}&destination=${destCoords.lat},${destCoords.lon}&travelmode=driving`;
 
     // Format phone for WhatsApp (add Italy country code if not present)
     const formattedPhone = phoneDigits.startsWith("39") ? phoneDigits : `39${phoneDigits}`;

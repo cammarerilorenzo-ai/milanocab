@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Phone, Loader2, AlertCircle } from "lucide-react";
+import { Phone, Loader2, AlertCircle, UserPlus } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 export default function Auth() {
@@ -84,6 +84,15 @@ export default function Auth() {
                 "Accedi"
               )}
             </Button>
+
+            <div className="text-center pt-2">
+              <Link to="/referral">
+                <Button variant="outline" className="gap-2 w-full">
+                  <UserPlus className="h-4 w-4" />
+                  Inserisci numero referral
+                </Button>
+              </Link>
+            </div>
           </form>
         </CardContent>
       </Card>

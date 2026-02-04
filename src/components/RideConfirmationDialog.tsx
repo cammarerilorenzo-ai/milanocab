@@ -1,10 +1,9 @@
 import { MapPin, Navigation, Clock, Route, CheckCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+
 interface RideConfirmationDialogProps {
   open: boolean;
-  onClose: () => void;
   pickup: string;
   destination: string;
   distanceKm: number;
@@ -21,7 +20,6 @@ interface RideConfirmationDialogProps {
 }
 export function RideConfirmationDialog({
   open,
-  onClose,
   pickup,
   destination,
   distanceKm,
@@ -109,13 +107,6 @@ export function RideConfirmationDialog({
 
           {/* Info message */}
           <p className="text-sm text-muted-foreground text-center">Per info contatta cabmilan@proton.me</p>
-
-          {/* Actions */}
-          <div className="flex gap-3">
-            <Button className="flex-1" onClick={onClose}>
-              Ho capito
-            </Button>
-          </div>
         </div>
       </DialogContent>
     </Dialog>;

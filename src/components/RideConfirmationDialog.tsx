@@ -100,7 +100,7 @@ export function RideConfirmationDialog({
               <Clock className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm">{durationMin} min</span>
             </div>
-            <div className="text-lg font-bold text-primary">
+            <div className="text-lg font-bold text-green-600">
               €{price.toFixed(2)}
             </div>
           </div>

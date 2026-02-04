@@ -27,7 +27,7 @@ const Index = () => {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex-1" />
-          <img src={logo} alt="Milano Cab" className="h-12 w-auto" />
+          <img src={logo} alt="Milano Cab" className="h-14 w-auto" />
           <div className="flex-1 flex justify-end items-center gap-2">
             {user && (
               <>

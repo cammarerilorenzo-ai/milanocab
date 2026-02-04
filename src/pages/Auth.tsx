@@ -41,9 +41,8 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <img src={logo} alt="Milano Cab" className="h-16" />
-            <span className="text-2xl font-bold text-foreground">Milano Cab</span>
+          <div className="flex justify-center mb-4">
+            <img src={logo} alt="Milano Cab" className="h-20" />
           </div>
           <CardTitle className="text-2xl">Accesso</CardTitle>
           <CardDescription>

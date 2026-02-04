@@ -72,7 +72,7 @@ export default function Referral() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <img src={logo} alt="Milano Cab" className="h-16" />
+            <img src={logo} alt="Milano Cab" className="h-20" />
           </div>
           <CardTitle className="text-2xl">Registrazione Referral</CardTitle>
           <CardDescription>

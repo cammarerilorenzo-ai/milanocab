@@ -378,9 +378,9 @@ export function RideBookingForm() {
             title="Usa la mia posizione"
           >
             {isGeolocating ? (
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <Loader2 className="h-5 w-5 animate-spin text-yellow-500" />
             ) : (
-              <LocateFixed className="h-5 w-5 text-primary" />
+              <LocateFixed className="h-5 w-5 text-yellow-500" />
             )}
           </button>
         </div>

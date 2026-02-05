@@ -143,7 +143,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
                   <img 
                     src={image} 
                     alt={vehicle.display_name || vehicle.vehicle_type} 
-                    className="h-28 sm:h-32 w-auto max-w-full object-contain" 
+                    className="h-32 sm:h-36 w-auto max-w-full object-contain" 
                   />
                 </div>
               )}

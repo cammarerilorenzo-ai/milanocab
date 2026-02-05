@@ -19,7 +19,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
           className={cn(
             "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
             value === "economy"
-              ? "border-primary bg-primary/10"
+              ? "border-yellow-400 bg-yellow-400/10"
               : "border-border bg-card hover:border-yellow-400 hover:bg-yellow-400/10"
           )}
         >
@@ -31,7 +31,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
             <p className="text-[10px] text-muted-foreground">Comoda e conveniente</p>
           </div>
           {value === "economy" && (
-            <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary" />
+            <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-yellow-400" />
           )}
         </button>
 
@@ -42,7 +42,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
           className={cn(
             "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
             value === "premium"
-              ? "border-primary bg-primary/10"
+              ? "border-yellow-400 bg-yellow-400/10"
               : "border-border bg-card hover:border-yellow-400 hover:bg-yellow-400/10"
           )}
         >
@@ -54,7 +54,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
             <p className="text-[10px] text-muted-foreground">Spazio e stile</p>
           </div>
           {value === "premium" && (
-            <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary" />
+            <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-yellow-400" />
           )}
         </button>
       </div>

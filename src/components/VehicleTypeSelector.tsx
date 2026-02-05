@@ -5,46 +5,42 @@ import fiat500Image from "@/assets/fiat500.png";
 import trocCabrioImage from "@/assets/troc-cabrio.png";
 
 interface VehicleTypeSelectorProps {
-  value: string;
-  onChange: (value: string) => void;
+  value: "economy" | "premium";
+  onChange: (value: "economy" | "premium") => void;
 }
 
 interface VehicleSetting {
   vehicle_type: string;
   is_available: boolean;
-  display_name: string | null;
-  description: string | null;
-  image_url: string | null;
-  price_multiplier: number | null;
 }
 
 export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProps) {
-  const [vehicles, setVehicles] = useState<VehicleSetting[]>([]);
+  const [availableVehicles, setAvailableVehicles] = useState<VehicleSetting[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchVehicleSettings = async () => {
       try {
-        const { data, error } = await supabase
-          .from("vehicle_settings")
-          .select("vehicle_type, is_available, display_name, description, image_url, price_multiplier");
+        const { data, error } = await supabase.from("vehicle_settings").select("vehicle_type, is_available");
 
         if (error) throw error;
 
-        const availableVehicles = (data || []).filter(v => v.is_available);
-        setVehicles(availableVehicles);
-        
+        setAvailableVehicles(data || []);
+
         // Se il veicolo selezionato non è disponibile, seleziona il primo disponibile
-        const currentAvailable = availableVehicles.find(v => v.vehicle_type === value);
-        if (!currentAvailable && availableVehicles.length > 0) {
-          onChange(availableVehicles[0].vehicle_type);
+        const currentAvailable = data?.find((v) => v.vehicle_type === value && v.is_available);
+        if (!currentAvailable) {
+          const firstAvailable = data?.find((v) => v.is_available);
+          if (firstAvailable) {
+            onChange(firstAvailable.vehicle_type as "economy" | "premium");
+          }
         }
       } catch (error) {
         console.error("Error fetching vehicle settings:", error);
-        // Default: mostra veicoli di fallback
-        setVehicles([
-          { vehicle_type: "economy", is_available: true, display_name: "Utilitaria", description: "Comoda e conveniente", image_url: null, price_multiplier: 1 },
-          { vehicle_type: "premium", is_available: true, display_name: "SUV Cabrio", description: "Spazio e stile", image_url: null, price_multiplier: 1.3 }
+        // Default: mostra tutti i veicoli
+        setAvailableVehicles([
+          { vehicle_type: "economy", is_available: true },
+          { vehicle_type: "premium", is_available: true },
         ]);
       } finally {
         setLoading(false);
@@ -54,15 +50,16 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
     fetchVehicleSettings();
   }, []);
 
-  const getVehicleImage = (vehicle: VehicleSetting) => {
-    if (vehicle.image_url) return vehicle.image_url;
-    if (vehicle.vehicle_type === "economy") return fiat500Image;
-    if (vehicle.vehicle_type === "premium") return trocCabrioImage;
-    return null;
+  const isVehicleAvailable = (type: string) => {
+    const vehicle = availableVehicles.find((v) => v.vehicle_type === type);
+    return vehicle?.is_available ?? true;
   };
 
+  const economyAvailable = isVehicleAvailable("economy");
+  const premiumAvailable = isVehicleAvailable("premium");
+
   // Se nessun veicolo è disponibile
-  if (!loading && vehicles.length === 0) {
+  if (!loading && !economyAvailable && !premiumAvailable) {
     return (
       <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-center">
         <p className="text-sm text-destructive">Nessun veicolo disponibile al momento</p>
@@ -71,26 +68,24 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
   }
 
   // Se solo un veicolo è disponibile, mostralo come selezionato (senza opzione di scelta)
-  if (!loading && vehicles.length === 1) {
-    const vehicle = vehicles[0];
-    const image = getVehicleImage(vehicle);
+  if (!loading && economyAvailable !== premiumAvailable) {
+    const availableType = economyAvailable ? "economy" : "premium";
+    const vehicleInfo = economyAvailable
+      ? { image: fiat500Image, name: "Utilitaria", desc: "Comoda e conveniente" }
+      : { image: trocCabrioImage, name: "SUV Cabrio", desc: "Spazio e stile (+30%)" };
 
     return (
       <div className="space-y-2">
         <p className="text-sm font-medium text-foreground">Veicolo disponibile</p>
-        <div className="flex flex-col items-center gap-3 p-5 rounded-xl border-2 border-yellow-400 bg-yellow-400/10">
-          {image && (
-            <img 
-              src={image} 
-              alt={vehicle.display_name || vehicle.vehicle_type} 
-              className="h-28 w-auto object-contain" 
-            />
-          )}
-          <div className="text-center">
-            <p className="font-semibold text-foreground text-lg">{vehicle.display_name || vehicle.vehicle_type}</p>
-            <p className="text-sm text-muted-foreground">
-              {vehicle.description || ""}
-            </p>
+        <div className="flex items-center gap-4 p-4 rounded-xl border-2 border-yellow-400 bg-yellow-400/10">
+          <img
+            src={vehicleInfo.image}
+            alt={vehicleInfo.name}
+            className={economyAvailable ? "h-14 w-28 object-contain" : "h-20 w-40 object-contain"}
+          />
+          <div>
+            <p className="font-medium text-foreground">{vehicleInfo.name}</p>
+            <p className="text-xs text-muted-foreground">{vehicleInfo.desc}</p>
           </div>
         </div>
       </div>
@@ -110,51 +105,54 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <p className="text-sm font-medium text-foreground">Tipo di veicolo</p>
-      <div className={cn(
-        "grid gap-4",
-        vehicles.length === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"
-      )}>
-        {vehicles.map((vehicle) => {
-          const image = getVehicleImage(vehicle);
-          const isSelected = value === vehicle.vehicle_type;
+      <div className="grid grid-cols-2 gap-3">
+        {/* Economy option */}
+        {economyAvailable && (
+          <button
+            type="button"
+            onClick={() => onChange("economy")}
+            className={cn(
+              "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+              value === "economy"
+                ? "border-yellow-400 bg-yellow-400/10"
+                : "border-border bg-card hover:border-yellow-400 hover:bg-yellow-400/10",
+            )}
+          >
+            <div className="h-20 flex items-center justify-center">
+              <img src={fiat500Image} alt="Fiat 500" className="h-14 w-28 object-contain" />
+            </div>
+            <div className="text-center min-h-[32px] flex flex-col justify-center">
+              <p className="font-medium text-foreground text-xs">Utilitaria</p>
+              <p className="text-[10px] text-muted-foreground">Comoda e conveniente</p>
+            </div>
+            {value === "economy" && <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-yellow-400" />}
+          </button>
+        )}
 
-          return (
-            <button
-              key={vehicle.vehicle_type}
-              type="button"
-              onClick={() => onChange(vehicle.vehicle_type)}
-              className={cn(
-                "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
-                isSelected
-                  ? "border-yellow-400 bg-yellow-400/10"
-                  : "border-border bg-card hover:border-yellow-400 hover:bg-yellow-400/10"
-              )}
-            >
-              {image && (
-                <div className="w-full h-40 sm:h-44 flex items-center justify-center">
-                  <img 
-                    src={image} 
-                    alt={vehicle.display_name || vehicle.vehicle_type} 
-                    className="h-full w-auto max-w-full object-contain"
-                  />
-                </div>
-              )}
-              <div className="text-center">
-                <p className="font-semibold text-foreground text-lg">
-                  {vehicle.display_name || vehicle.vehicle_type}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {vehicle.description || ""}
-                </p>
-              </div>
-              {isSelected && (
-                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-yellow-400" />
-              )}
-            </button>
-          );
-        })}
+        {/* Premium SUV option */}
+        {premiumAvailable && (
+          <button
+            type="button"
+            onClick={() => onChange("premium")}
+            className={cn(
+              "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+              value === "premium"
+                ? "border-yellow-400 bg-yellow-400/10"
+                : "border-border bg-card hover:border-yellow-400 hover:bg-yellow-400/10",
+            )}
+          >
+            <div className="h-20 flex items-center justify-center">
+              <img src={trocCabrioImage} alt="T-Roc Cabrio" className="h-25 w-50 object-contain" />
+            </div>
+            <div className="text-center min-h-[32px] flex flex-col justify-center">
+              <p className="font-medium text-foreground text-xs">SUV Cabrio</p>
+              <p className="text-[10px] text-muted-foreground">Spazio e stile (+30%)</p>
+            </div>
+            {value === "premium" && <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-yellow-400" />}
+          </button>
+        )}
       </div>
     </div>
   );

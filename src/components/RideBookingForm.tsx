@@ -270,7 +270,7 @@ export function RideBookingForm() {
         </Label>
         <div className="relative">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-yellow-500" />
-          <Input id="pickup" placeholder="Es: Corso Vercelli 1" value={formData.pickup} onChange={e => setFormData({
+          <Input id="pickup" placeholder="Es: Via Bagutta 14" value={formData.pickup} onChange={e => setFormData({
           ...formData,
           pickup: e.target.value
         })} className="pl-11 h-12 bg-card border-border" maxLength={200} />
@@ -288,7 +288,7 @@ export function RideBookingForm() {
         </div>
         <div className="relative">
           <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-yellow-500" />
-          <Input id="destination" placeholder="Es: Piazza San Babila" value={formData.destination} onChange={e => setFormData({
+          <Input id="destination" placeholder="Es: Viale Monterosa 84" value={formData.destination} onChange={e => setFormData({
           ...formData,
           destination: e.target.value
         })} className="pl-11 h-12 bg-card border-border" maxLength={200} />

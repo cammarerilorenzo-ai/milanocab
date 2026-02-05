@@ -44,7 +44,7 @@ export default function Auth() {
           <div className="flex justify-center mb-4">
             <img src={logo} alt="Milano Cab" className="h-20" />
           </div>
-          <CardTitle className="text-2xl">Accesso</CardTitle>
+          <CardTitle className="text-2xl" style={{ fontFamily: "'Golden Antique', serif" }}>Accesso</CardTitle>
           <CardDescription>
             Inserisci il tuo numero di telefono per accedere
           </CardDescription>

@@ -20,7 +20,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
             "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
             value === "economy"
               ? "border-primary bg-primary/10"
-              : "border-border bg-card hover:border-primary/50 hover:bg-primary/5"
+              : "border-border bg-card hover:border-yellow-400 hover:bg-yellow-400/10"
           )}
         >
           <div className="h-20 flex items-center justify-center">
@@ -43,7 +43,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
             "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
             value === "premium"
               ? "border-primary bg-primary/10"
-              : "border-border bg-card hover:border-primary/50 hover:bg-primary/5"
+              : "border-border bg-card hover:border-yellow-400 hover:bg-yellow-400/10"
           )}
         >
           <div className="h-20 flex items-center justify-center">

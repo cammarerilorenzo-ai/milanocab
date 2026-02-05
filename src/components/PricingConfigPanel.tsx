@@ -10,7 +10,7 @@ const DEFAULT_PRICING = {
   basePrice: 5.0,
   pricePerKm: 1.5,
   pricePerMin: 0.3,
-  discountUnder5km: 0.95,
+  discountUnder5km: 0.85,
   discountOver5km: 1.0,
   distanceThreshold: 5,
 };

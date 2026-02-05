@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { RideConfirmationDialog } from "@/components/RideConfirmationDialog";
+import { VehicleTypeSelector } from "@/components/VehicleTypeSelector";
+
 interface RideFormData {
   pickup: string;
   destination: string;
@@ -79,6 +81,7 @@ export function RideBookingForm() {
     scheduledDate: "",
     scheduledTime: ""
   });
+  const [vehicleType, setVehicleType] = useState<"economy" | "premium">("economy");
 
   // Geolocation state
   const [isGeolocating, setIsGeolocating] = useState(false);
@@ -336,8 +339,8 @@ export function RideBookingForm() {
   // Get minimum date (today) for scheduling
   const today = new Date().toISOString().split("T")[0];
   return <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Phone */}
-      
+      {/* Vehicle Type Selection */}
+      <VehicleTypeSelector value={vehicleType} onChange={setVehicleType} />
 
       {/* Pickup Location */}
       <div className="space-y-2">

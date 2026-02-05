@@ -31,7 +31,7 @@ const Index = () => {
             {user && (
               <Button variant="ghost" size="icon" asChild title="Invita un amico" className="hover:bg-yellow-400/30">
                 <Link to="/invita">
-                  <UserPlus className="h-4 w-4" />
+                  <UserPlus className="h-4 w-4 text-primary" />
                 </Link>
               </Button>
             )}
@@ -44,7 +44,7 @@ const Index = () => {
                   {user.phone}
                 </span>
                 <Button variant="ghost" size="icon" onClick={logout} title="Logout" className="hover:bg-yellow-400/30">
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-4 w-4 text-primary" />
                 </Button>
               </>
             )}

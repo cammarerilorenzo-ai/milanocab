@@ -20,9 +20,9 @@
        );
      }
  
-     const ORS_API_KEY = Deno.env.get("OPENROUTESERVICE_API_KEY");
+    const ORS_API_KEY = Deno.env.get("OPENROUTE_API_KEY");
      if (!ORS_API_KEY) {
-       throw new Error("OpenRouteService API key not configured");
+      throw new Error("OPENROUTE_API_KEY not configured");
      }
  
      // Use OpenRouteService reverse geocoding for better accuracy

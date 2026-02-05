@@ -72,7 +72,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
     const availableType = economyAvailable ? "economy" : "premium";
     const vehicleInfo = economyAvailable
       ? { image: fiat500Image, name: "Utilitaria", desc: "Comoda e conveniente" }
-      : { image: trocCabrioImage, name: "SUV Cabrio", desc: "Spazio e stile (+30%)" };
+      : { image: trocCabrioImage, name: "SUV Cabrio", desc: "Spazio e stile" };
 
     return (
       <div className="space-y-2">
@@ -121,7 +121,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
             )}
           >
             <div className="h-20 flex items-center justify-center">
-              <img src={fiat500Image} alt="Fiat 500" className="h-14 w-28 object-contain" />
+              <img src={fiat500Image} alt="Fiat 500" className="h-18 w-36 object-contain" />
             </div>
             <div className="text-center min-h-[32px] flex flex-col justify-center">
               <p className="font-medium text-foreground text-xs">Utilitaria</p>
@@ -144,7 +144,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
             )}
           >
             <div className="h-20 flex items-center justify-center">
-              <img src={trocCabrioImage} alt="T-Roc Cabrio" className="h-25 w-50 object-contain" />
+              <img src={trocCabrioImage} alt="T-Roc Cabrio" className="h-20 w-40 object-contain" />
             </div>
             <div className="text-center min-h-[32px] flex flex-col justify-center">
               <p className="font-medium text-foreground text-xs">SUV Cabrio</p>

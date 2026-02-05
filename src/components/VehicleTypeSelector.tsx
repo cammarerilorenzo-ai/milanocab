@@ -74,9 +74,6 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
   if (!loading && vehicles.length === 1) {
     const vehicle = vehicles[0];
     const image = getVehicleImage(vehicle);
-    const priceInfo = vehicle.price_multiplier && vehicle.price_multiplier !== 1 
-      ? ` (+${Math.round((vehicle.price_multiplier - 1) * 100)}%)` 
-      : "";
 
     return (
       <div className="space-y-2">
@@ -92,7 +89,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
           <div className="text-center">
             <p className="font-semibold text-foreground text-lg">{vehicle.display_name || vehicle.vehicle_type}</p>
             <p className="text-sm text-muted-foreground">
-              {vehicle.description || ""}{priceInfo}
+              {vehicle.description || ""}
             </p>
           </div>
         </div>
@@ -122,9 +119,6 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
         {vehicles.map((vehicle) => {
           const image = getVehicleImage(vehicle);
           const isSelected = value === vehicle.vehicle_type;
-          const priceInfo = vehicle.price_multiplier && vehicle.price_multiplier !== 1 
-            ? ` (+${Math.round((vehicle.price_multiplier - 1) * 100)}%)` 
-            : "";
 
           return (
             <button
@@ -155,7 +149,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
                   {vehicle.display_name || vehicle.vehicle_type}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {vehicle.description || ""}{priceInfo}
+                  {vehicle.description || ""}
                 </p>
               </div>
               {isSelected && (

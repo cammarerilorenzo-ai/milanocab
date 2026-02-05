@@ -59,7 +59,7 @@ const Index = () => {
           <h2 className="text-3xl font-bold text-foreground mb-2 drop-shadow-sm" style={{ fontFamily: "'Golden Antique', serif" }}>
             Dove vuoi andare?
           </h2>
-          <p className="text-muted-foreground drop-shadow-sm">
+          <p className="text-muted-foreground drop-shadow-sm" style={{ fontFamily: "'Golden Antique', serif" }}>
             Prenota la tua corsa in pochi secondi
           </p>
         </div>

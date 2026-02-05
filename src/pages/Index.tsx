@@ -1,7 +1,8 @@
 import { RideBookingForm } from "@/components/RideBookingForm";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut } from "lucide-react";
+import { LogOut, UserPlus } from "lucide-react";
+import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 
 const Index = () => {
@@ -34,6 +35,11 @@ const Index = () => {
                 <span className="text-sm text-muted-foreground hidden sm:inline">
                   {user.phone}
                 </span>
+                <Button variant="ghost" size="icon" asChild title="Invita un amico">
+                  <Link to="/invita">
+                    <UserPlus className="h-4 w-4" />
+                  </Link>
+                </Button>
                 <Button variant="ghost" size="icon" onClick={logout} title="Logout">
                   <LogOut className="h-4 w-4" />
                 </Button>

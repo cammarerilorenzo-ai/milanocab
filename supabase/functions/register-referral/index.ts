@@ -78,6 +78,7 @@ Deno.serve(async (req) => {
       .insert({
         phone: normalizedNew,
         name: newName || null,
+        referred_by: referralData.id,
       });
 
     if (insertError) {

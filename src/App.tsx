@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import ConfirmRide from "./pages/ConfirmRide";
 import Auth from "./pages/Auth";
 import Referral from "./pages/Referral";
+import Invita from "./pages/Invita";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Index />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/invita"
+              element={
+                <ProtectedRoute>
+                  <Invita />
                 </ProtectedRoute>
               }
             />

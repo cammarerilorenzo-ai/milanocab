@@ -150,6 +150,11 @@ const handler = async (req: Request): Promise<Response> => {
                 <p style="margin: 0; color: #1e293b; font-size: 28px; font-weight: 700;">€${estimatedPrice.toFixed(2)}</p>
                 <p style="margin: 8px 0 0 0; color: #64748b; font-size: 14px;">~${estimatedKm} km • ~${estimatedMin} min</p>
               </div>
+              <div style="margin-bottom: 20px; padding: 16px; background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 12px; text-align: center;">
+                <p style="margin: 0 0 8px 0; color: #92400e; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">⛽ Stima Carburante (8L/100km)</p>
+                <p style="margin: 0; color: #78350f; font-size: 20px; font-weight: 700;">${((estimatedKm * 8) / 100).toFixed(2)} L</p>
+                <p style="margin: 4px 0 0 0; color: #92400e; font-size: 13px;">~€${(((estimatedKm * 8) / 100) * 1.75).toFixed(2)} (a €1.75/L)</p>
+              </div>
               <a href="${whatsappLink}" target="_blank" style="display: block; text-align: center; background: linear-gradient(135deg, #25d366, #128c7e); color: white; text-decoration: none; padding: 16px 24px; border-radius: 12px; font-weight: 600; font-size: 16px; margin-bottom: 12px;">
                 📱 Contatta su WhatsApp
               </a>

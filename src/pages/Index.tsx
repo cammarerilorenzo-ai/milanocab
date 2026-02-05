@@ -29,7 +29,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex-1 flex justify-start">
             {user && (
-              <Button variant="ghost" size="icon" asChild title="Invita un amico" className="hover:bg-yellow-500/20">
+              <Button variant="ghost" size="icon" asChild title="Invita un amico" className="hover:bg-yellow-400/30">
                 <Link to="/invita">
                   <UserPlus className="h-4 w-4" />
                 </Link>

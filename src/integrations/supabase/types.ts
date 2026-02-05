@@ -20,20 +20,31 @@ export type Database = {
           id: string
           name: string | null
           phone: string
+          referred_by: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           name?: string | null
           phone: string
+          referred_by?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           name?: string | null
           phone?: string
+          referred_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "authorized_phones_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "authorized_phones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ride_requests: {
         Row: {

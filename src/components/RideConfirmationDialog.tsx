@@ -50,22 +50,15 @@ export function RideConfirmationDialog({
           {/* Logo overlay with trip info */}
           <div className="absolute top-2 left-2 bg-white rounded-lg shadow-md p-2 flex items-center gap-3">
             <img src={logo} alt="Milano Cab" className="h-10 w-auto" />
-            <div className="flex flex-col border-l pl-3">
-              <div className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5 text-primary" />
-                <span className="text-xs text-muted-foreground">Attesa</span>
-                <span className="text-sm font-semibold">~15 min</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Navigation className="h-3.5 w-3.5 text-primary" />
-                <span className="text-xs text-muted-foreground">Arrivo</span>
-                <span className="text-sm font-semibold">
-                  {new Date(Date.now() + 15 * 60000 + durationMin * 60000).toLocaleTimeString('it-IT', {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-                </span>
-              </div>
+            <div className="flex items-center gap-1.5 border-l pl-3">
+              <Navigation className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs text-muted-foreground">Arrivo</span>
+              <span className="text-sm font-semibold">
+                ~{new Date(Date.now() + 15 * 60000 + durationMin * 60000).toLocaleTimeString('it-IT', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+              </span>
             </div>
           </div>
         </div>

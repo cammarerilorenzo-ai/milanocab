@@ -358,7 +358,7 @@ export function RideBookingForm() {
           Punto di partenza
         </Label>
         <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-yellow-500" />
+          <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-yellow-500" />
           <Input 
             id="pickup" 
             placeholder="Es: Via Bagutta 14" 
@@ -396,7 +396,7 @@ export function RideBookingForm() {
           <span className="text-xs text-muted-foreground">Aggiungi indirizzo e civico</span>
         </div>
         <div className="relative">
-          <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-yellow-500" />
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-yellow-500" />
           <Input id="destination" placeholder="Es: Viale Monterosa 84" value={formData.destination} onChange={e => setFormData({
           ...formData,
           destination: e.target.value

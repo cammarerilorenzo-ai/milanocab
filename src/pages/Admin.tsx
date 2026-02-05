@@ -30,6 +30,7 @@ interface VehicleSetting {
   description: string | null;
   image_url: string | null;
   price_multiplier: number | null;
+  base_price: number | null;
 }
 
 const Admin = () => {
@@ -255,15 +256,16 @@ const Admin = () => {
     }
   };
 
-  const handleUpdateMultiplier = async (vehicleType: string, multiplier: number) => {
+  const handleUpdatePricing = async (vehicleType: string, multiplier: number, basePrice: number) => {
     if (!user?.phone) throw new Error("Non autenticato");
 
     const { data, error } = await supabase.functions.invoke("admin-settings", {
       body: {
-        action: "update_multiplier",
+        action: "update_pricing",
         phone: user.phone,
         vehicleType,
-        priceMultiplier: multiplier
+        priceMultiplier: multiplier,
+        basePrice
       }
     });
 
@@ -273,7 +275,7 @@ const Admin = () => {
 
     // Update local state
     setVehicles(prev => prev.map(v => 
-      v.vehicle_type === vehicleType ? { ...v, price_multiplier: multiplier } : v
+      v.vehicle_type === vehicleType ? { ...v, price_multiplier: multiplier, base_price: basePrice } : v
     ));
   };
 
@@ -411,7 +413,7 @@ const Admin = () => {
         <div className="mt-6">
           <PricingConfigPanel 
             vehicles={vehicles} 
-            onUpdateMultiplier={handleUpdateMultiplier}
+            onUpdatePricing={handleUpdatePricing}
           />
         </div>
       </main>

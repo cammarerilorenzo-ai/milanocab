@@ -17,7 +17,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, phone, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier } = await req.json();
+    const { action, phone, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier, basePrice } = await req.json();
 
     // Verify admin access
     const { data: isAdmin } = await supabase.rpc("is_admin", { check_phone: phone });
@@ -117,27 +117,31 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (action === "update_multiplier") {
-      // Update price multiplier for a vehicle
-      if (!vehicleType || priceMultiplier === undefined) {
+    if (action === "update_pricing") {
+      // Update price multiplier and base price for a vehicle
+      if (!vehicleType) {
         return new Response(
           JSON.stringify({ success: false, error: "Campi obbligatori mancanti" }),
           { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
 
+      const updateData: { updated_at: string; price_multiplier?: number; base_price?: number } = {
+        updated_at: new Date().toISOString()
+      };
+
+      if (priceMultiplier !== undefined) updateData.price_multiplier = priceMultiplier;
+      if (basePrice !== undefined) updateData.base_price = basePrice;
+
       const { error } = await supabase
         .from("vehicle_settings")
-        .update({ 
-          price_multiplier: priceMultiplier, 
-          updated_at: new Date().toISOString() 
-        })
+        .update(updateData)
         .eq("vehicle_type", vehicleType);
 
       if (error) throw error;
 
       return new Response(
-        JSON.stringify({ success: true, message: `Moltiplicatore di ${vehicleType} aggiornato a ${priceMultiplier}` }),
+        JSON.stringify({ success: true, message: `Prezzi di ${vehicleType} aggiornati` }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }

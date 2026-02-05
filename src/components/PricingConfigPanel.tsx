@@ -21,23 +21,28 @@ interface PricingConfigPanelProps {
     vehicle_type: string;
     display_name: string | null;
     price_multiplier: number | null;
+    base_price: number | null;
   }>;
-  onUpdateMultiplier: (vehicleType: string, multiplier: number) => Promise<void>;
+  onUpdatePricing: (vehicleType: string, multiplier: number, basePrice: number) => Promise<void>;
 }
 
-export function PricingConfigPanel({ vehicles, onUpdateMultiplier }: PricingConfigPanelProps) {
+export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigPanelProps) {
   const { toast } = useToast();
   const [pricing, setPricing] = useState(DEFAULT_PRICING);
   const [vehicleMultipliers, setVehicleMultipliers] = useState<Record<string, string>>({});
+  const [vehicleBasePrices, setVehicleBasePrices] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
 
-  // Initialize multipliers from vehicles
+  // Initialize multipliers and base prices from vehicles
   useEffect(() => {
     const multipliers: Record<string, string> = {};
+    const basePrices: Record<string, string> = {};
     vehicles.forEach(v => {
       multipliers[v.vehicle_type] = (v.price_multiplier ?? 1).toString();
+      basePrices[v.vehicle_type] = (v.base_price ?? 5).toString();
     });
     setVehicleMultipliers(multipliers);
+    setVehicleBasePrices(basePrices);
   }, [vehicles]);
 
   // Calculate example price for a given multiplier
@@ -49,9 +54,11 @@ export function PricingConfigPanel({ vehicles, onUpdateMultiplier }: PricingConf
     return Math.floor(discountedPrice * multiplier * 2) / 2;
   };
 
-  const handleSaveMultiplier = async (vehicleType: string) => {
+  const handleSavePricing = async (vehicleType: string) => {
     const multiplierStr = vehicleMultipliers[vehicleType];
+    const basePriceStr = vehicleBasePrices[vehicleType];
     const multiplier = parseFloat(multiplierStr);
+    const basePrice = parseFloat(basePriceStr);
     
     if (isNaN(multiplier) || multiplier < 0.1 || multiplier > 5) {
       toast({
@@ -62,17 +69,26 @@ export function PricingConfigPanel({ vehicles, onUpdateMultiplier }: PricingConf
       return;
     }
 
+    if (isNaN(basePrice) || basePrice < 0) {
+      toast({
+        title: "Valore non valido",
+        description: "La tariffa base deve essere >= 0",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
-      await onUpdateMultiplier(vehicleType, multiplier);
+      await onUpdatePricing(vehicleType, multiplier, basePrice);
       toast({
         title: "Salvato",
-        description: `Moltiplicatore aggiornato per ${vehicleType}`
+        description: `Prezzi aggiornati per ${vehicleType}`
       });
     } catch (error) {
       toast({
         title: "Errore",
-        description: "Impossibile salvare il moltiplicatore",
+        description: "Impossibile salvare i prezzi",
         variant: "destructive"
       });
     } finally {
@@ -212,14 +228,15 @@ export function PricingConfigPanel({ vehicles, onUpdateMultiplier }: PricingConf
         <div className="space-y-3">
           {vehicles.map((vehicle) => {
             const multiplier = parseFloat(vehicleMultipliers[vehicle.vehicle_type] || "1");
+            const basePrice = parseFloat(vehicleBasePrices[vehicle.vehicle_type] || "5");
             const examplePrice = calculateExamplePrice(multiplier);
             
             return (
               <div
                 key={vehicle.id}
-                className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg border border-border"
+                className="p-3 bg-muted/20 rounded-lg border border-border space-y-2"
               >
-                <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
                   <p className="font-medium text-foreground truncate">
                     {vehicle.display_name || vehicle.vehicle_type}
                   </p>
@@ -228,8 +245,24 @@ export function PricingConfigPanel({ vehicles, onUpdateMultiplier }: PricingConf
                   </p>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <div className="w-20">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <Label className="text-xs text-muted-foreground whitespace-nowrap">Base €</Label>
+                    <Input
+                      type="number"
+                      step="0.5"
+                      min="0"
+                      value={vehicleBasePrices[vehicle.vehicle_type] || "5"}
+                      onChange={(e) => setVehicleBasePrices(prev => ({
+                        ...prev,
+                        [vehicle.vehicle_type]: e.target.value
+                      }))}
+                      className="h-8 w-20 text-center"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <Label className="text-xs text-muted-foreground whitespace-nowrap">Coeff.</Label>
                     <Input
                       type="number"
                       step="0.05"
@@ -240,16 +273,17 @@ export function PricingConfigPanel({ vehicles, onUpdateMultiplier }: PricingConf
                         ...prev,
                         [vehicle.vehicle_type]: e.target.value
                       }))}
-                      className="h-8 text-center"
+                      className="h-8 w-20 text-center"
                     />
+                    <span className="text-xs text-muted-foreground w-14 text-right">
+                      {getMultiplierLabel(multiplier)}
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground w-16 text-right">
-                    {getMultiplierLabel(multiplier)}
-                  </span>
+                  
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleSaveMultiplier(vehicle.vehicle_type)}
+                    onClick={() => handleSavePricing(vehicle.vehicle_type)}
                     disabled={isSaving}
                     className="h-8 w-8 p-0 hover:bg-yellow-400/20"
                   >

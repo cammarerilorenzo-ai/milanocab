@@ -117,6 +117,31 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    if (action === "update_multiplier") {
+      // Update price multiplier for a vehicle
+      if (!vehicleType || priceMultiplier === undefined) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Campi obbligatori mancanti" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      const { error } = await supabase
+        .from("vehicle_settings")
+        .update({ 
+          price_multiplier: priceMultiplier, 
+          updated_at: new Date().toISOString() 
+        })
+        .eq("vehicle_type", vehicleType);
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, message: `Moltiplicatore di ${vehicleType} aggiornato a ${priceMultiplier}` }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     if (action === "delete_vehicle") {
       // Delete vehicle image from storage first
       const { data: vehicle } = await supabase

@@ -13,6 +13,7 @@ import Invita from "./pages/Invita";
 import Registrati from "./pages/Registrati";
 import Admin from "./pages/Admin";
 import Install from "./pages/Install";
+import Guida from "./pages/Guida";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
             />
             <Route path="/confirm-ride/:token" element={<ConfirmRide />} />
             <Route path="/install" element={<Install />} />
+            <Route path="/guida" element={<Guida />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -43,7 +43,7 @@ const Index = () => {
                 <span className="text-sm text-muted-foreground hidden sm:inline">
                   {user.phone}
                 </span>
-                <Button variant="ghost" size="icon" onClick={logout} title="Logout">
+                <Button variant="ghost" size="icon" onClick={logout} title="Logout" className="hover:bg-yellow-400/30">
                   <LogOut className="h-4 w-4" />
                 </Button>
               </>

@@ -148,7 +148,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
             </div>
             <div className="text-center min-h-[32px] flex flex-col justify-center">
               <p className="font-medium text-foreground text-xs">SUV Cabrio</p>
-              <p className="text-[10px] text-muted-foreground">Spazio e stile (+30%)</p>
+              <p className="text-[10px] text-muted-foreground">Spazio e stile</p>
             </div>
             {value === "premium" && <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-yellow-400" />}
           </button>

@@ -81,17 +81,17 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
     return (
       <div className="space-y-2">
         <p className="text-sm font-medium text-foreground">Veicolo disponibile</p>
-        <div className="flex items-center gap-4 p-4 rounded-xl border-2 border-yellow-400 bg-yellow-400/10">
+        <div className="flex flex-col items-center gap-3 p-5 rounded-xl border-2 border-yellow-400 bg-yellow-400/10">
           {image && (
             <img 
               src={image} 
               alt={vehicle.display_name || vehicle.vehicle_type} 
-              className="h-14 w-28 object-contain" 
+              className="h-28 w-auto object-contain" 
             />
           )}
-          <div>
-            <p className="font-medium text-foreground">{vehicle.display_name || vehicle.vehicle_type}</p>
-            <p className="text-xs text-muted-foreground">
+          <div className="text-center">
+            <p className="font-semibold text-foreground text-lg">{vehicle.display_name || vehicle.vehicle_type}</p>
+            <p className="text-sm text-muted-foreground">
               {vehicle.description || ""}{priceInfo}
             </p>
           </div>
@@ -132,31 +132,31 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
               type="button"
               onClick={() => onChange(vehicle.vehicle_type)}
               className={cn(
-                "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                "relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all",
                 isSelected
                   ? "border-yellow-400 bg-yellow-400/10"
                   : "border-border bg-card hover:border-yellow-400 hover:bg-yellow-400/10"
               )}
             >
               {image && (
-                <div className="h-20 flex items-center justify-center">
+                <div className="h-28 flex items-center justify-center">
                   <img 
                     src={image} 
                     alt={vehicle.display_name || vehicle.vehicle_type} 
-                    className="h-14 w-28 object-contain" 
+                    className="h-28 w-auto object-contain" 
                   />
                 </div>
               )}
-              <div className="text-center min-h-[32px] flex flex-col justify-center">
-                <p className="font-medium text-foreground text-xs">
+              <div className="text-center">
+                <p className="font-semibold text-foreground text-base">
                   {vehicle.display_name || vehicle.vehicle_type}
                 </p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {vehicle.description || ""}{priceInfo}
                 </p>
               </div>
               {isSelected && (
-                <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-yellow-400" />
+                <div className="absolute top-3 right-3 w-4 h-4 rounded-full bg-yellow-400" />
               )}
             </button>
           );

@@ -23,7 +23,18 @@ Deno.serve(async (req) => {
     }
 
     // Normalize phone number - remove spaces and special chars
-    const normalizedPhone = phone.replace(/[\s\-\(\)\.]/g, "");
+  let normalizedPhone = phone.replace(/[\s\-\(\)\.]/g, "");
+  
+  // Add +39 prefix if not present
+  if (!normalizedPhone.startsWith("+39")) {
+    if (normalizedPhone.startsWith("39")) {
+      normalizedPhone = "+" + normalizedPhone;
+    } else if (normalizedPhone.startsWith("+")) {
+      // Different country code, leave as is
+    } else {
+      normalizedPhone = "+39" + normalizedPhone;
+    }
+  }
 
     console.log(`Verifying phone: ${normalizedPhone}`);
 

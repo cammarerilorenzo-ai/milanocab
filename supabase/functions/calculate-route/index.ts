@@ -19,6 +19,14 @@ const AIRPORT_PRICES: Record<string, number> = {
   bergamo: 75, // Bergamo airport
 };
 
+// Fixed airport coordinates (on accessible roads near terminals)
+const AIRPORT_COORDS: Record<string, [number, number]> = {
+  malpensa: [8.7114, 45.6301],      // Terminal 1 entrance road
+  "orio al serio": [9.7016, 45.6694], // Orio al Serio airport road
+  bergamo: [9.7016, 45.6694],        // Same as Orio
+  linate: [9.2780, 45.4491],          // Linate airport road
+};
+
 // Milan bounding box (approximate city limits) - for pickup only
 const MILAN_BOUNDS = {
   minLat: 45.40,
@@ -73,6 +81,35 @@ function getAirportFixedPrice(destination: string): number | null {
     if (normalizedDest.includes("malpensa") || normalizedDest.includes("varese")) {
       return 75;
     }
+    if (normalizedDest.includes("linate")) {
+      return 50; // Linate is closer
+    }
+  }
+  
+  return null;
+}
+
+// Get fixed coordinates for known airports
+function getAirportCoords(destination: string): [number, number] | null {
+  const normalizedDest = destination.toLowerCase();
+  
+  for (const [keyword, coords] of Object.entries(AIRPORT_COORDS)) {
+    if (normalizedDest.includes(keyword)) {
+      return coords;
+    }
+  }
+  
+  // Also check for "aeroporto" keyword combined with city names
+  if (normalizedDest.includes("aeroporto")) {
+    if (normalizedDest.includes("bergamo") || normalizedDest.includes("orio")) {
+      return AIRPORT_COORDS["orio al serio"];
+    }
+    if (normalizedDest.includes("malpensa") || normalizedDest.includes("varese")) {
+      return AIRPORT_COORDS.malpensa;
+    }
+    if (normalizedDest.includes("linate")) {
+      return AIRPORT_COORDS.linate;
+    }
   }
   
   return null;
@@ -95,12 +132,20 @@ interface GeocodingResult {
 }
 
 interface RouteResult {
-  features: Array<{
+  // GeoJSON format (GET request)
+  features?: Array<{
     properties: {
       summary: {
         distance: number; // meters
         duration: number; // seconds
       };
+    };
+  }>;
+  // JSON format (POST request)
+  routes?: Array<{
+    summary: {
+      distance: number; // meters
+      duration: number; // seconds
     };
   }>;
 }
@@ -251,18 +296,49 @@ async function calculateRoute(
   end: [number, number],
   apiKey: string
 ): Promise<{ distance: number; duration: number } | null> {
-  const url = `${ORS_BASE_URL}/v2/directions/driving-car?api_key=${apiKey}&start=${start[0]},${start[1]}&end=${end[0]},${end[1]}`;
+  const url = `${ORS_BASE_URL}/v2/directions/driving-car`;
   
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": apiKey,
+    },
+    body: JSON.stringify({
+      coordinates: [start, end],
+      radiuses: [2000, 5000], // Allow snapping to roads within 2km for start, 5km for airports
+    }),
+  });
+  
   if (!response.ok) {
-    console.error(`Route calculation failed: ${response.status}`);
+    const errorText = await response.text();
+    console.error(`Route calculation failed: ${response.status} - ${errorText}`);
     return null;
   }
   
-  const data: RouteResult = await response.json();
+  const responseText = await response.text();
+  console.log(`Route API response: ${responseText.substring(0, 500)}`);
   
-  if (data.features && data.features.length > 0) {
-    const summary = data.features[0].properties.summary;
+  let data: RouteResult;
+  try {
+    data = JSON.parse(responseText);
+  } catch (e) {
+    console.error(`Failed to parse route response: ${e}`);
+    return null;
+  }
+  
+  // Handle both GeoJSON (features) and JSON (routes) response formats
+  let summary: { distance: number; duration: number } | undefined;
+  
+  if (data.routes && data.routes.length > 0) {
+    // JSON format from POST request
+    summary = data.routes[0].summary;
+  } else if (data.features && data.features.length > 0) {
+    // GeoJSON format from GET request
+    summary = data.features[0].properties.summary;
+  }
+  
+  if (summary) {
     return {
       distance: summary.distance, // meters
       duration: summary.duration, // seconds
@@ -293,9 +369,15 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Geocoding pickup: "${pickup}"`);
     const pickupCoords = await geocodeAddressMilan(pickup, OPENROUTE_API_KEY);
     
-    // Geocode destination (all Lombardy)
-    console.log(`Geocoding destination: "${destination}"`);
-    const destCoords = await geocodeAddressLombardy(destination, OPENROUTE_API_KEY);
+    // First check if it's a known airport with fixed coords
+    let destCoords = getAirportCoords(destination);
+    if (destCoords) {
+      console.log(`Using fixed airport coordinates for "${destination}": [${destCoords}]`);
+    } else {
+      // Geocode destination (all Lombardy)
+      console.log(`Geocoding destination: "${destination}"`);
+      destCoords = await geocodeAddressLombardy(destination, OPENROUTE_API_KEY);
+    }
 
     if (!pickupCoords) {
       return new Response(

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Car, Loader2, Settings, ShieldCheck, Plus, Trash2, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PricingConfigPanel } from "@/components/PricingConfigPanel";
 import logo from "@/assets/logo.png";
 import fiat500Image from "@/assets/fiat500.png";
 import trocCabrioImage from "@/assets/troc-cabrio.png";
@@ -254,6 +255,28 @@ const Admin = () => {
     }
   };
 
+  const handleUpdateMultiplier = async (vehicleType: string, multiplier: number) => {
+    if (!user?.phone) throw new Error("Non autenticato");
+
+    const { data, error } = await supabase.functions.invoke("admin-settings", {
+      body: {
+        action: "update_multiplier",
+        phone: user.phone,
+        vehicleType,
+        priceMultiplier: multiplier
+      }
+    });
+
+    if (error || !data.success) {
+      throw new Error(data?.error || "Errore nell'aggiornamento");
+    }
+
+    // Update local state
+    setVehicles(prev => prev.map(v => 
+      v.vehicle_type === vehicleType ? { ...v, price_multiplier: multiplier } : v
+    ));
+  };
+
   const resetAddForm = () => {
     setNewVehicleType("");
     setNewDisplayName("");
@@ -382,6 +405,14 @@ const Admin = () => {
           <p className="text-xs text-muted-foreground mt-4">
             I veicoli disattivati non saranno visibili ai clienti nel form di prenotazione.
           </p>
+        </div>
+
+        {/* Pricing Configuration */}
+        <div className="mt-6">
+          <PricingConfigPanel 
+            vehicles={vehicles} 
+            onUpdateMultiplier={handleUpdateMultiplier}
+          />
         </div>
       </main>
 

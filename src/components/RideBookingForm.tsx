@@ -42,8 +42,6 @@ const PRICING = {
   discountUnder5km: 0.95,  // 5% sconto sotto i 5km
   discountOver5km: 0.50,   // 50% sconto sopra i 5km
   distanceThreshold: 5,    // km soglia per sconto maggiore
-  premiumMultiplier: 1.30, // +30% per SUV premium
-  ghettoMultiplier: 0.85,  // -15% per ghetto
   premiumEtaExtra: 4       // minuti extra ETA per premium (7 - 3 = 4)
 };
 
@@ -85,6 +83,26 @@ export function RideBookingForm() {
     scheduledTime: ""
   });
   const [vehicleType, setVehicleType] = useState<string>("economy");
+  const [vehicleMultipliers, setVehicleMultipliers] = useState<Record<string, number>>({});
+
+  // Fetch vehicle multipliers from database
+  useEffect(() => {
+    const fetchMultipliers = async () => {
+      const { data, error } = await supabase
+        .from("vehicle_settings")
+        .select("vehicle_type, price_multiplier")
+        .eq("is_available", true);
+      
+      if (!error && data) {
+        const multipliers: Record<string, number> = {};
+        data.forEach(v => {
+          multipliers[v.vehicle_type] = v.price_multiplier ?? 1;
+        });
+        setVehicleMultipliers(multipliers);
+      }
+    };
+    fetchMultipliers();
+  }, []);
 
   // Geolocation state
   const [isGeolocating, setIsGeolocating] = useState(false);
@@ -213,13 +231,10 @@ export function RideBookingForm() {
         const discount = data.distanceKm > PRICING.distanceThreshold ? PRICING.discountOver5km : PRICING.discountUnder5km;
         let rawPrice = isFixedPrice ? data.fixedPrice : calculatedPrice * discount;
         
-        // Applica moltiplicatori veicolo solo se NON è tariffa fissa aeroporto
+        // Applica moltiplicatore veicolo dal database (solo se NON è tariffa fissa aeroporto)
         if (!isFixedPrice) {
-          if (vehicleType === "premium") {
-            rawPrice = rawPrice * PRICING.premiumMultiplier; // +30%
-          } else if (vehicleType === "ghetto") {
-            rawPrice = rawPrice * PRICING.ghettoMultiplier; // -15%
-          }
+          const multiplier = vehicleMultipliers[vehicleType] ?? 1;
+          rawPrice = rawPrice * multiplier;
         }
         
         // Round down to nearest 50 cents
@@ -252,7 +267,7 @@ export function RideBookingForm() {
     } finally {
       setIsCalculating(false);
     }
-  }, [debouncedPickup, debouncedDestination, vehicleType]);
+  }, [debouncedPickup, debouncedDestination, vehicleType, vehicleMultipliers]);
   useEffect(() => {
     calculateRoute();
   }, [calculateRoute]);

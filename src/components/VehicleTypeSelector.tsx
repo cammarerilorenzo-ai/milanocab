@@ -143,7 +143,10 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
                   <img 
                     src={image} 
                     alt={vehicle.display_name || vehicle.vehicle_type} 
-                    className="h-32 sm:h-36 w-auto max-w-full object-contain" 
+                    className={cn(
+                      "w-auto max-w-full object-contain",
+                      vehicle.vehicle_type === "premium" ? "h-36 sm:h-40" : "h-32 sm:h-36"
+                    )}
                   />
                 </div>
               )}

@@ -300,14 +300,14 @@ export function RideBookingForm() {
           <button type="button" onClick={() => setFormData({
           ...formData,
           destination: "Aeroporto Malpensa"
-        })} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-yellow-400/20 hover:bg-yellow-400/30 text-blue-600 rounded-full border border-yellow-400/30 transition-colors">
-            ✈️ Malpensa <span className="font-semibold text-green-600">€75</span>
+        })} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-yellow-400/20 hover:bg-yellow-400/30 text-foreground rounded-full border border-yellow-400/30 transition-colors">
+            ✈️ Malpensa <span className="line-through text-muted-foreground">€75</span> <span className="font-semibold text-green-600">€65</span>
           </button>
           <button type="button" onClick={() => setFormData({
           ...formData,
           destination: "Aeroporto Orio al Serio"
-        })} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-yellow-400/20 hover:bg-yellow-400/30 text-blue-600 rounded-full border border-yellow-400/30 transition-colors">
-            ✈️ Bergamo Orio <span className="font-semibold text-green-600">€75</span>
+        })} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-yellow-400/20 hover:bg-yellow-400/30 text-foreground rounded-full border border-yellow-400/30 transition-colors">
+            ✈️ Bergamo Orio <span className="line-through text-muted-foreground">€75</span> <span className="font-semibold text-green-600">€65</span>
           </button>
           
         </div>

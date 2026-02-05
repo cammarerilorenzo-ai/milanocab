@@ -14,9 +14,9 @@ const ETA_BUFFER_MINUTES = 3; // Buffer time to add to ETA
 
 // Fixed airport prices
 const AIRPORT_PRICES: Record<string, number> = {
-  malpensa: 75,
-  "orio al serio": 75,
-  bergamo: 75, // Bergamo airport
+  malpensa: 65,
+  "orio al serio": 65,
+  bergamo: 65, // Bergamo airport
 };
 
 // Fixed airport coordinates (on accessible roads near terminals)

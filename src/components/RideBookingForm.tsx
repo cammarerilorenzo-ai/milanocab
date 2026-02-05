@@ -83,7 +83,7 @@ export function RideBookingForm() {
     scheduledDate: "",
     scheduledTime: ""
   });
-  const [vehicleType, setVehicleType] = useState<string>("economy");
+  const [vehicleType, setVehicleType] = useState<"economy" | "premium">("economy");
 
   // Geolocation state
   const [isGeolocating, setIsGeolocating] = useState(false);

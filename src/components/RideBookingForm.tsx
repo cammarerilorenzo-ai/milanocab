@@ -392,13 +392,13 @@ export function RideBookingForm() {
           ...formData,
           destination: "Aeroporto Malpensa"
         })} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-yellow-400/20 hover:bg-yellow-400/30 text-foreground rounded-full border border-yellow-400/30 transition-colors">
-            ✈️ Malpensa <span className="line-through text-muted-foreground">€75</span> <span className="font-semibold text-green-600">€65</span>
+            ✈️ Malpensa <span className="line-through text-muted-foreground">€75</span> <span className="font-semibold" style={{ color: '#4A6082' }}>€65</span>
           </button>
           <button type="button" onClick={() => setFormData({
           ...formData,
           destination: "Aeroporto Orio al Serio"
         })} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-yellow-400/20 hover:bg-yellow-400/30 text-foreground rounded-full border border-yellow-400/30 transition-colors">
-            ✈️ Bergamo Orio <span className="line-through text-muted-foreground">€75</span> <span className="font-semibold text-green-600">€65</span>
+            ✈️ Bergamo Orio <span className="line-through text-muted-foreground">€75</span> <span className="font-semibold" style={{ color: '#4A6082' }}>€65</span>
           </button>
           
         </div>

@@ -1,10 +1,64 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// Helper to send notification email
+async function sendRegistrationNotification(
+  phone: string,
+  name: string | null,
+  source: string,
+  referrerName: string | null
+) {
+  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+  const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL");
+  
+  if (!RESEND_API_KEY || !ADMIN_EMAIL) {
+    console.log("Email notification skipped: missing RESEND_API_KEY or ADMIN_EMAIL");
+    return;
+  }
+
+  const resend = new Resend(RESEND_API_KEY);
+  
+  const sourceLabel = source === "qrCode" 
+    ? "📱 QR Code" 
+    : source === "invita" 
+      ? "👥 Invito da utente" 
+      : "🔗 Auto-registrazione";
+
+  const emailHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+      <h2 style="color: #c41e3a;">🚕 Nuovo Utente Registrato</h2>
+      
+      <div style="background: #f5f5f5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <p style="margin: 8px 0;"><strong>📞 Telefono:</strong> ${phone}</p>
+        <p style="margin: 8px 0;"><strong>👤 Nome:</strong> ${name || "Non specificato"}</p>
+        <p style="margin: 8px 0;"><strong>📍 Fonte:</strong> ${sourceLabel}</p>
+        ${referrerName ? `<p style="margin: 8px 0;"><strong>🤝 Invitato da:</strong> ${referrerName}</p>` : ""}
+      </div>
+      
+      <p style="color: #666; font-size: 12px;">
+        Notifica automatica da Milano Cab
+      </p>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: "Milano Cab <onboarding@resend.dev>",
+      to: [ADMIN_EMAIL],
+      subject: `🆕 Nuovo utente: ${name || phone}`,
+      html: emailHtml,
+    });
+    console.log("Registration notification email sent successfully");
+  } catch (error) {
+    console.error("Failed to send notification email:", error);
+  }
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -64,6 +118,9 @@ Deno.serve(async (req) => {
       }
 
       console.log(`Successfully registered ${normalizedNew} via QR code`);
+
+      // Send notification email
+      await sendRegistrationNotification(normalizedNew, newName || null, "qrCode", null);
 
       return new Response(
         JSON.stringify({
@@ -150,6 +207,9 @@ Deno.serve(async (req) => {
     }
 
     console.log(`Successfully registered ${normalizedNew} with referral from ${referralData.name || normalizedReferral}`);
+
+    // Send notification email
+    await sendRegistrationNotification(normalizedNew, newName || null, "invita", referralData.name || normalizedReferral);
 
     return new Response(
       JSON.stringify({

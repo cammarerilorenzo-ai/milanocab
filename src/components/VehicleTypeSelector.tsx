@@ -60,17 +60,38 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
   const economyAvailable = isVehicleAvailable("economy");
   const premiumAvailable = isVehicleAvailable("premium");
 
-  // Se solo un veicolo è disponibile, non mostrare il selettore
-  if (!loading && (!economyAvailable || !premiumAvailable)) {
-    if (!economyAvailable && !premiumAvailable) {
-      return (
-        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-center">
-          <p className="text-sm text-destructive">Nessun veicolo disponibile al momento</p>
+  // Se nessun veicolo è disponibile
+  if (!loading && !economyAvailable && !premiumAvailable) {
+    return (
+      <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-center">
+        <p className="text-sm text-destructive">Nessun veicolo disponibile al momento</p>
+      </div>
+    );
+  }
+
+  // Se solo un veicolo è disponibile, mostralo come selezionato (senza opzione di scelta)
+  if (!loading && (economyAvailable !== premiumAvailable)) {
+    const availableType = economyAvailable ? "economy" : "premium";
+    const vehicleInfo = economyAvailable 
+      ? { image: fiat500Image, name: "Utilitaria", desc: "Comoda e conveniente" }
+      : { image: trocCabrioImage, name: "SUV Cabrio", desc: "Spazio e stile (+30%)" };
+
+    return (
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-foreground">Veicolo disponibile</p>
+        <div className="flex items-center gap-4 p-4 rounded-xl border-2 border-yellow-400 bg-yellow-400/10">
+          <img 
+            src={vehicleInfo.image} 
+            alt={vehicleInfo.name} 
+            className={economyAvailable ? "h-14 w-28 object-contain" : "h-20 w-40 object-contain"} 
+          />
+          <div>
+            <p className="font-medium text-foreground">{vehicleInfo.name}</p>
+            <p className="text-xs text-muted-foreground">{vehicleInfo.desc}</p>
+          </div>
         </div>
-      );
-    }
-    // Un solo veicolo disponibile - non mostrare il selettore
-    return null;
+      </div>
+    );
   }
 
   if (loading) {

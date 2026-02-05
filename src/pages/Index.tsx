@@ -56,7 +56,7 @@ const Index = () => {
       <main className="relative z-10 container mx-auto px-4 py-8 max-w-lg">
         {/* Hero Section */}
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-foreground mb-2 drop-shadow-sm">
+          <h2 className="text-3xl font-bold text-foreground mb-2 drop-shadow-sm" style={{ fontFamily: "'Golden Antique', serif" }}>
             Dove vuoi andare?
           </h2>
           <p className="text-muted-foreground drop-shadow-sm">

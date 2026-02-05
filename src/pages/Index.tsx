@@ -44,7 +44,7 @@ const Index = () => {
                   {user.phone}
                 </span>
                 <Button variant="ghost" size="icon" onClick={logout} title="Logout">
-                  <LogOut className="h-4 w-4 text-yellow-500" />
+                  <LogOut className="h-4 w-4" />
                 </Button>
               </>
             )}

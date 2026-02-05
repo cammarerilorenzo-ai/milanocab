@@ -11,6 +11,7 @@ import Auth from "./pages/Auth";
 import Referral from "./pages/Referral";
 import Invita from "./pages/Invita";
 import Registrati from "./pages/Registrati";
+import Admin from "./pages/Admin";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Invita />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Admin />
                 </ProtectedRoute>
               }
             />

@@ -1,12 +1,30 @@
+import { useState, useEffect } from "react";
 import { RideBookingForm } from "@/components/RideBookingForm";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, UserPlus } from "lucide-react";
+import { LogOut, UserPlus, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 
 const Index = () => {
   const { user, logout } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user?.phone) return;
+      
+      try {
+        const { data } = await supabase.rpc("is_admin", { check_phone: user.phone });
+        setIsAdmin(!!data);
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+      }
+    };
+    
+    checkAdmin();
+  }, [user]);
 
   return (
     <div className="min-h-screen relative">
@@ -40,6 +58,13 @@ const Index = () => {
           <div className="flex-1 flex justify-end items-center gap-2">
             {user && (
               <>
+                {isAdmin && (
+                  <Button variant="ghost" size="icon" asChild title="Impostazioni Admin" className="hover:bg-yellow-400/30">
+                    <Link to="/admin">
+                      <Settings className="h-4 w-4 text-primary" />
+                    </Link>
+                  </Button>
+                )}
                 <span className="text-sm text-muted-foreground hidden sm:inline">
                   {user.phone}
                 </span>

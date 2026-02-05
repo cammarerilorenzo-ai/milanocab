@@ -31,7 +31,7 @@ const Index = () => {
             {user && (
               <Button variant="ghost" size="icon" asChild title="Invita un amico">
                 <Link to="/invita">
-                  <UserPlus className="h-4 w-4 text-yellow-500" />
+                  <UserPlus className="h-4 w-4" />
                 </Link>
               </Button>
             )}

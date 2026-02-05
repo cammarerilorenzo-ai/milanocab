@@ -138,6 +138,7 @@ export type Database = {
       }
       vehicle_settings: {
         Row: {
+          base_price: number | null
           description: string | null
           display_name: string | null
           id: string
@@ -148,6 +149,7 @@ export type Database = {
           vehicle_type: string
         }
         Insert: {
+          base_price?: number | null
           description?: string | null
           display_name?: string | null
           id?: string
@@ -158,6 +160,7 @@ export type Database = {
           vehicle_type: string
         }
         Update: {
+          base_price?: number | null
           description?: string | null
           display_name?: string | null
           id?: string

@@ -212,8 +212,8 @@ export function RideBookingForm() {
         const discount = data.distanceKm > PRICING.distanceThreshold ? PRICING.discountOver5km : PRICING.discountUnder5km;
         let rawPrice = isFixedPrice ? data.fixedPrice : calculatedPrice * discount;
         
-        // Applica sovrapprezzo SUV (+30%)
-        if (vehicleType === "premium") {
+        // Applica sovrapprezzo SUV (+30%) solo se NON è tariffa fissa aeroporto
+        if (vehicleType === "premium" && !isFixedPrice) {
           rawPrice = rawPrice * PRICING.premiumMultiplier;
         }
         

@@ -54,12 +54,18 @@ const Index = () => {
               </Button>
             )}
           </div>
-          <img src={logo} alt="Milano Cab" className="h-14 w-auto" />
+          {isAdmin ? (
+            <Link to="/admin" title="Impostazioni Admin">
+              <img src={logo} alt="Milano Cab" className="h-14 w-auto sm:cursor-default cursor-pointer" />
+            </Link>
+          ) : (
+            <img src={logo} alt="Milano Cab" className="h-14 w-auto" />
+          )}
           <div className="flex-1 flex justify-end items-center gap-2">
             {user && (
               <>
                 {isAdmin && (
-                  <Button variant="ghost" size="icon" asChild title="Impostazioni Admin" className="hover:bg-yellow-400/30">
+                  <Button variant="ghost" size="icon" asChild title="Impostazioni Admin" className="hover:bg-yellow-400/30 hidden sm:flex">
                     <Link to="/admin">
                       <Settings className="h-4 w-4 text-primary" />
                     </Link>

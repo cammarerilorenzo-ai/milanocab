@@ -356,7 +356,7 @@ export function RideBookingForm() {
             type="button"
             onClick={handleGeolocation}
             disabled={isGeolocating}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-accent transition-colors disabled:opacity-50"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-primary/20 transition-colors disabled:opacity-50"
             title="Usa la mia posizione"
           >
             {isGeolocating ? (

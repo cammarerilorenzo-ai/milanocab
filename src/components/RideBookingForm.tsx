@@ -170,8 +170,13 @@ export function RideBookingForm() {
     setIsCalculating(true);
     setRouteError(null);
     try {
-      // Aggiungi sempre ", Milano" al pickup per assicurare geocodifica corretta
-      const pickupAddress = debouncedPickup.trim().toLowerCase().includes("milano") 
+      // Località speciali consentite come pickup (aeroporti)
+      const pickupSpecificLocations = ["malpensa", "orio", "linate", "aeroporto"];
+      const pickupLower = debouncedPickup.trim().toLowerCase();
+      const hasSpecificPickupLocation = pickupSpecificLocations.some(loc => pickupLower.includes(loc)) || pickupLower.includes("milano");
+      
+      // Aggiungi ", Milano" al pickup solo se non è una località specifica
+      const pickupAddress = hasSpecificPickupLocation
         ? debouncedPickup.trim() 
         : `${debouncedPickup.trim()}, Milano`;
       
@@ -366,7 +371,7 @@ export function RideBookingForm() {
             )}
           </button>
         </div>
-        <p className="text-xs text-muted-foreground">Solo indirizzi a Milano</p>
+        <p className="text-xs text-muted-foreground">Milano o aeroporti (Malpensa, Orio, Linate)</p>
       </div>
 
       {/* Destination */}

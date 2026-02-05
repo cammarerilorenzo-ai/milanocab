@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route } from "lucide-react";
+import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route, LocateFixed } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -79,6 +79,95 @@ export function RideBookingForm() {
     scheduledDate: "",
     scheduledTime: ""
   });
+
+  // Geolocation state
+  const [isGeolocating, setIsGeolocating] = useState(false);
+  
+  const handleGeolocation = async () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "Non supportato",
+        description: "La geolocalizzazione non è supportata dal tuo browser",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGeolocating(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          
+          // Reverse geocoding using Nominatim (OpenStreetMap)
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=it`
+          );
+          
+          if (!response.ok) throw new Error("Errore geocodifica");
+          
+          const data = await response.json();
+          
+          // Build address string
+          let address = "";
+          if (data.address) {
+            const { road, house_number, suburb, city, town, village } = data.address;
+            const streetPart = road ? (house_number ? `${road} ${house_number}` : road) : "";
+            const cityPart = city || town || village || "";
+            
+            if (streetPart && cityPart) {
+              address = `${streetPart}, ${cityPart}`;
+            } else if (streetPart) {
+              address = streetPart;
+            } else if (data.display_name) {
+              address = data.display_name.split(",").slice(0, 2).join(",");
+            }
+          }
+          
+          if (address) {
+            setFormData(prev => ({ ...prev, pickup: address }));
+            toast({
+              title: "Posizione trovata",
+              description: address
+            });
+          } else {
+            throw new Error("Indirizzo non trovato");
+          }
+        } catch (error) {
+          console.error("Reverse geocoding error:", error);
+          toast({
+            title: "Errore",
+            description: "Impossibile determinare l'indirizzo dalla posizione",
+            variant: "destructive"
+          });
+        } finally {
+          setIsGeolocating(false);
+        }
+      },
+      (error) => {
+        setIsGeolocating(false);
+        let message = "Impossibile ottenere la posizione";
+        if (error.code === error.PERMISSION_DENIED) {
+          message = "Permesso di geolocalizzazione negato";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          message = "Posizione non disponibile";
+        } else if (error.code === error.TIMEOUT) {
+          message = "Timeout nella richiesta di posizione";
+        }
+        toast({
+          title: "Errore GPS",
+          description: message,
+          variant: "destructive"
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  };
 
   // Debounce addresses for API calls
   const debouncedPickup = useDebounce(formData.pickup, 800);
@@ -270,10 +359,30 @@ export function RideBookingForm() {
         </Label>
         <div className="relative">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-yellow-500" />
-          <Input id="pickup" placeholder="Es: Via Bagutta 14" value={formData.pickup} onChange={e => setFormData({
-          ...formData,
-          pickup: e.target.value
-        })} className="pl-11 h-12 bg-card border-border" maxLength={200} />
+          <Input 
+            id="pickup" 
+            placeholder="Es: Via Bagutta 14" 
+            value={formData.pickup} 
+            onChange={e => setFormData({
+              ...formData,
+              pickup: e.target.value
+            })} 
+            className="pl-11 pr-12 h-12 bg-card border-border" 
+            maxLength={200} 
+          />
+          <button
+            type="button"
+            onClick={handleGeolocation}
+            disabled={isGeolocating}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-accent transition-colors disabled:opacity-50"
+            title="Usa la mia posizione"
+          >
+            {isGeolocating ? (
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            ) : (
+              <LocateFixed className="h-5 w-5 text-primary" />
+            )}
+          </button>
         </div>
         <p className="text-xs text-muted-foreground">Solo indirizzi a Milano</p>
       </div>

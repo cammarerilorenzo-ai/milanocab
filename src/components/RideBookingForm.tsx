@@ -41,7 +41,9 @@ const PRICING = {
   pricePerMin: 0.3,    // € per minuto
   discountUnder5km: 0.95,  // 5% sconto sotto i 5km
   discountOver5km: 0.50,   // 50% sconto sopra i 5km
-  distanceThreshold: 5     // km soglia per sconto maggiore
+  distanceThreshold: 5,    // km soglia per sconto maggiore
+  premiumMultiplier: 1.30, // +30% per SUV premium
+  premiumEtaExtra: 4       // minuti extra ETA per premium (7 - 3 = 4)
 };
 
 // Debounce hook
@@ -208,13 +210,25 @@ export function RideBookingForm() {
         const calculatedPrice = PRICING.basePrice + data.distanceKm * PRICING.pricePerKm + data.durationMin * PRICING.pricePerMin;
         // Applica sconto 50% se oltre 5km, altrimenti 5%
         const discount = data.distanceKm > PRICING.distanceThreshold ? PRICING.discountOver5km : PRICING.discountUnder5km;
-        const rawPrice = isFixedPrice ? data.fixedPrice : calculatedPrice * discount;
+        let rawPrice = isFixedPrice ? data.fixedPrice : calculatedPrice * discount;
+        
+        // Applica sovrapprezzo SUV (+30%)
+        if (vehicleType === "premium") {
+          rawPrice = rawPrice * PRICING.premiumMultiplier;
+        }
+        
         // Round down to nearest 50 cents
         const price = Math.floor(rawPrice * 2) / 2;
+        
+        // Calcola ETA con extra per SUV premium (7 min invece di 3)
+        const etaMin = vehicleType === "premium" 
+          ? data.etaMin + PRICING.premiumEtaExtra 
+          : data.etaMin;
+        
         setRouteEstimate({
           distanceKm: data.distanceKm,
           durationMin: data.durationMin,
-          etaMin: data.etaMin,
+          etaMin,
           mapsLink: data.mapsLink,
           price,
           isFixedPrice,
@@ -233,7 +247,7 @@ export function RideBookingForm() {
     } finally {
       setIsCalculating(false);
     }
-  }, [debouncedPickup, debouncedDestination]);
+  }, [debouncedPickup, debouncedDestination, vehicleType]);
   useEffect(() => {
     calculateRoute();
   }, [calculateRoute]);

@@ -27,7 +27,15 @@ const Index = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex-1" />
+          <div className="flex-1 flex justify-start">
+            {user && (
+              <Button variant="ghost" size="icon" asChild title="Invita un amico">
+                <Link to="/invita">
+                  <UserPlus className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+          </div>
           <img src={logo} alt="Milano Cab" className="h-14 w-auto" />
           <div className="flex-1 flex justify-end items-center gap-2">
             {user && (
@@ -35,11 +43,6 @@ const Index = () => {
                 <span className="text-sm text-muted-foreground hidden sm:inline">
                   {user.phone}
                 </span>
-                <Button variant="ghost" size="icon" asChild title="Invita un amico">
-                  <Link to="/invita">
-                    <UserPlus className="h-4 w-4" />
-                  </Link>
-                </Button>
                 <Button variant="ghost" size="icon" onClick={logout} title="Logout">
                   <LogOut className="h-4 w-4" />
                 </Button>

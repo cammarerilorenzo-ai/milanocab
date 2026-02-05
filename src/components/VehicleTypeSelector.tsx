@@ -113,11 +113,11 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <p className="text-sm font-medium text-foreground">Tipo di veicolo</p>
       <div className={cn(
-        "grid gap-3",
-        vehicles.length === 2 ? "grid-cols-2" : vehicles.length >= 3 ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-1"
+        "grid gap-4",
+        vehicles.length === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"
       )}>
         {vehicles.map((vehicle) => {
           const image = getVehicleImage(vehicle);
@@ -132,23 +132,23 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
               type="button"
               onClick={() => onChange(vehicle.vehicle_type)}
               className={cn(
-                "relative flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all",
+                "relative flex flex-col items-center gap-4 p-6 rounded-2xl border-2 transition-all",
                 isSelected
                   ? "border-yellow-400 bg-yellow-400/10"
                   : "border-border bg-card hover:border-yellow-400 hover:bg-yellow-400/10"
               )}
             >
               {image && (
-                <div className="h-28 flex items-center justify-center">
+                <div className="w-full flex items-center justify-center py-2">
                   <img 
                     src={image} 
                     alt={vehicle.display_name || vehicle.vehicle_type} 
-                    className="h-28 w-auto object-contain" 
+                    className="h-32 sm:h-36 w-auto max-w-full object-contain" 
                   />
                 </div>
               )}
               <div className="text-center">
-                <p className="font-semibold text-foreground text-base">
+                <p className="font-semibold text-foreground text-lg">
                   {vehicle.display_name || vehicle.vehicle_type}
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -156,7 +156,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
                 </p>
               </div>
               {isSelected && (
-                <div className="absolute top-3 right-3 w-4 h-4 rounded-full bg-yellow-400" />
+                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-yellow-400" />
               )}
             </button>
           );

@@ -87,7 +87,7 @@ export default function Auth() {
 
             <div className="text-center pt-2">
               <Link to="/referral">
-                <Button variant="outline" className="gap-2 w-full">
+                <Button variant="outline" className="gap-2 w-full hover:bg-yellow-400/30 hover:border-yellow-400">
                   <UserPlus className="h-4 w-4" />
                   Inserisci numero referral
                 </Button>

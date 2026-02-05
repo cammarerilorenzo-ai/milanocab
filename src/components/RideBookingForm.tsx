@@ -100,39 +100,21 @@ export function RideBookingForm() {
         try {
           const { latitude, longitude } = position.coords;
           
-          // Reverse geocoding using Nominatim (OpenStreetMap)
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=it`
-          );
+          // Reverse geocoding using OpenRouteService (more accurate)
+          const { data, error } = await supabase.functions.invoke("reverse-geocode", {
+            body: { lat: latitude, lon: longitude }
+          });
           
-          if (!response.ok) throw new Error("Errore geocodifica");
+          if (error) throw error;
           
-          const data = await response.json();
-          
-          // Build address string
-          let address = "";
-          if (data.address) {
-            const { road, house_number, suburb, city, town, village } = data.address;
-            const streetPart = road ? (house_number ? `${road} ${house_number}` : road) : "";
-            const cityPart = city || town || village || "";
-            
-            if (streetPart && cityPart) {
-              address = `${streetPart}, ${cityPart}`;
-            } else if (streetPart) {
-              address = streetPart;
-            } else if (data.display_name) {
-              address = data.display_name.split(",").slice(0, 2).join(",");
-            }
-          }
-          
-          if (address) {
-            setFormData(prev => ({ ...prev, pickup: address }));
+          if (data.success && data.address) {
+            setFormData(prev => ({ ...prev, pickup: data.address }));
             toast({
               title: "Posizione trovata",
-              description: address
+              description: data.address
             });
           } else {
-            throw new Error("Indirizzo non trovato");
+            throw new Error(data.error || "Indirizzo non trovato");
           }
         } catch (error) {
           console.error("Reverse geocoding error:", error);

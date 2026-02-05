@@ -23,7 +23,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
               : "border-border bg-card hover:border-primary/50 hover:bg-primary/5"
           )}
         >
-          <img src={fiat500Image} alt="Fiat 500" className="h-12 w-24 object-contain" />
+          <img src={fiat500Image} alt="Fiat 500" className="h-14 w-28 object-contain" />
           <div className="text-center">
             <p className="font-medium text-foreground text-xs">Utilitaria</p>
             <p className="text-[10px] text-muted-foreground">Comoda e conveniente</p>
@@ -44,7 +44,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
               : "border-border bg-card hover:border-primary/50 hover:bg-primary/5"
           )}
         >
-          <img src={trocCabrioImage} alt="T-Roc Cabrio" className="h-16 w-32 object-contain" />
+          <img src={trocCabrioImage} alt="T-Roc Cabrio" className="h-20 w-40 object-contain" />
           <div className="text-center">
             <p className="font-medium text-foreground text-xs">SUV Cabrio</p>
             <p className="text-[10px] text-muted-foreground">Spazio e stile</p>

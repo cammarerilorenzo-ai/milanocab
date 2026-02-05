@@ -132,18 +132,18 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
               type="button"
               onClick={() => onChange(vehicle.vehicle_type)}
               className={cn(
-                "relative flex flex-col items-center gap-4 p-6 rounded-2xl border-2 transition-all",
+                "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
                 isSelected
                   ? "border-yellow-400 bg-yellow-400/10"
                   : "border-border bg-card hover:border-yellow-400 hover:bg-yellow-400/10"
               )}
             >
               {image && (
-                <div className="w-full flex items-center justify-center py-2">
+                <div className="w-full flex items-center justify-center">
                   <img 
                     src={image} 
                     alt={vehicle.display_name || vehicle.vehicle_type} 
-                    className="h-36 sm:h-40 w-auto max-w-full object-contain" 
+                    className="h-28 sm:h-32 w-auto max-w-full object-contain" 
                   />
                 </div>
               )}

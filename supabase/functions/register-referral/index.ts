@@ -13,8 +13,68 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { referralPhone, newPhone, newName } = await req.json();
+    const { referralPhone, newPhone, newName, source } = await req.json();
 
+    // QR code self-registration (no referral needed)
+    if (source === "qrCode") {
+      if (!newPhone) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Numero di telefono richiesto" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const normalizedNew = newPhone.replace(/[\s\-\(\)\.]/g, "");
+      console.log(`QR code self-registration: phone=${normalizedNew}`);
+
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      // Check if phone already exists
+      const { data: existingPhone } = await supabase
+        .from("authorized_phones")
+        .select("id")
+        .eq("phone", normalizedNew)
+        .maybeSingle();
+
+      if (existingPhone) {
+        console.log("Phone already registered");
+        return new Response(
+          JSON.stringify({ success: false, error: "Questo numero è già registrato" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Insert new phone without referral (QR code registration)
+      const { error: insertError } = await supabase
+        .from("authorized_phones")
+        .insert({
+          phone: normalizedNew,
+          name: newName || null,
+          referred_by: null, // No referrer for QR code registrations
+        });
+
+      if (insertError) {
+        console.error("Error inserting new phone:", insertError);
+        return new Response(
+          JSON.stringify({ success: false, error: "Errore durante la registrazione" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log(`Successfully registered ${normalizedNew} via QR code`);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Registrazione completata con successo",
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // User referral registration
     if (!referralPhone || !newPhone) {
       return new Response(
         JSON.stringify({ success: false, error: "Entrambi i numeri sono richiesti" }),

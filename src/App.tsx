@@ -10,6 +10,7 @@ import ConfirmRide from "./pages/ConfirmRide";
 import Auth from "./pages/Auth";
 import Referral from "./pages/Referral";
 import Invita from "./pages/Invita";
+import Registrati from "./pages/Registrati";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/referral" element={<Referral />} />
+            <Route path="/registrati" element={<Registrati />} />
             <Route
               path="/"
               element={

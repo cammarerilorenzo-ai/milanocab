@@ -99,7 +99,7 @@
                    <Input
                      id="firstName"
                      type="text"
-                     placeholder="Mario"
+                    placeholder="Maria Teresa"
                      value={firstName}
                      onChange={(e) => setFirstName(e.target.value)}
                      className="pl-10"
@@ -113,7 +113,7 @@
                  <Input
                    id="lastName"
                    type="text"
-                   placeholder="Rossi"
+                  placeholder="Brambilla"
                    value={lastName}
                    onChange={(e) => setLastName(e.target.value)}
                    disabled={isLoading}

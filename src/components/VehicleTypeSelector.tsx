@@ -44,7 +44,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
               : "border-border bg-card hover:border-primary/50 hover:bg-primary/5"
           )}
         >
-          <img src={trocCabrioImage} alt="T-Roc Cabrio" className="h-12 w-24 object-contain" />
+          <img src={trocCabrioImage} alt="T-Roc Cabrio" className="h-14 w-28 object-contain" />
           <div className="text-center">
             <p className="font-medium text-foreground text-sm">SUV Cabrio</p>
             <p className="text-xs text-muted-foreground">Spazio e stile</p>

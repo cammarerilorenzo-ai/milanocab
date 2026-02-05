@@ -2,6 +2,15 @@ import { MapPin, Navigation, Clock, Route, CheckCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
+// Funzione per capitalizzare correttamente gli indirizzi (title case)
+function capitalizeAddress(address: string): string {
+  return address
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 interface RideConfirmationDialogProps {
   open: boolean;
   pickup: string;
@@ -71,14 +80,14 @@ export function RideConfirmationDialog({
               <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-xs text-muted-foreground">Partenza</p>
-                <p className="text-sm font-medium">{pickup}</p>
+                <p className="text-sm font-medium">{capitalizeAddress(pickup)}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Navigation className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-xs text-muted-foreground">Destinazione</p>
-                <p className="text-sm font-medium">{destination}</p>
+                <p className="text-sm font-medium">{capitalizeAddress(destination)}</p>
               </div>
             </div>
           </div>

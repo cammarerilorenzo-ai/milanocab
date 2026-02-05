@@ -10,6 +10,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { RideConfirmationDialog } from "@/components/RideConfirmationDialog";
 import { VehicleTypeSelector } from "@/components/VehicleTypeSelector";
 
+// Funzione per capitalizzare correttamente gli indirizzi (title case)
+function capitalizeAddress(address: string): string {
+  return address
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 interface RideFormData {
   pickup: string;
   destination: string;
@@ -386,7 +395,7 @@ export function RideBookingForm() {
           <Input 
             id="pickup" 
             placeholder="Es: Via Bagutta 14" 
-            value={formData.pickup} 
+            value={capitalizeAddress(formData.pickup)} 
             onChange={e => setFormData({
               ...formData,
               pickup: e.target.value
@@ -421,10 +430,17 @@ export function RideBookingForm() {
         </div>
         <div className="relative">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-yellow-500" />
-          <Input id="destination" placeholder="Es: Viale Monterosa 84" value={formData.destination} onChange={e => setFormData({
-          ...formData,
-          destination: e.target.value
-        })} className="pl-11 h-12 bg-card border-border" maxLength={200} />
+          <Input 
+            id="destination" 
+            placeholder="Es: Viale Monterosa 84" 
+            value={capitalizeAddress(formData.destination)} 
+            onChange={e => setFormData({
+              ...formData,
+              destination: e.target.value
+            })} 
+            className="pl-11 h-12 bg-card border-border" 
+            maxLength={200} 
+          />
         </div>
         <p className="text-xs text-muted-foreground mb-2">Qualsiasi destinazione in Lombardia</p>
         

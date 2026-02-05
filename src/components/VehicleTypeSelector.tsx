@@ -25,8 +25,8 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
         >
           <img src={fiat500Image} alt="Fiat 500" className="h-12 w-24 object-contain" />
           <div className="text-center">
-            <p className="font-medium text-foreground text-sm">Utilitaria</p>
-            <p className="text-xs text-muted-foreground">Comoda e conveniente</p>
+            <p className="font-medium text-foreground text-xs">Utilitaria</p>
+            <p className="text-[10px] text-muted-foreground">Comoda e conveniente</p>
           </div>
           {value === "economy" && (
             <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary" />
@@ -46,8 +46,8 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
         >
           <img src={trocCabrioImage} alt="T-Roc Cabrio" className="h-16 w-32 object-contain" />
           <div className="text-center">
-            <p className="font-medium text-foreground text-sm">SUV Cabrio</p>
-            <p className="text-xs text-muted-foreground">Spazio e stile</p>
+            <p className="font-medium text-foreground text-xs">SUV Cabrio</p>
+            <p className="text-[10px] text-muted-foreground">Spazio e stile</p>
           </div>
           {value === "premium" && (
             <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary" />

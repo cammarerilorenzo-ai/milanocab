@@ -23,18 +23,29 @@ Deno.serve(async (req) => {
     }
 
     // Normalize phone number - remove spaces and special chars
-  let normalizedPhone = phone.replace(/[\s\-\(\)\.]/g, "");
-  
-  // Add +39 prefix if not present
-  if (!normalizedPhone.startsWith("+39")) {
-    if (normalizedPhone.startsWith("39")) {
+    let normalizedPhone = phone.replace(/[\s\-\(\)\.]/g, "");
+    
+    // Handle different country prefixes
+    if (normalizedPhone.startsWith("+")) {
+      // Already has country code, leave as is
+    } else if (normalizedPhone.startsWith("39") && normalizedPhone.length >= 11) {
+      // Italian number starting with 39
       normalizedPhone = "+" + normalizedPhone;
-    } else if (normalizedPhone.startsWith("+")) {
-      // Different country code, leave as is
+    } else if (normalizedPhone.startsWith("55") && normalizedPhone.length >= 12) {
+      // Brazilian number starting with 55
+      normalizedPhone = "+" + normalizedPhone;
     } else {
+      // Default to Italian prefix +39
       normalizedPhone = "+39" + normalizedPhone;
     }
-  }
+    
+    // Try to find the phone in database with multiple prefix attempts
+    const phoneVariants = [normalizedPhone];
+    
+    // If no prefix was provided, also try with +55 (Brazil)
+    if (!phone.startsWith("+") && !phone.startsWith("39") && !phone.startsWith("55")) {
+      phoneVariants.push("+55" + phone.replace(/[\s\-\(\)\.]/g, ""));
+    }
 
     console.log(`Verifying phone: ${normalizedPhone}`);
 
@@ -44,12 +55,28 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if phone exists in authorized_phones table
-    const { data, error } = await supabase
-      .from("authorized_phones")
-      .select("id, name, phone")
-      .eq("phone", normalizedPhone)
-      .maybeSingle();
+    // Check if phone exists in authorized_phones table (try all variants)
+    let data = null;
+    let error = null;
+    
+    for (const variant of phoneVariants) {
+      console.log(`Trying phone variant: ${variant}`);
+      const result = await supabase
+        .from("authorized_phones")
+        .select("id, name, phone")
+        .eq("phone", variant)
+        .maybeSingle();
+      
+      if (result.error) {
+        error = result.error;
+        break;
+      }
+      
+      if (result.data) {
+        data = result.data;
+        break;
+      }
+    }
 
     if (error) {
       console.error("Database error:", error);

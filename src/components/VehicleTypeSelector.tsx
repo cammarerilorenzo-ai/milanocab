@@ -126,10 +126,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-foreground">Tipo di veicolo</p>
-      <div className={cn(
-        "grid gap-3",
-        vehicles.length === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"
-      )}>
+      <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2">
         {vehicles.map((vehicle) => {
           const image = getVehicleImage(vehicle);
           const isSelected = value === vehicle.vehicle_type;
@@ -140,26 +137,27 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
               type="button"
               onClick={() => onChange(vehicle.vehicle_type)}
               className={cn(
-                "relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                "relative flex items-center gap-4 p-3 rounded-xl border-2 transition-all",
+                "sm:flex-col sm:gap-2 sm:p-4",
                 isSelected
                   ? "border-yellow-400 bg-yellow-400/10"
                   : "border-border bg-card hover:border-yellow-400 hover:bg-yellow-400/10"
               )}
             >
-              <div className="h-20 flex items-center justify-center">
+              <div className="h-14 w-20 sm:h-20 sm:w-auto flex items-center justify-center flex-shrink-0">
                 {image && (
                   <img
                     src={image}
                     alt={vehicle.display_name || vehicle.vehicle_type}
-                    className={cn(getImageStyle(vehicle.vehicle_type), "object-contain")}
+                    className={cn(getImageStyle(vehicle.vehicle_type), "object-contain max-h-full")}
                   />
                 )}
               </div>
-              <div className="text-center min-h-[32px] flex flex-col justify-center">
-                <p className="font-medium text-foreground text-xs">
+              <div className="text-left sm:text-center flex-1 sm:flex-none sm:min-h-[32px] flex flex-col justify-center">
+                <p className="font-medium text-foreground text-sm sm:text-xs">
                   {vehicle.display_name || vehicle.vehicle_type}
                 </p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-xs sm:text-[10px] text-muted-foreground line-clamp-2">
                   {vehicle.description || ""}
                 </p>
               </div>

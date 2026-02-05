@@ -133,7 +133,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
               )}
             >
               {image && (
-                <div className="w-full h-36 sm:h-40 flex items-center justify-center">
+                <div className="w-full h-40 sm:h-44 flex items-center justify-center">
                   <img 
                     src={image} 
                     alt={vehicle.display_name || vehicle.vehicle_type} 

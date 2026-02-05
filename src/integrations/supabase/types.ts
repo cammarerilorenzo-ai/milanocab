@@ -138,20 +138,32 @@ export type Database = {
       }
       vehicle_settings: {
         Row: {
+          description: string | null
+          display_name: string | null
           id: string
+          image_url: string | null
           is_available: boolean
+          price_multiplier: number | null
           updated_at: string
           vehicle_type: string
         }
         Insert: {
+          description?: string | null
+          display_name?: string | null
           id?: string
+          image_url?: string | null
           is_available?: boolean
+          price_multiplier?: number | null
           updated_at?: string
           vehicle_type: string
         }
         Update: {
+          description?: string | null
+          display_name?: string | null
           id?: string
+          image_url?: string | null
           is_available?: boolean
+          price_multiplier?: number | null
           updated_at?: string
           vehicle_type?: string
         }

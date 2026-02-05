@@ -17,7 +17,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, phone, vehicleType, isAvailable } = await req.json();
+    const { action, phone, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier } = await req.json();
 
     // Verify admin access
     const { data: isAdmin } = await supabase.rpc("is_admin", { check_phone: phone });
@@ -55,6 +55,92 @@ const handler = async (req: Request): Promise<Response> => {
 
       return new Response(
         JSON.stringify({ success: true, message: `${vehicleType} aggiornato` }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (action === "add_vehicle") {
+      // Validate required fields
+      if (!vehicleType || !displayName || !description) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Campi obbligatori mancanti" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      let imageUrl = null;
+
+      // Upload image if provided
+      if (imageBase64) {
+        const base64Data = imageBase64.split(",")[1] || imageBase64;
+        const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+        const fileName = `${vehicleType}-${Date.now()}.png`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("vehicle-images")
+          .upload(fileName, imageBuffer, {
+            contentType: "image/png",
+            upsert: true
+          });
+
+        if (uploadError) {
+          console.error("Upload error:", uploadError);
+          throw new Error("Errore nel caricamento dell'immagine");
+        }
+
+        const { data: urlData } = supabase.storage
+          .from("vehicle-images")
+          .getPublicUrl(fileName);
+
+        imageUrl = urlData.publicUrl;
+      }
+
+      // Insert new vehicle
+      const { data: newVehicle, error } = await supabase
+        .from("vehicle_settings")
+        .insert({
+          vehicle_type: vehicleType,
+          display_name: displayName,
+          description: description,
+          image_url: imageUrl,
+          price_multiplier: priceMultiplier || 1.0,
+          is_available: true
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, vehicle: newVehicle }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (action === "delete_vehicle") {
+      // Delete vehicle image from storage first
+      const { data: vehicle } = await supabase
+        .from("vehicle_settings")
+        .select("image_url")
+        .eq("vehicle_type", vehicleType)
+        .single();
+
+      if (vehicle?.image_url) {
+        const fileName = vehicle.image_url.split("/").pop();
+        if (fileName) {
+          await supabase.storage.from("vehicle-images").remove([fileName]);
+        }
+      }
+
+      const { error } = await supabase
+        .from("vehicle_settings")
+        .delete()
+        .eq("vehicle_type", vehicleType);
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, message: `${vehicleType} eliminato` }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }

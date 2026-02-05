@@ -417,7 +417,7 @@ export function RideBookingForm() {
       {/* Schedule Toggle */}
       <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
         <div className="flex items-center gap-3">
-          <Clock className="h-5 w-5 text-primary" />
+          <Clock className="h-5 w-5 text-yellow-500" />
           <div>
             <p className="font-medium text-foreground">Programma corsa</p>
             <p className="text-sm text-muted-foreground">

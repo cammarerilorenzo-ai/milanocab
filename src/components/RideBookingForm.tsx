@@ -43,6 +43,7 @@ const PRICING = {
   discountOver5km: 0.50,   // 50% sconto sopra i 5km
   distanceThreshold: 5,    // km soglia per sconto maggiore
   premiumMultiplier: 1.30, // +30% per SUV premium
+  ghettoMultiplier: 0.85,  // -15% per ghetto
   premiumEtaExtra: 4       // minuti extra ETA per premium (7 - 3 = 4)
 };
 
@@ -212,9 +213,13 @@ export function RideBookingForm() {
         const discount = data.distanceKm > PRICING.distanceThreshold ? PRICING.discountOver5km : PRICING.discountUnder5km;
         let rawPrice = isFixedPrice ? data.fixedPrice : calculatedPrice * discount;
         
-        // Applica sovrapprezzo SUV (+30%) solo se NON è tariffa fissa aeroporto
-        if (vehicleType === "premium" && !isFixedPrice) {
-          rawPrice = rawPrice * PRICING.premiumMultiplier;
+        // Applica moltiplicatori veicolo solo se NON è tariffa fissa aeroporto
+        if (!isFixedPrice) {
+          if (vehicleType === "premium") {
+            rawPrice = rawPrice * PRICING.premiumMultiplier; // +30%
+          } else if (vehicleType === "ghetto") {
+            rawPrice = rawPrice * PRICING.ghettoMultiplier; // -15%
+          }
         }
         
         // Round down to nearest 50 cents

@@ -1,23 +1,18 @@
 
+## Aggiornamento ETA in tempo reale nel dialog di conferma
 
-## Aggiornamento info temporale nella card corsa
+### Problema
+Nella schermata "Corsa richiesta con successo", il valore "Arrivo autista" e l'orario "Arrivo" nell'overlay della mappa non si aggiornano quando l'admin modifica l'ETA. Il polling ogni 10 secondi recupera il nuovo `eta_min`, ma lo applica solo al primo cambio di stato a "confirmed", ignorando le modifiche successive.
 
-Attualmente in alto a destra nella card viene mostrato `date_time` (es. "Subito" o l'orario prenotato). Verra' sostituito con informazioni temporali dinamiche in base allo stato:
+### Soluzione
+Aggiornare il polling in `RideConfirmationDialog.tsx` per sincronizzare sempre `remainingMinutes` con il valore `eta_min` ricevuto dal backend, indipendentemente dal cambio di stato.
 
-- **pending**: "In attesa da X min" (calcolato da `created_at`)
-- **confirmed**: "Confermata da X min" (calcolato da `confirmed_at` o `created_at`)
-- **completed**: data e ora di completamento (es. "06/02/2026 18:30")
-- **cancelled / picked_up / altro**: comportamento attuale invariato
+### Modifiche tecniche
 
-### Dettagli tecnici
+**File: `src/components/RideConfirmationDialog.tsx`**
 
-**File: `src/components/RideRequestCard.tsx`**
+1. **Aggiornare `remainingMinutes` ad ogni poll** -- Nel blocco `pollStatus`, dopo aver ricevuto `newEta`, aggiornare sempre `remainingMinutes` al valore `newEta` (senza il +2 per mantenerlo fedele a quanto impostato dall'admin), indipendentemente dal fatto che lo stato sia cambiato o meno.
 
-1. Sostituire il contenuto dello `<span>` in alto a destra (attualmente `formatDateTime(ride.date_time)`) con una logica condizionale basata su `ride.status`.
+2. **Aggiornare l'orario di arrivo nell'overlay mappa** -- Attualmente l'orario usa `etaMin` (prop statica). Sostituirlo con `remainingMinutes` (stato dinamico) in modo che si aggiorni automaticamente quando il polling rileva un nuovo ETA.
 
-2. Per gli stati `pending` e `confirmed`, calcolare i minuti trascorsi da `created_at` / `confirmed_at` usando `Date.now()` e aggiornare il valore ogni 60 secondi tramite un `useEffect` + `setInterval` con stato locale.
-
-3. Per `completed`, formattare `confirmed_at` (o `created_at` come fallback) in formato "dd/MM/yyyy HH:mm" usando `date-fns`.
-
-4. Per tutti gli altri stati, mantenere il comportamento attuale con `formatDateTime(ride.date_time)`.
-
+3. **Rimuovere `etaMin` dalle dipendenze del countdown `useEffect`** -- Il countdown locale basato su `setInterval` ogni 60 secondi diventa superfluo dato che il polling ogni 10 secondi fornisce sempre il valore aggiornato. Si puo' semplificare rimuovendo il timer locale e affidandosi interamente al polling per aggiornare i minuti.

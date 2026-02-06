@@ -53,14 +53,27 @@ export function RideConfirmationDialog({
   const [rideStatus, setRideStatus] = useState<string>("pending");
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [lastKnownEta, setLastKnownEta] = useState<number | null>(null);
 
   // Reset remaining minutes when dialog opens
   useEffect(() => {
     if (!open) return;
     setRemainingMinutes(etaMin + 2);
+    setLastKnownEta(null);
   }, [open, etaMin]);
 
-  // Poll for status updates every 10 seconds (realtime may not fire due to RLS)
+  // Local countdown: decrement every 60 seconds
+  useEffect(() => {
+    if (!open) return;
+
+    const interval = setInterval(() => {
+      setRemainingMinutes(prev => (prev <= 0 ? 0 : prev - 1));
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [open]);
+
+  // Poll for status updates every 10 seconds
   useEffect(() => {
     if (!open || !rideId) return;
 
@@ -73,8 +86,9 @@ export function RideConfirmationDialog({
           const newStatus = data.ride.status as string;
           const newEta = data.ride.eta_min as number;
           
-          // Always sync remainingMinutes with backend ETA
-          if (newEta != null) {
+          // Only reset countdown when admin actually changed the ETA
+          if (newEta != null && newEta !== lastKnownEta) {
+            setLastKnownEta(newEta);
             setRemainingMinutes(newEta);
           }
           
@@ -101,12 +115,11 @@ export function RideConfirmationDialog({
       }
     };
 
-    // Initial check
     pollStatus();
     const interval = setInterval(pollStatus, 10000);
 
     return () => clearInterval(interval);
-  }, [open, rideId, etaMin, toast]);
+  }, [open, rideId, etaMin, toast, lastKnownEta]);
 
   const checkRideStatus = async () => {
     if (!rideId) return;

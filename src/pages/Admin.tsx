@@ -10,6 +10,7 @@ import { ArrowLeft, Car, Loader2, Settings, ShieldCheck, Plus, Trash2, Upload, X
 import { useToast } from "@/hooks/use-toast";
 import { PricingConfigPanel } from "@/components/PricingConfigPanel";
 import { GroupPricingPanel } from "@/components/GroupPricingPanel";
+import { ServiceToggle } from "@/components/ServiceToggle";
 import logo from "@/assets/logo.png";
 import fiat500Image from "@/assets/fiat500.png";
 import trocCabrioImage from "@/assets/troc-cabrio.png";
@@ -42,7 +43,8 @@ const Admin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [vehicles, setVehicles] = useState<VehicleSetting[]>([]);
   const [updating, setUpdating] = useState<string | null>(null);
-  
+  const [serviceEnabled, setServiceEnabled] = useState(true);
+  const [updatingService, setUpdatingService] = useState(false);
   // Add vehicle dialog state
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newVehicleType, setNewVehicleType] = useState("");
@@ -82,6 +84,7 @@ const Admin = () => {
 
       setIsAdmin(true);
       setVehicles(data.vehicles);
+      setServiceEnabled(data.serviceEnabled ?? true);
     } catch (error) {
       console.error("Error checking admin:", error);
       navigate("/");
@@ -126,6 +129,42 @@ const Admin = () => {
       });
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const toggleService = async () => {
+    if (!user?.phone) return;
+
+    setUpdatingService(true);
+    try {
+      const newValue = !serviceEnabled;
+      const { data, error } = await supabase.functions.invoke("admin-settings", {
+        body: {
+          action: "update_app_setting",
+          phone: user.phone,
+          settingKey: "service_enabled",
+          settingValue: newValue.toString()
+        }
+      });
+
+      if (error || !data.success) {
+        throw new Error(data?.error || "Errore nell'aggiornamento");
+      }
+
+      setServiceEnabled(newValue);
+      toast({
+        title: "Impostazione aggiornata",
+        description: `Servizio ${newValue ? "attivato" : "disattivato"}`
+      });
+    } catch (error) {
+      console.error("Error toggling service:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile aggiornare lo stato del servizio",
+        variant: "destructive"
+      });
+    } finally {
+      setUpdatingService(false);
     }
   };
 
@@ -327,8 +366,17 @@ const Admin = () => {
       <main className="container mx-auto px-4 py-8 max-w-lg">
         {/* Admin Badge */}
         <div className="flex items-center gap-2 mb-6">
-          <ShieldCheck className="h-6 w-6 text-yellow-500" />
+          <ShieldCheck className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold text-foreground">Pannello Admin</h1>
+        </div>
+
+        {/* Service Toggle */}
+        <div className="mb-6">
+          <ServiceToggle
+            isEnabled={serviceEnabled}
+            isUpdating={updatingService}
+            onToggle={toggleService}
+          />
         </div>
 
         {/* Vehicle Settings */}

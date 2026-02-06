@@ -21,6 +21,7 @@ interface RideRequest {
   dest_lon: number;
   confirmation_token: string;
   created_at: string;
+  confirmed_at?: string | null;
   eta_min?: number | null;
 }
 

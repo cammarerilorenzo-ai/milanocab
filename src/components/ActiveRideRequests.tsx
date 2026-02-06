@@ -35,29 +35,19 @@ export function ActiveRideRequests({ isAdmin, userPhone }: ActiveRideRequestsPro
 
   const fetchRides = async () => {
     try {
-      let query = supabase
-        .from("ride_requests")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (isAdmin) {
-        // Admin sees all pending, confirmed, and picked_up rides
-        query = query.in("status", ["pending", "confirmed", "picked_up"]);
-      } else if (userPhone) {
-        // Phone is redacted in DB as ***XXXX (last 4 digits)
-        const cleanPhone = userPhone.replace(/\D/g, "");
-        const last4 = cleanPhone.slice(-4);
-        query = query.ilike("customer_phone", `%${last4}`);
-      }
-
-      const { data, error } = await query.limit(10);
+      const { data, error } = await supabase.functions.invoke("admin-settings", {
+        body: {
+          action: "get_active_rides",
+          phone: userPhone || ""
+        }
+      });
 
       if (error) {
         console.error("Error fetching rides:", error);
         return;
       }
 
-      setRides(data || []);
+      setRides(data?.rides || []);
     } catch (error) {
       console.error("Error in fetchRides:", error);
     } finally {

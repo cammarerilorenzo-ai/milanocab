@@ -103,6 +103,7 @@ export function RideBookingForm() {
     pickup: string;
     destination: string;
     routeEstimate: RouteEstimate;
+    rideId: string;
   } | null>(null);
   const [formData, setFormData] = useState<RideFormData>({
     pickup: "",
@@ -386,7 +387,8 @@ export function RideBookingForm() {
       setConfirmedRide({
         pickup: formData.pickup.trim(),
         destination: formData.destination.trim(),
-        routeEstimate: routeEstimate
+        routeEstimate: routeEstimate,
+        rideId: data.rideId
       });
       setShowConfirmation(true);
 
@@ -620,6 +622,6 @@ export function RideBookingForm() {
       </Button>
 
       {/* Confirmation Dialog with Map */}
-      {confirmedRide && <RideConfirmationDialog open={showConfirmation} pickup={confirmedRide.pickup} destination={confirmedRide.destination} distanceKm={confirmedRide.routeEstimate.distanceKm} durationMin={confirmedRide.routeEstimate.durationMin} price={confirmedRide.routeEstimate.price} pickupCoords={confirmedRide.routeEstimate.pickupCoords} destCoords={confirmedRide.routeEstimate.destCoords} />}
+      {confirmedRide && <RideConfirmationDialog open={showConfirmation} pickup={confirmedRide.pickup} destination={confirmedRide.destination} distanceKm={confirmedRide.routeEstimate.distanceKm} durationMin={confirmedRide.routeEstimate.durationMin} price={confirmedRide.routeEstimate.price} pickupCoords={confirmedRide.routeEstimate.pickupCoords} destCoords={confirmedRide.routeEstimate.destCoords} rideId={confirmedRide.rideId} etaMin={confirmedRide.routeEstimate.etaMin} onClose={() => { setShowConfirmation(false); setConfirmedRide(null); }} />}
     </form>;
 }

@@ -293,6 +293,63 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    if (action === "get_ride_status") {
+      if (!rideId) {
+        return new Response(
+          JSON.stringify({ success: false, error: "ID corsa richiesto" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      const { data: ride, error } = await supabase
+        .from("ride_requests")
+        .select("status, eta_min, confirmed_at")
+        .eq("id", rideId)
+        .single();
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, ride }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (action === "cancel_ride_user") {
+      if (!rideId) {
+        return new Response(
+          JSON.stringify({ success: false, error: "ID corsa richiesto" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      // Only allow cancelling pending rides
+      const { data: ride } = await supabase
+        .from("ride_requests")
+        .select("status")
+        .eq("id", rideId)
+        .single();
+
+      if (!ride || ride.status !== "pending") {
+        return new Response(
+          JSON.stringify({ success: false, error: "Solo le corse in attesa possono essere cancellate" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      const { error } = await supabase
+        .from("ride_requests")
+        .update({ status: "cancelled", confirmed_at: new Date().toISOString() })
+        .eq("id", rideId);
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, message: "Corsa cancellata" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ success: false, error: "Azione non valida" }),
       { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }

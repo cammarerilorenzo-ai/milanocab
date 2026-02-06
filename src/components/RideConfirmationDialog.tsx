@@ -1,6 +1,10 @@
-import { MapPin, Navigation, Clock, Route, CheckCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MapPin, Navigation, Clock, Route, CheckCircle, Loader2, X, RefreshCw, XCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 // Funzione per capitalizzare correttamente gli indirizzi (title case)
 function capitalizeAddress(address: string): string {
@@ -26,7 +30,11 @@ interface RideConfirmationDialogProps {
     lat: number;
     lon: number;
   };
+  rideId?: string;
+  etaMin?: number;
+  onClose?: () => void;
 }
+
 export function RideConfirmationDialog({
   open,
   pickup,
@@ -35,11 +43,137 @@ export function RideConfirmationDialog({
   durationMin,
   price,
   pickupCoords,
-  destCoords
+  destCoords,
+  rideId,
+  etaMin = 15,
+  onClose
 }: RideConfirmationDialogProps) {
+  const { toast } = useToast();
+  const [remainingMinutes, setRemainingMinutes] = useState<number>(etaMin + 2);
+  const [rideStatus, setRideStatus] = useState<string>("pending");
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!open) return;
+    
+    setRemainingMinutes(etaMin + 2);
+    
+    const interval = setInterval(() => {
+      setRemainingMinutes(prev => {
+        if (prev <= 0) return 0;
+        return prev - 1;
+      });
+    }, 60000); // Every minute
+
+    return () => clearInterval(interval);
+  }, [open, etaMin]);
+
+  const checkRideStatus = async () => {
+    if (!rideId) return;
+    
+    setIsCheckingStatus(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-settings", {
+        body: {
+          action: "get_ride_status",
+          rideId
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.ride) {
+        setRideStatus(data.ride.status);
+        
+        if (data.ride.status === "confirmed") {
+          toast({
+            title: "Corsa confermata! 🎉",
+            description: `L'autista è in arrivo tra ~${data.ride.eta_min} minuti`
+          });
+        } else if (data.ride.status === "cancelled") {
+          toast({
+            title: "Corsa annullata",
+            description: "L'autista non è disponibile al momento",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "In attesa",
+            description: "La tua richiesta è ancora in attesa di conferma"
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error checking status:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile verificare lo stato",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  };
+
+  const cancelRide = async () => {
+    if (!rideId) return;
+    
+    setIsCancelling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-settings", {
+        body: {
+          action: "cancel_ride_user",
+          rideId
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setRideStatus("cancelled");
+        toast({
+          title: "Corsa annullata",
+          description: "La tua richiesta è stata cancellata"
+        });
+        onClose?.();
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      console.error("Error cancelling ride:", error);
+      toast({
+        title: "Errore",
+        description: error instanceof Error ? error.message : "Impossibile cancellare la corsa",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   // Create Google Maps embed URL with directions - satellite view with higher zoom
   const mapsEmbedUrl = `https://www.google.com/maps/embed/v1/directions?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&origin=${pickupCoords.lat},${pickupCoords.lon}&destination=${destCoords.lat},${destCoords.lon}&mode=driving&maptype=satellite&zoom=15`;
-  return <Dialog open={open} onOpenChange={() => {}}>
+  
+  const getStatusColor = () => {
+    switch (rideStatus) {
+      case "confirmed": return "bg-green-500/20 text-green-700 border-green-500/30";
+      case "cancelled": return "bg-red-500/20 text-red-700 border-red-500/30";
+      default: return "bg-yellow-500/20 text-yellow-700 border-yellow-500/30";
+    }
+  };
+
+  const getStatusLabel = () => {
+    switch (rideStatus) {
+      case "confirmed": return "✅ Confermata";
+      case "cancelled": return "❌ Annullata";
+      default: return "⏳ In attesa";
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent 
         className="max-w-lg p-0 overflow-hidden" 
         onPointerDownOutside={(e) => e.preventDefault()}
@@ -54,7 +188,7 @@ export function RideConfirmationDialog({
         </DialogHeader>
 
         {/* Map */}
-        <div className="relative w-full h-64">
+        <div className="relative w-full h-52">
           <iframe src={mapsEmbedUrl} className="w-full h-full border-0" allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" title="Percorso della corsa" />
           {/* Logo overlay with trip info */}
           <div className="absolute top-2 left-2 bg-white rounded-lg shadow-md p-2 flex items-center gap-3">
@@ -63,12 +197,47 @@ export function RideConfirmationDialog({
               <Navigation className="h-3.5 w-3.5 text-primary" />
               <span className="text-xs text-muted-foreground">Arrivo</span>
               <span className="text-sm font-semibold">
-                ~{new Date(Date.now() + 15 * 60000 + durationMin * 60000).toLocaleTimeString('it-IT', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+                ~{new Date(Date.now() + (etaMin + 2) * 60000 + durationMin * 60000).toLocaleTimeString('it-IT', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
               </span>
             </div>
+          </div>
+        </div>
+
+        {/* Countdown and Status */}
+        <div className="px-4 pt-3 space-y-3">
+          {/* Countdown */}
+          <div className="flex items-center justify-between p-3 bg-primary/10 rounded-xl">
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium">Arrivo autista</span>
+            </div>
+            <span className="text-xl font-bold text-primary">
+              {remainingMinutes > 0 ? `~${remainingMinutes} min` : "In arrivo!"}
+            </span>
+          </div>
+
+          {/* Status Badge */}
+          <div className="flex items-center justify-between">
+            <span className={`px-3 py-1.5 text-sm font-medium rounded-full border ${getStatusColor()}`}>
+              {getStatusLabel()}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={checkRideStatus}
+              disabled={isCheckingStatus || rideStatus === "cancelled"}
+              className="gap-1.5"
+            >
+              {isCheckingStatus ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              Aggiorna stato
+            </Button>
           </div>
         </div>
 
@@ -107,9 +276,39 @@ export function RideConfirmationDialog({
             </div>
           </div>
 
+          {/* Cancel Button - only for pending rides */}
+          {rideStatus === "pending" && (
+            <Button
+              variant="destructive"
+              className="w-full gap-2"
+              onClick={cancelRide}
+              disabled={isCancelling}
+            >
+              {isCancelling ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <XCircle className="h-4 w-4" />
+              )}
+              Annulla corsa
+            </Button>
+          )}
+
+          {/* Close button for cancelled/confirmed */}
+          {rideStatus !== "pending" && onClose && (
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={onClose}
+            >
+              <X className="h-4 w-4" />
+              Chiudi
+            </Button>
+          )}
+
           {/* Info message */}
           <p className="text-sm text-muted-foreground text-center">Per info contatta cabmilan@proton.me</p>
         </div>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 }

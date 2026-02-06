@@ -11,11 +11,12 @@ export function AdminGpsTracker({ userPhone }: AdminGpsTrackerProps) {
   const { toast } = useToast();
   const [isTracking, setIsTracking] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [prevUpdate, setPrevUpdate] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const watchIdRef = useRef<number | null>(null);
+  const lastUpdateRef = useRef<Date | null>(null);
 
   useEffect(() => {
-    // Start tracking automatically when component mounts
     startTracking();
     
     return () => {
@@ -32,14 +33,12 @@ export function AdminGpsTracker({ userPhone }: AdminGpsTrackerProps) {
     setIsTracking(true);
     setError(null);
 
-    // Get initial position
     navigator.geolocation.getCurrentPosition(
       (position) => updatePosition(position),
       (err) => handleError(err),
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
 
-    // Watch for position changes
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => updatePosition(position),
       (err) => handleError(err),
@@ -73,7 +72,10 @@ export function AdminGpsTracker({ userPhone }: AdminGpsTrackerProps) {
         return;
       }
 
-      setLastUpdate(new Date());
+      setPrevUpdate(lastUpdateRef.current);
+      const now = new Date();
+      setLastUpdate(now);
+      lastUpdateRef.current = now;
       setError(null);
     } catch (e) {
       console.error("Error updating admin position:", e);
@@ -106,7 +108,7 @@ export function AdminGpsTracker({ userPhone }: AdminGpsTrackerProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {isTracking ? (
-            <MapPin className="h-5 w-5 text-emerald-500 animate-pulse" />
+            <MapPin className="h-5 w-5 text-primary animate-pulse" />
           ) : error ? (
             <MapPinOff className="h-5 w-5 text-destructive" />
           ) : (
@@ -118,7 +120,12 @@ export function AdminGpsTracker({ userPhone }: AdminGpsTrackerProps) {
             </p>
             {lastUpdate && (
               <p className="text-xs text-muted-foreground">
-                Ultimo aggiornamento: {formatTime(lastUpdate)}
+                Ultimo: {formatTime(lastUpdate)}
+                {prevUpdate && (
+                  <span className="ml-2 text-muted-foreground/60">
+                    · Precedente: {formatTime(prevUpdate)}
+                  </span>
+                )}
               </p>
             )}
             {error && (

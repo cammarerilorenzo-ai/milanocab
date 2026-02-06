@@ -67,7 +67,7 @@ function getStatusColor(status: string): string {
 function getStatusLabel(status: string): string {
   switch (status) {
     case "pending":
-      return "In attesa";
+      return "In attesa di conferma";
     case "confirmed":
       return "Confermata";
     case "picked_up":

@@ -216,31 +216,29 @@ async function geocodeAddressMilan(address: string, apiKey: string): Promise<[nu
   return null;
 }
 
-// Check if destination contains a specific location (not default to Milan)
-function hasSpecificLocation(address: string): boolean {
-  const specificLocations = ["malpensa", "orio", "bergamo", "linate", "aeroporto", "monza", "como", "brescia", "varese", "pavia", "lecco", "cremona", "mantova", "lodi", "sondrio", "milano", "milan"];
+// Check if destination contains a specific non-Milan location
+function hasNonMilanLocation(address: string): boolean {
+  const nonMilanLocations = ["malpensa", "orio", "bergamo", "linate", "aeroporto", "monza", "como", "brescia", "varese", "pavia", "lecco", "cremona", "mantova", "lodi", "sondrio", "rho", "sesto", "cinisello", "cologno", "segrate", "assago", "san donato", "corsico", "buccinasco", "rozzano", "opera", "bollate", "arese", "lainate", "pero"];
   const addressLower = address.toLowerCase();
-  return specificLocations.some(loc => addressLower.includes(loc));
+  return nonMilanLocations.some(loc => addressLower.includes(loc));
 }
 
 // Geocode an address to coordinates (restricted to Lombardy - for destination)
 async function geocodeAddressLombardy(address: string, apiKey: string): Promise<[number, number] | null> {
-  // Se non c'è una località specifica, prioritizza Milano
-  const shouldPrioritizeMilan = !hasSpecificLocation(address);
+  const isNonMilan = hasNonMilanLocation(address);
   
-  const normalizedAddress = shouldPrioritizeMilan 
-    ? `${address.trim()}, Milano, Italia`
-    : normalizeAddressLombardy(address);
+  // Default: treat as Milan address unless a specific other city is mentioned
+  const normalizedAddress = isNonMilan 
+    ? normalizeAddressLombardy(address)
+    : `${address.trim()}, Milano, Italia`;
   
-  // Usa focus.point per prioritizzare risultati vicino al centro di Milano se non specificato altro
   const milanCenterLat = 45.4642;
   const milanCenterLon = 9.1900;
   
-  const focusParams = shouldPrioritizeMilan 
-    ? `&focus.point.lat=${milanCenterLat}&focus.point.lon=${milanCenterLon}`
-    : '';
+  // For Milan addresses, use Milan bounds; for others, use Lombardy bounds
+  const bounds = isNonMilan ? LOMBARDY_BOUNDS : MILAN_BOUNDS;
   
-  const url = `${ORS_BASE_URL}/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(normalizedAddress)}&boundary.country=IT&boundary.rect.min_lon=${LOMBARDY_BOUNDS.minLon}&boundary.rect.min_lat=${LOMBARDY_BOUNDS.minLat}&boundary.rect.max_lon=${LOMBARDY_BOUNDS.maxLon}&boundary.rect.max_lat=${LOMBARDY_BOUNDS.maxLat}${focusParams}&size=10`;
+  const url = `${ORS_BASE_URL}/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(normalizedAddress)}&boundary.country=IT&boundary.rect.min_lon=${bounds.minLon}&boundary.rect.min_lat=${bounds.minLat}&boundary.rect.max_lon=${bounds.maxLon}&boundary.rect.max_lat=${bounds.maxLat}&focus.point.lat=${milanCenterLat}&focus.point.lon=${milanCenterLon}&size=10`;
   
   const response = await fetch(url);
   if (!response.ok) {
@@ -251,19 +249,19 @@ async function geocodeAddressLombardy(address: string, apiKey: string): Promise<
   const data: GeocodingResult = await response.json();
   
   if (data.features && data.features.length > 0) {
-    // Se prioritizziamo Milano, cerca prima risultati a Milano
-    if (shouldPrioritizeMilan) {
+    if (!isNonMilan) {
+      // For Milan: strictly prefer results within Milan bounds with "milan" in label
       for (const feature of data.features) {
         const [lon, lat] = feature.geometry.coordinates;
         const label = feature.properties.label.toLowerCase();
         
         if (isInMilan(lon, lat) && label.includes("milan")) {
-          console.log(`Found destination "${address}" at [${lon}, ${lat}] (Milan priority) - ${feature.properties.label}`);
+          console.log(`Found destination "${address}" at [${lon}, ${lat}] (Milan match) - ${feature.properties.label}`);
           return [lon, lat];
         }
       }
       
-      // Fallback: primo risultato dentro Milano
+      // Fallback: first result within Milan bounds
       for (const feature of data.features) {
         const [lon, lat] = feature.geometry.coordinates;
         
@@ -272,9 +270,12 @@ async function geocodeAddressLombardy(address: string, apiKey: string): Promise<
           return [lon, lat];
         }
       }
+      
+      console.error(`No Milan location found for destination "${address}". Results were outside Milan bounds.`);
+      return null;
     }
     
-    // Per località specifiche o fallback, prendi il primo risultato in Lombardia
+    // For non-Milan: take first result in Lombardy
     for (const feature of data.features) {
       const [lon, lat] = feature.geometry.coordinates;
       

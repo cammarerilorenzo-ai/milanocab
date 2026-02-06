@@ -11,7 +11,7 @@ interface GroupPricingPanelProps {
 
 export function GroupPricingPanel({ userPhone }: GroupPricingPanelProps) {
   const { toast } = useToast();
-  const [businessMultiplier, setBusinessMultiplier] = useState<string>("0.90");
+  const [businessMultiplier, setBusinessMultiplier] = useState<string>("1.00");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -23,14 +23,14 @@ export function GroupPricingPanel({ userPhone }: GroupPricingPanelProps) {
     try {
       const { data, error } = await supabase
         .from("group_pricing")
-        .select("discount_long")
+        .select("price_per_km")
         .eq("customer_group", "business")
         .single();
 
       if (error) throw error;
       
-      // discount_long rappresenta lo sconto, quindi il coefficiente è 1 - discount
-      const multiplier = 1 - (data?.discount_long ?? 0.15);
+      // price_per_km usato come moltiplicatore (1.5 default = tariffa base, valori diversi = coefficiente)
+      const multiplier = data?.price_per_km ?? 1.0;
       setBusinessMultiplier(multiplier.toFixed(2));
     } catch (error) {
       console.error("Error fetching business pricing:", error);
@@ -42,10 +42,10 @@ export function GroupPricingPanel({ userPhone }: GroupPricingPanelProps) {
   const handleSave = async () => {
     const multiplier = parseFloat(businessMultiplier);
     
-    if (isNaN(multiplier) || multiplier < 0.5 || multiplier > 1) {
+    if (isNaN(multiplier) || multiplier < 0.5 || multiplier > 2) {
       toast({
         title: "Valore non valido",
-        description: "Il coefficiente deve essere tra 0.50 e 1.00",
+        description: "Il coefficiente deve essere tra 0.50 e 2.00",
         variant: "destructive"
       });
       return;
@@ -54,15 +54,12 @@ export function GroupPricingPanel({ userPhone }: GroupPricingPanelProps) {
     setIsSaving(true);
     
     try {
-      // Il discount_long è l'inverso del coefficiente (1 - multiplier)
-      const discountLong = 1 - multiplier;
-      
       const { data, error } = await supabase.functions.invoke("admin-settings", {
         body: {
           action: "update_group_pricing",
           phone: userPhone,
           customerGroup: "business",
-          discount_long: discountLong
+          price_per_km: multiplier
         }
       });
 
@@ -86,11 +83,13 @@ export function GroupPricingPanel({ userPhone }: GroupPricingPanelProps) {
     }
   };
 
-  const getDiscountLabel = () => {
+  const getPercentLabel = () => {
     const multiplier = parseFloat(businessMultiplier);
     if (isNaN(multiplier)) return "";
-    const discount = Math.round((1 - multiplier) * 100);
-    return discount > 0 ? `-${discount}%` : "Nessuno sconto";
+    const percent = Math.round((multiplier - 1) * 100);
+    if (percent > 0) return `+${percent}%`;
+    if (percent < 0) return `${percent}%`;
+    return "0%";
   };
 
   if (isLoading) {
@@ -117,13 +116,13 @@ export function GroupPricingPanel({ userPhone }: GroupPricingPanelProps) {
           type="number"
           step="0.05"
           min="0.5"
-          max="1"
+          max="2"
           value={businessMultiplier}
           onChange={(e) => setBusinessMultiplier(e.target.value)}
           className="h-9 w-24 text-center"
         />
-        <span className="text-sm text-muted-foreground min-w-[80px]">
-          = {getDiscountLabel()}
+        <span className="text-sm font-medium text-foreground min-w-[50px]">
+          {getPercentLabel()}
         </span>
         <Button
           size="sm"
@@ -143,7 +142,7 @@ export function GroupPricingPanel({ userPhone }: GroupPricingPanelProps) {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Sconto applicato ai clienti Business (0.85 = -15%)
+        1.00 = tariffa base, 1.15 = +15%, 0.85 = -15%
       </p>
     </div>
   );

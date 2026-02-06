@@ -54,20 +54,10 @@ export function RideConfirmationDialog({
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  // Countdown timer
+  // Reset remaining minutes when dialog opens
   useEffect(() => {
     if (!open) return;
-    
     setRemainingMinutes(etaMin + 2);
-    
-    const interval = setInterval(() => {
-      setRemainingMinutes(prev => {
-        if (prev <= 0) return 0;
-        return prev - 1;
-      });
-    }, 60000); // Every minute
-
-    return () => clearInterval(interval);
   }, [open, etaMin]);
 
   // Poll for status updates every 10 seconds (realtime may not fire due to RLS)
@@ -83,10 +73,14 @@ export function RideConfirmationDialog({
           const newStatus = data.ride.status as string;
           const newEta = data.ride.eta_min as number;
           
+          // Always sync remainingMinutes with backend ETA
+          if (newEta != null) {
+            setRemainingMinutes(newEta);
+          }
+          
           setRideStatus(prev => {
             if (prev !== newStatus) {
               if (newStatus === "confirmed") {
-                setRemainingMinutes((newEta || etaMin) + 2);
                 toast({
                   title: "🚗 Autista in arrivo!",
                   description: `La tua corsa è stata confermata. Arrivo tra ~${newEta || etaMin} minuti`,
@@ -251,7 +245,7 @@ export function RideConfirmationDialog({
               <Navigation className="h-3.5 w-3.5 text-primary" />
               <span className="text-xs text-muted-foreground">Arrivo</span>
               <span className="text-sm font-semibold">
-                ~{new Date(Date.now() + (etaMin + 2) * 60000 + durationMin * 60000).toLocaleTimeString('it-IT', {
+                ~{new Date(Date.now() + remainingMinutes * 60000 + durationMin * 60000).toLocaleTimeString('it-IT', {
                   hour: '2-digit',
                   minute: '2-digit'
                 })}

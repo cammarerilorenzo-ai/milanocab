@@ -583,7 +583,7 @@ export function RideBookingForm() {
               </p>
               <p className="text-2xl font-bold text-green-600">€{routeEstimate.price.toFixed(2)}</p>
               {routeEstimate.isNightRate && (
-                <p className="text-xs text-yellow-600 font-medium">🌙 +30% fascia 22:00-06:00</p>
+                <p className="text-xs text-yellow-600 font-medium">🌙 Tariffa notturna</p>
               )}
             </div>
             <div className="text-right text-sm text-muted-foreground">

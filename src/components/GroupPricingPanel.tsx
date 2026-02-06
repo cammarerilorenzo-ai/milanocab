@@ -7,9 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface GroupPricingPanelProps {
   userPhone: string;
+  adminPassword?: string;
 }
 
-export function GroupPricingPanel({ userPhone }: GroupPricingPanelProps) {
+export function GroupPricingPanel({ userPhone, adminPassword }: GroupPricingPanelProps) {
   const { toast } = useToast();
   const [businessMultiplier, setBusinessMultiplier] = useState<string>("1.00");
   const [isLoading, setIsLoading] = useState(true);
@@ -58,6 +59,7 @@ export function GroupPricingPanel({ userPhone }: GroupPricingPanelProps) {
         body: {
           action: "update_group_pricing",
           phone: userPhone,
+          adminPassword,
           customerGroup: "business",
           price_per_km: multiplier
         }

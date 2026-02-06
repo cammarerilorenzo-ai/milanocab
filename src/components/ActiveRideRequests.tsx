@@ -27,9 +27,10 @@ interface RideRequest {
 interface ActiveRideRequestsProps {
   isAdmin: boolean;
   userPhone?: string;
+  adminPassword?: string;
 }
 
-export function ActiveRideRequests({ isAdmin, userPhone }: ActiveRideRequestsProps) {
+export function ActiveRideRequests({ isAdmin, userPhone, adminPassword }: ActiveRideRequestsProps) {
   const [rides, setRides] = useState<RideRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -139,6 +140,7 @@ export function ActiveRideRequests({ isAdmin, userPhone }: ActiveRideRequestsPro
             ride={ride}
             isAdmin={isAdmin}
             userPhone={userPhone}
+            adminPassword={adminPassword}
             onStatusChange={fetchRides}
           />
         ))}

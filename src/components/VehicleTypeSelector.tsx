@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import fiat500Image from "@/assets/fiat500.png";
 import trocCabrioImage from "@/assets/troc-cabrio.png";
+import peugeot108Image from "@/assets/peugeot108.png";
 
 interface VehicleTypeSelectorProps {
   value: string;
@@ -23,12 +24,14 @@ interface VehicleSetting {
 const fallbackImages: Record<string, string> = {
   fiat500: fiat500Image,
   vwtroc: trocCabrioImage,
+  peugeot108: peugeot108Image,
 };
 
 // Independent image styles per vehicle name
 const vehicleImageStyles: Record<string, string> = {
   fiat500: "h-14 w-28",
   vwtroc: "h-20 w-40",
+  peugeot108: "h-14 w-28",
 };
 
 export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProps) {

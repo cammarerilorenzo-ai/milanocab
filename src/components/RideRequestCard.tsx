@@ -368,8 +368,8 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
           <span className="font-bold text-green-600">€{Number(ride.estimated_price).toFixed(2)}</span>
         </div>
 
-        {/* ETA for confirmed rides with countdown */}
-        {ride.status === "confirmed" && remainingMinutes !== null && (
+        {/* ETA for confirmed rides */}
+        {ride.status === "confirmed" && ride.eta_min != null && (
           <div className="flex items-center justify-between py-2 px-3 bg-green-500/10 rounded-lg">
             {isAdmin ? (
               <>
@@ -378,12 +378,12 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
                   variant="outline"
                   className="h-8 w-8"
                   onClick={() => adjustEta(-1)}
-                  disabled={isAdjustingEta || remainingMinutes <= 0}
+                  disabled={isAdjustingEta || (remainingMinutes ?? 0) <= 0}
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
                 <p className="text-sm text-green-700 font-medium">
-                  🚗 ~{remainingMinutes} min
+                  🚗 ~{remainingMinutes ?? ride.eta_min} min
                 </p>
                 <Button
                   size="icon"
@@ -397,8 +397,8 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
               </>
             ) : (
               <p className="text-sm text-green-700 font-medium w-full text-center">
-                {remainingMinutes > 0 
-                  ? `🚗 In arrivo tra ~${remainingMinutes} minuti`
+                {ride.eta_min > 0
+                  ? `🚗 In arrivo tra ~${ride.eta_min} min`
                   : "🚗 In arrivo!"}
               </p>
             )}

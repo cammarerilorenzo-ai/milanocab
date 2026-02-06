@@ -76,7 +76,7 @@ export default function Install() {
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-2xl font-bold text-foreground text-center mb-2"
+          className="text-2xl font-bold text-foreground text-center mb-2" style={{ fontFamily: "'Golden Antique', serif" }}
         >
           Milano Cab
         </motion.h1>
@@ -86,7 +86,7 @@ export default function Install() {
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-muted-foreground text-center mb-8"
+          className="text-muted-foreground text-center mb-8" style={{ fontFamily: "'Golden Antique', serif" }}
         >
           Prenota corse in pochi secondi
         </motion.p>

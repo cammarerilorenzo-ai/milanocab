@@ -16,7 +16,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, phone, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier, basePrice, settingKey, settingValue } = await req.json();
+    const { action, phone, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier, basePrice, settingKey, settingValue, customerGroup, base_price, price_per_km, price_per_min, discount_short, discount_long, night_surcharge, airport_malpensa, airport_orio } = await req.json();
 
     // Verify admin access
     const { data: isAdmin } = await supabase.rpc("is_admin", { check_phone: phone });
@@ -206,17 +206,6 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (action === "update_group_pricing") {
-      const { 
-        customerGroup, 
-        base_price, 
-        price_per_km, 
-        price_per_min, 
-        discount_short, 
-        discount_long, 
-        night_surcharge, 
-        airport_malpensa, 
-        airport_orio 
-      } = await req.json().catch(() => ({}));
 
       if (!customerGroup) {
         return new Response(

@@ -18,14 +18,19 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { action, phone, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier, basePrice, settingKey, settingValue, customerGroup, base_price, price_per_km, price_per_min, discount_short, discount_long, night_surcharge, airport_malpensa, airport_orio, latitude, longitude, rideId, status } = await req.json();
 
-    // Verify admin access
-    const { data: isAdmin } = await supabase.rpc("is_admin", { check_phone: phone });
+    // Actions that don't require admin verification
+    const publicActions = ["get_ride_status", "cancel_ride_user"];
     
-    if (!isAdmin) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Accesso non autorizzato" }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    if (!publicActions.includes(action)) {
+      // Verify admin access for protected actions
+      const { data: isAdmin } = await supabase.rpc("is_admin", { check_phone: phone || "" });
+      
+      if (!isAdmin) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Accesso non autorizzato" }),
+          { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
     }
 
     if (action === "get_settings") {

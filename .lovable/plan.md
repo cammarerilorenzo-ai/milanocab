@@ -1,44 +1,29 @@
 
+## Aggiungere fascia di sconto 3-5 km all'8%
 
-## Rinominare `vehicle_type` in `vehicle_name` e aggiornare i valori
+### Situazione attuale
+Il pricing ha due fasce di sconto:
+- Sotto 5 km: 20% di sconto (moltiplicatore 0.80)
+- Sopra 5 km: 15% di sconto (moltiplicatore 0.85)
 
 ### Cosa cambia
+Si aggiunge una fascia intermedia, ottenendo tre fasce:
+- **Sotto 3 km**: 20% di sconto (moltiplicatore 0.80) -- invariato
+- **Da 3 a 5 km**: 8% di sconto (moltiplicatore 0.92) -- NUOVA
+- **Sopra 5 km**: 15% di sconto (moltiplicatore 0.85) -- invariato
 
-1. **Colonna database**: `vehicle_type` viene rinominata in `vehicle_name`
-2. **Valori nel database**:
-   - `economy` diventa `fiat500`
-   - `premium` diventa `vwtroc`
-   - `ghetto` resta `ghetto`
-3. **Tutto il codice** viene aggiornato per usare `vehicle_name` al posto di `vehicle_type` e i nuovi nomi
+### Modifiche tecniche
 
-### Passaggi
+**1. `src/components/RideBookingForm.tsx`**
+- Aggiungere al blocco `PRICING` le nuove costanti:
+  - `discount3to5km: 0.92` (8% di sconto)
+  - `distanceThresholdLow: 3` (soglia 3 km)
+- Aggiornare la logica di calcolo sconto (riga ~262) da un `if/else` a un blocco a tre livelli:
+  - `distanza <= 3 km` -> `discountUnder5km` (0.80)
+  - `distanza > 3 km e <= 5 km` -> `discount3to5km` (0.92)
+  - `distanza > 5 km` -> `discountOver5km` (0.85)
 
-**1. Migrazione database**
-- Rinominare la colonna `vehicle_type` in `vehicle_name` nella tabella `vehicle_settings`
-- Aggiornare i valori: `economy` -> `fiat500`, `premium` -> `vwtroc`
-
-**2. Aggiornare `VehicleTypeSelector.tsx`**
-- Rinominare tutte le occorrenze di `vehicle_type` in `vehicle_name` nell'interfaccia e nella logica
-- Aggiornare le mappe `fallbackImages` e `vehicleImageStyles` per usare `fiat500` e `vwtroc` come chiavi
-
-**3. Aggiornare `RideBookingForm.tsx`**
-- Stato iniziale `vehicleType` da `"economy"` a `"fiat500"`
-- Riferimenti alla colonna `vehicle_type` diventano `vehicle_name`
-- Logica ETA: il check `"premium"` diventa `"vwtroc"`
-- Costante `premiumEtaExtra` rinominata in `vwtrocEtaExtra`
-
-**4. Aggiornare `Admin.tsx`**
-- Funzione `getVehicleImage`: i check `"economy"` e `"premium"` diventano `"fiat500"` e `"vwtroc"`
-- Tutti i riferimenti a `vehicle_type` diventano `vehicle_name`
-
-**5. Aggiornare `PricingConfigPanel.tsx`**
-- Tutti i riferimenti a `vehicle_type` nella prop e nella logica diventano `vehicle_name`
-
-### Dettagli tecnici
-
-- La migrazione usa `ALTER TABLE ... RENAME COLUMN` (operazione sicura, non distruttiva)
-- Gli `UPDATE` cambiano i valori esistenti
-- Il file `types.ts` si aggiornerà automaticamente dopo la migrazione
-- Nessun impatto sulle RLS policies (non dipendono dal nome della colonna)
-- I veicoli con `is_available: false` (ghetto, premium/vwtroc) non sono visibili agli utenti ma vengono aggiornati per coerenza
-
+**2. `src/components/PricingConfigPanel.tsx`**
+- Aggiungere `discount3to5km: 0.92` e `distanceThresholdLow: 3` ai valori di default
+- Aggiungere un campo input per visualizzare/modificare lo sconto della fascia 3-5 km
+- Aggiornare la formula di esempio per tenere conto delle tre fasce

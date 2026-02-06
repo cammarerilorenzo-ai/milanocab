@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+// Edge function for route calculation
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -463,4 +463,4 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-serve(handler);
+Deno.serve(handler);

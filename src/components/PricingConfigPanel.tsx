@@ -11,9 +11,11 @@ const DEFAULT_PRICING = {
   basePrice: 5.0,
   pricePerKm: 1.5,
   pricePerMin: 0.3,
-  discountUnder5km: 0.95,
+  discountUnder3km: 0.80,
+  discount3to5km: 0.92,
   discountOver5km: 0.85,
-  distanceThreshold: 5,
+  distanceThresholdLow: 3,
+  distanceThresholdHigh: 5,
 };
 
 interface PricingConfigPanelProps {
@@ -210,14 +212,14 @@ export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigP
           </div>
           
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Soglia sconto (km)</Label>
+            <Label className="text-xs text-muted-foreground">Soglia bassa (km)</Label>
             <div className="flex items-center gap-2">
               <Input
                 type="number"
                 step="1"
                 min="0"
-                value={pricing.distanceThreshold}
-                onChange={(e) => setPricing(p => ({ ...p, distanceThreshold: parseFloat(e.target.value) || 0 }))}
+                value={pricing.distanceThresholdLow}
+                onChange={(e) => setPricing(p => ({ ...p, distanceThresholdLow: parseFloat(e.target.value) || 0 }))}
                 className="h-9"
               />
               <span className="text-sm text-muted-foreground">km</span>
@@ -225,25 +227,41 @@ export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigP
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 pt-2">
+        <div className="grid grid-cols-3 gap-4 pt-2">
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Sconto &lt; {pricing.distanceThreshold}km</Label>
+            <Label className="text-xs text-muted-foreground">Sconto &lt; {pricing.distanceThresholdLow}km</Label>
             <div className="flex items-center gap-2">
               <Input
                 type="number"
                 step="0.01"
                 min="0"
                 max="1"
-                value={pricing.discountUnder5km}
-                onChange={(e) => setPricing(p => ({ ...p, discountUnder5km: parseFloat(e.target.value) || 0 }))}
+                value={pricing.discountUnder3km}
+                onChange={(e) => setPricing(p => ({ ...p, discountUnder3km: parseFloat(e.target.value) || 0 }))}
                 className="h-9"
               />
-              <span className="text-sm text-muted-foreground">= {Math.round((1 - pricing.discountUnder5km) * 100)}%</span>
+              <span className="text-sm text-muted-foreground">= {Math.round((1 - pricing.discountUnder3km) * 100)}%</span>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Sconto {pricing.distanceThresholdLow}-{pricing.distanceThresholdHigh}km</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                max="1"
+                value={pricing.discount3to5km}
+                onChange={(e) => setPricing(p => ({ ...p, discount3to5km: parseFloat(e.target.value) || 0 }))}
+                className="h-9"
+              />
+              <span className="text-sm text-muted-foreground">= {Math.round((1 - pricing.discount3to5km) * 100)}%</span>
             </div>
           </div>
           
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Sconto &gt; {pricing.distanceThreshold}km</Label>
+            <Label className="text-xs text-muted-foreground">Sconto &gt; {pricing.distanceThresholdHigh}km</Label>
             <div className="flex items-center gap-2">
               <Input
                 type="number"

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { MapPin, Navigation, Clock, Route, Check, X, Loader2, Phone, UserCheck, Flag, Plus, Minus, Star } from "lucide-react";
+import { format } from "date-fns";
 import { RideReviewDialog } from "./RideReviewDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -93,6 +94,21 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
   const [showReview, setShowReview] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [remainingMinutes, setRemainingMinutes] = useState<number | null>(null);
+  const [elapsedMinutes, setElapsedMinutes] = useState<number>(0);
+
+  // Elapsed time for pending/confirmed
+  useEffect(() => {
+    if (ride.status === "pending" || ride.status === "confirmed") {
+      const refTime = ride.status === "confirmed" && ride.confirmed_at
+        ? new Date(ride.confirmed_at).getTime()
+        : new Date(ride.created_at).getTime();
+      
+      const update = () => setElapsedMinutes(Math.floor((Date.now() - refTime) / 60000));
+      update();
+      const interval = setInterval(update, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [ride.status, ride.confirmed_at, ride.created_at]);
 
   // Countdown timer for ETA
   useEffect(() => {
@@ -314,7 +330,10 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
             {getStatusLabel(ride.status)}
           </span>
           <span className="text-xs text-muted-foreground">
-            {formatDateTime(ride.date_time)}
+            {ride.status === "pending" && `⏳ ${elapsedMinutes} min`}
+            {ride.status === "confirmed" && `✅ ${elapsedMinutes} min`}
+            {ride.status === "completed" && format(new Date(ride.confirmed_at || ride.created_at), "dd/MM/yyyy HH:mm")}
+            {ride.status !== "pending" && ride.status !== "confirmed" && ride.status !== "completed" && formatDateTime(ride.date_time)}
           </span>
         </div>
 

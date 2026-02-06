@@ -147,7 +147,7 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
                   : "border-border bg-card hover:border-yellow-400 hover:bg-yellow-400/10"
               )}
             >
-              <div className="h-14 w-20 sm:h-20 sm:w-auto flex items-center justify-center flex-shrink-0">
+              <div className="h-20 w-24 sm:h-20 sm:w-auto flex items-center justify-center flex-shrink-0">
                 {image && (
                   <img
                     src={image}

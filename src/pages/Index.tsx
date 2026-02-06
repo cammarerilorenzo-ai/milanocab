@@ -43,8 +43,8 @@ const Index = () => {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border pt-[env(safe-area-inset-top)]">
+        <div className="container mx-auto px-4 py-2 flex items-center justify-between">
           <div className="flex-1 flex justify-start">
             {user && (
               <Button variant="ghost" size="icon" asChild title="Invita un amico" className="hover:bg-yellow-400/30">
@@ -56,10 +56,10 @@ const Index = () => {
           </div>
           {isAdmin ? (
             <Link to="/admin" title="Impostazioni Admin">
-              <img src={logo} alt="Milano Cab" className="h-14 w-auto sm:cursor-default cursor-pointer" />
+              <img src={logo} alt="Milano Cab" className="h-10 sm:h-14 w-auto sm:cursor-default cursor-pointer" />
             </Link>
           ) : (
-            <img src={logo} alt="Milano Cab" className="h-14 w-auto" />
+            <img src={logo} alt="Milano Cab" className="h-10 sm:h-14 w-auto" />
           )}
           <div className="flex-1 flex justify-end items-center gap-2">
             {user && (

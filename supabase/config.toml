@@ -8,3 +8,15 @@ verify_jwt = false
 
 [functions.register-referral]
 verify_jwt = false
+
+[functions.admin-settings]
+verify_jwt = false
+
+[functions.calculate-route]
+verify_jwt = false
+
+[functions.confirm-ride]
+verify_jwt = false
+
+[functions.reverse-geocode]
+verify_jwt = false

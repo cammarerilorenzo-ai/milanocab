@@ -92,7 +92,7 @@ export function RideBookingForm() {
     toast
   } = useToast();
   const {
-    user, sessionToken
+    user, sessionToken, logout
   } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -382,7 +382,33 @@ export function RideBookingForm() {
           note: formData.note.trim() || undefined
         }
       });
-      if (error) throw error;
+      if (error) {
+        // Check if it's a session error (401)
+        const errorMsg = typeof error === 'object' && error !== null && 'message' in error ? (error as { message: string }).message : String(error);
+        if (errorMsg.includes("401") || errorMsg.includes("Sessione")) {
+          logout();
+          toast({
+            title: "Sessione scaduta",
+            description: "Effettua di nuovo il login.",
+            variant: "destructive"
+          });
+          return;
+        }
+        throw error;
+      }
+
+      if (data && !data.success) {
+        if (data.error?.includes("Sessione") || data.error?.includes("login")) {
+          logout();
+          toast({
+            title: "Sessione scaduta",
+            description: "Effettua di nuovo il login.",
+            variant: "destructive"
+          });
+          return;
+        }
+        throw new Error(data.error || "Errore sconosciuto");
+      }
 
       // Save confirmed ride data and show confirmation dialog
       setConfirmedRide({

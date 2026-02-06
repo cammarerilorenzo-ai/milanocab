@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { MapPin, Navigation, Clock, Route, Check, X, Loader2, Phone, UserCheck, Flag, Plus, Minus } from "lucide-react";
+import { MapPin, Navigation, Clock, Route, Check, X, Loader2, Phone, UserCheck, Flag, Plus, Minus, Star } from "lucide-react";
+import { RideReviewDialog } from "./RideReviewDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,6 +90,8 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
   const [isCompleting, setIsCompleting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isAdjustingEta, setIsAdjustingEta] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [remainingMinutes, setRemainingMinutes] = useState<number | null>(null);
 
   // Countdown timer for ETA
@@ -514,6 +517,31 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
               {isCancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : <><X className="h-4 w-4 mr-1" />Annulla corsa</>}
             </Button>
           </div>
+        )}
+
+        {/* Review prompt for completed rides (client only) */}
+        {!isAdmin && ride.status === "completed" && !reviewSubmitted && (
+          showReview ? (
+            <RideReviewDialog
+              rideId={ride.id}
+              onClose={() => {
+                setShowReview(false);
+                setReviewSubmitted(true);
+              }}
+            />
+          ) : (
+            <div className="flex items-center justify-between pt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowReview(true)}
+              >
+                <Star className="h-4 w-4 mr-1" />
+                Lascia una recensione
+              </Button>
+            </div>
+          )
         )}
       </CardContent>
     </Card>

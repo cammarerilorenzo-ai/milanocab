@@ -100,9 +100,13 @@ export function ActiveRideRequests({ isAdmin, userPhone }: ActiveRideRequestsPro
   const activeRides = rides.filter(ride => {
     if (ride.status === "pending" || ride.status === "picked_up") return true;
     if (ride.status === "confirmed") {
-      // Show confirmed rides for 60 minutes
       const confirmedTime = ride.created_at ? new Date(ride.created_at).getTime() : 0;
       return Date.now() - confirmedTime < 60 * 60 * 1000;
+    }
+    // Show completed rides for 30 minutes so clients can leave a review
+    if (ride.status === "completed") {
+      const completedTime = ride.confirmed_at ? new Date(ride.confirmed_at).getTime() : new Date(ride.created_at).getTime();
+      return Date.now() - completedTime < 30 * 60 * 1000;
     }
     return false;
   });

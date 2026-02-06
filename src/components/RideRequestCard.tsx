@@ -508,7 +508,7 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
             <Button
               size="sm"
               variant="destructive"
-              className="w-full"
+              className="w-full opacity-80"
               onClick={async () => {
                 setIsCancelling(true);
                 try {

@@ -41,8 +41,8 @@ export function ActiveRideRequests({ isAdmin, userPhone }: ActiveRideRequestsPro
         .order("created_at", { ascending: false });
 
       if (isAdmin) {
-        // Admin sees all pending and recent confirmed/cancelled
-        query = query.in("status", ["pending", "confirmed", "cancelled"]);
+        // Admin sees all pending, confirmed, and picked_up rides
+        query = query.in("status", ["pending", "confirmed", "picked_up"]);
       } else if (userPhone) {
         // User sees only their own rides
         const cleanPhone = userPhone.replace(/\D/g, "");
@@ -112,13 +112,13 @@ export function ActiveRideRequests({ isAdmin, userPhone }: ActiveRideRequestsPro
     return null;
   }
 
-  // Filter active rides (pending or recently confirmed)
+  // Filter active rides (pending, confirmed, or picked_up)
   const activeRides = rides.filter(ride => {
-    if (ride.status === "pending") return true;
+    if (ride.status === "pending" || ride.status === "picked_up") return true;
     if (ride.status === "confirmed") {
-      // Show confirmed rides for 30 minutes
+      // Show confirmed rides for 60 minutes
       const confirmedTime = ride.created_at ? new Date(ride.created_at).getTime() : 0;
-      return Date.now() - confirmedTime < 30 * 60 * 1000;
+      return Date.now() - confirmedTime < 60 * 60 * 1000;
     }
     return false;
   });

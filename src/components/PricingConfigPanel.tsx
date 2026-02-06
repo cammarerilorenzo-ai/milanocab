@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, Percent, Save, RotateCcw } from "lucide-react";
+import { DollarSign, Percent, Save, TrendingUp } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 
 // Default pricing values (matching RideBookingForm.tsx)
 const DEFAULT_PRICING = {
@@ -32,6 +33,8 @@ export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigP
   const [vehicleMultipliers, setVehicleMultipliers] = useState<Record<string, string>>({});
   const [vehicleBasePrices, setVehicleBasePrices] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [globalIncreasePercent, setGlobalIncreasePercent] = useState(0);
+  const [isApplyingGlobal, setIsApplyingGlobal] = useState(false);
 
   // Initialize multipliers and base prices from vehicles
   useEffect(() => {
@@ -93,6 +96,49 @@ export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigP
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleApplyGlobalIncrease = async () => {
+    if (globalIncreasePercent === 0) {
+      toast({
+        title: "Nessuna modifica",
+        description: "Imposta una percentuale di aumento",
+      });
+      return;
+    }
+
+    setIsApplyingGlobal(true);
+    const factor = 1 + globalIncreasePercent / 100;
+
+    try {
+      for (const vehicle of vehicles) {
+        const currentMultiplier = vehicle.price_multiplier ?? 1;
+        const currentBasePrice = vehicle.base_price ?? 5;
+        const newMultiplier = Math.round(currentMultiplier * factor * 100) / 100;
+
+        await onUpdatePricing(vehicle.vehicle_type, newMultiplier, currentBasePrice);
+
+        // Update local state
+        setVehicleMultipliers(prev => ({
+          ...prev,
+          [vehicle.vehicle_type]: newMultiplier.toString()
+        }));
+      }
+
+      toast({
+        title: "Aumento applicato",
+        description: `Tutti i coefficienti sono stati aumentati del ${globalIncreasePercent}%`
+      });
+      setGlobalIncreasePercent(0);
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: "Impossibile applicare l'aumento globale",
+        variant: "destructive"
+      });
+    } finally {
+      setIsApplyingGlobal(false);
     }
   };
 
@@ -215,6 +261,66 @@ export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigP
 
         <p className="text-xs text-muted-foreground pt-2 border-t border-border mt-3">
           💡 Nota: Questi valori sono solo di riferimento visivo. Per applicarli, aggiorna il codice di RideBookingForm.tsx
+        </p>
+      </div>
+
+      {/* Global Increase Section */}
+      <div className="p-4 bg-yellow-400/10 rounded-xl border border-yellow-400/30 space-y-4">
+        <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-yellow-500" />
+          Aumento Globale Coefficienti
+        </h3>
+        
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <Slider
+                value={[globalIncreasePercent]}
+                onValueChange={(value) => setGlobalIncreasePercent(value[0])}
+                min={-50}
+                max={100}
+                step={5}
+                className="w-full"
+              />
+            </div>
+            <div className="flex items-center gap-2 min-w-[80px]">
+              <Input
+                type="number"
+                value={globalIncreasePercent}
+                onChange={(e) => setGlobalIncreasePercent(parseInt(e.target.value) || 0)}
+                className="h-9 w-16 text-center"
+                min={-50}
+                max={100}
+              />
+              <span className="text-sm font-medium">%</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              {globalIncreasePercent > 0 
+                ? `🔺 Aumenta tutti i coefficienti del ${globalIncreasePercent}%`
+                : globalIncreasePercent < 0
+                ? `🔻 Riduci tutti i coefficienti del ${Math.abs(globalIncreasePercent)}%`
+                : "Trascina lo slider o inserisci un valore"}
+            </p>
+            <Button
+              onClick={handleApplyGlobalIncrease}
+              disabled={isApplyingGlobal || globalIncreasePercent === 0}
+              className="bg-yellow-400 hover:bg-yellow-500 text-black"
+              size="sm"
+            >
+              {isApplyingGlobal ? (
+                <>Applicando...</>
+              ) : (
+                <>Applica a tutti</>
+              )}
+            </Button>
+          </div>
+        </div>
+        
+        <p className="text-xs text-muted-foreground border-t border-yellow-400/20 pt-3">
+          💡 Ideale per eventi speciali (es. Olimpiadi +60%). Modifica permanente.
         </p>
       </div>
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapPin, Navigation, Clock, Route, Check, X, Loader2, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +23,7 @@ interface RideRequest {
   dest_lon: number;
   confirmation_token: string;
   created_at: string;
+  confirmed_at?: string | null;
   eta_min?: number | null;
 }
 
@@ -76,6 +77,27 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
   const { toast } = useToast();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
+  const [remainingMinutes, setRemainingMinutes] = useState<number | null>(null);
+
+  // Countdown timer for ETA
+  useEffect(() => {
+    if (ride.status === "confirmed" && ride.eta_min) {
+      // Calculate remaining minutes based on confirmed_at time
+      const confirmedAt = ride.confirmed_at ? new Date(ride.confirmed_at).getTime() : Date.now();
+      const elapsedMinutes = Math.floor((Date.now() - confirmedAt) / 60000);
+      const initialRemaining = Math.max(0, ride.eta_min - elapsedMinutes);
+      setRemainingMinutes(initialRemaining);
+
+      const interval = setInterval(() => {
+        setRemainingMinutes(prev => {
+          if (prev === null || prev <= 0) return 0;
+          return prev - 1;
+        });
+      }, 60000); // Update every minute
+
+      return () => clearInterval(interval);
+    }
+  }, [ride.status, ride.eta_min, ride.confirmed_at]);
 
   const handleConfirm = async () => {
     if (!navigator.geolocation) {
@@ -218,11 +240,13 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
           <span className="font-bold text-green-600">€{Number(ride.estimated_price).toFixed(2)}</span>
         </div>
 
-        {/* ETA for confirmed rides */}
-        {ride.status === "confirmed" && ride.eta_min && (
+        {/* ETA for confirmed rides with countdown */}
+        {ride.status === "confirmed" && remainingMinutes !== null && (
           <div className="text-center py-2 bg-green-500/10 rounded-lg">
             <p className="text-sm text-green-700 font-medium">
-              🚗 In arrivo tra ~{ride.eta_min} minuti
+              {remainingMinutes > 0 
+                ? `🚗 In arrivo tra ~${remainingMinutes} minuti`
+                : "🚗 In arrivo!"}
             </p>
           </div>
         )}

@@ -73,6 +73,43 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Fields exceed maximum length");
     }
 
+    // Fetch customer info from authorized_phones
+    let customerName: string | null = null;
+    let referralName: string | null = null;
+
+    // Try different phone variants to find the customer
+    const phoneVariants = [
+      phoneDigits,
+      phoneDigits.startsWith("39") ? phoneDigits.slice(2) : `39${phoneDigits}`,
+      phoneDigits.startsWith("55") ? phoneDigits.slice(2) : phoneDigits,
+    ];
+
+    for (const variant of phoneVariants) {
+      const { data: customer } = await supabase
+        .from("authorized_phones")
+        .select("name, referred_by")
+        .or(`phone.eq.${variant},phone.eq.+${variant}`)
+        .maybeSingle();
+
+      if (customer) {
+        customerName = customer.name;
+        
+        // Fetch referrer name if exists
+        if (customer.referred_by) {
+          const { data: referrer } = await supabase
+            .from("authorized_phones")
+            .select("name, phone")
+            .eq("id", customer.referred_by)
+            .single();
+          
+          if (referrer) {
+            referralName = referrer.name || `Tel: ${referrer.phone}`;
+          }
+        }
+        break;
+      }
+    }
+
     // Generate Google Maps link with admin's current position as start, pickup as waypoint, destination as end
     // Omitting origin makes Google Maps use the user's current location automatically
     const mapsLink = `https://www.google.com/maps/dir/?api=1&waypoints=${pickupCoords.lat},${pickupCoords.lon}&destination=${destCoords.lat},${destCoords.lon}&travelmode=driving`;
@@ -89,6 +126,8 @@ const handler = async (req: Request): Promise<Response> => {
       .from("ride_requests")
       .insert({
         customer_phone: phoneDigits,
+        customer_name: customerName,
+        referral_name: referralName,
         pickup,
         destination,
         pickup_lat: pickupCoords.lat,

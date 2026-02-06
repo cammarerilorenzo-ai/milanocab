@@ -128,6 +128,7 @@ export type Database = {
           confirmation_token: string
           confirmed_at: string | null
           created_at: string
+          customer_name: string | null
           customer_phone: string
           date_time: string
           dest_lat: number
@@ -142,6 +143,7 @@ export type Database = {
           pickup: string
           pickup_lat: number
           pickup_lon: number
+          referral_name: string | null
           status: string
         }
         Insert: {
@@ -150,6 +152,7 @@ export type Database = {
           confirmation_token?: string
           confirmed_at?: string | null
           created_at?: string
+          customer_name?: string | null
           customer_phone: string
           date_time: string
           dest_lat: number
@@ -164,6 +167,7 @@ export type Database = {
           pickup: string
           pickup_lat: number
           pickup_lon: number
+          referral_name?: string | null
           status?: string
         }
         Update: {
@@ -172,6 +176,7 @@ export type Database = {
           confirmation_token?: string
           confirmed_at?: string | null
           created_at?: string
+          customer_name?: string | null
           customer_phone?: string
           date_time?: string
           dest_lat?: number
@@ -186,6 +191,7 @@ export type Database = {
           pickup?: string
           pickup_lat?: number
           pickup_lon?: number
+          referral_name?: string | null
           status?: string
         }
         Relationships: []

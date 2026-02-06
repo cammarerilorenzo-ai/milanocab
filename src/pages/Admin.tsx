@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PricingConfigPanel } from "@/components/PricingConfigPanel";
 import { GroupPricingPanel } from "@/components/GroupPricingPanel";
 import { ServiceToggle } from "@/components/ServiceToggle";
+import { AdminGpsTracker } from "@/components/AdminGpsTracker";
 import logo from "@/assets/logo.png";
 import fiat500Image from "@/assets/fiat500.png";
 import trocCabrioImage from "@/assets/troc-cabrio.png";
@@ -368,6 +369,11 @@ const Admin = () => {
         <div className="flex items-center gap-2 mb-6">
           <ShieldCheck className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold text-foreground">Pannello Admin</h1>
+        </div>
+
+        {/* GPS Tracker */}
+        <div className="mb-4">
+          <AdminGpsTracker userPhone={user?.phone || ""} />
         </div>
 
         {/* Service Toggle */}

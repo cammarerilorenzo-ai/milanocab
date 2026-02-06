@@ -450,6 +450,20 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
+    // Calculate the actual route from pickup to destination
+    console.log(`Calculating route from pickup [${pickupCoords}] to destination [${destCoords}]`);
+    const route = await calculateRoute(pickupCoords, destCoords, OPENROUTE_API_KEY);
+    
+    if (!route) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Impossibile calcolare il percorso. Riprova." 
+        }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // Convert to km and minutes
     const distanceKm = Math.round(route.distance / 100) / 10; // Round to 1 decimal
     const durationMin = Math.round(route.duration / 60);

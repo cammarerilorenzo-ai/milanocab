@@ -545,30 +545,30 @@ export function RideBookingForm() {
       </div>
 
       {/* Scheduled Date/Time - Only visible when scheduled */}
-      {formData.isScheduled && <div className="p-4 bg-card rounded-xl border border-border space-y-4 animate-in fade-in">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 space-y-2">
+      {formData.isScheduled && <div className="p-4 bg-card rounded-xl border border-border space-y-4 animate-in fade-in overflow-hidden">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="date" className="text-sm font-medium text-foreground">
                 Data
               </Label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none z-10" />
                 <Input id="date" type="date" min={today} value={formData.scheduledDate} onChange={e => setFormData({
               ...formData,
               scheduledDate: e.target.value
-            })} className="pl-11 h-12 bg-card border-border w-full" required />
+            })} className="pl-11 h-12 bg-card border-border w-full text-sm" required />
               </div>
             </div>
-            <div className="flex-1 space-y-2">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="time" className="text-sm font-medium text-foreground">
                 Ora
               </Label>
               <div className="relative">
-                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none z-10" />
                 <Input id="time" type="time" value={formData.scheduledTime} onChange={e => setFormData({
               ...formData,
               scheduledTime: e.target.value
-            })} className="pl-11 h-12 bg-card border-border w-full" required />
+            })} className="pl-11 h-12 bg-card border-border w-full text-sm" required />
               </div>
             </div>
           </div>

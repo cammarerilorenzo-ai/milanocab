@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import peugeot108Image from "@/assets/peugeot108.png";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -349,6 +350,7 @@ const Admin = () => {
     if (vehicle.image_url) return vehicle.image_url;
     if (vehicle.vehicle_name === "fiat500") return fiat500Image;
     if (vehicle.vehicle_name === "vwtroc") return trocCabrioImage;
+    if (vehicle.vehicle_name === "peugeot108") return peugeot108Image;
     return null;
   };
 

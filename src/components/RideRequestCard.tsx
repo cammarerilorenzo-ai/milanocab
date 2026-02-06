@@ -87,6 +87,7 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
   const [isRejecting, setIsRejecting] = useState(false);
   const [isPickingUp, setIsPickingUp] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [isAdjustingEta, setIsAdjustingEta] = useState(false);
   const [remainingMinutes, setRemainingMinutes] = useState<number | null>(null);
 
@@ -474,11 +475,45 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
           </Button>
         )}
 
-        {/* User waiting message */}
-        {!isAdmin && ride.status === "pending" && isUserRide && (
-          <p className="text-xs text-center text-muted-foreground">
-            In attesa di conferma...
-          </p>
+        {/* User cancel button for pending rides */}
+        {!isAdmin && ride.status === "pending" && (
+          <div className="flex flex-col gap-2 pt-2">
+            <p className="text-xs text-center text-muted-foreground">
+              In attesa di conferma...
+            </p>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="w-full"
+              onClick={async () => {
+                setIsCancelling(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke("admin-settings", {
+                    body: {
+                      action: "cancel_ride_user",
+                      rideId: ride.id,
+                      phone: userPhone
+                    }
+                  });
+                  if (error) throw error;
+                  if (data?.success) {
+                    toast({ title: "Corsa annullata", description: "La richiesta è stata annullata" });
+                    onStatusChange?.();
+                  } else {
+                    throw new Error(data?.error || "Errore");
+                  }
+                } catch (error) {
+                  console.error("Error cancelling ride:", error);
+                  toast({ title: "Errore", description: "Impossibile annullare la corsa", variant: "destructive" });
+                } finally {
+                  setIsCancelling(false);
+                }
+              }}
+              disabled={isCancelling}
+            >
+              {isCancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : <><X className="h-4 w-4 mr-1" />Annulla corsa</>}
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>

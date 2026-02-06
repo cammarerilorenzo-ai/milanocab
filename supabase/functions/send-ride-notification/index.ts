@@ -140,7 +140,7 @@ const handler = async (req: Request): Promise<Response> => {
         estimated_min: estimatedMin,
         maps_link: mapsLink,
       })
-      .select("confirmation_token")
+      .select("id, confirmation_token")
       .single();
 
     if (dbError) {
@@ -248,7 +248,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Phone number redacted successfully");
     }
 
-    return new Response(JSON.stringify({ success: true, emailId: emailResult.id }), {
+    return new Response(JSON.stringify({ success: true, emailId: emailResult.id, rideId: rideRequest.id }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

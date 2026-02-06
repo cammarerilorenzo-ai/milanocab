@@ -16,7 +16,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, phone, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier, basePrice, settingKey, settingValue, customerGroup, base_price, price_per_km, price_per_min, discount_short, discount_long, night_surcharge, airport_malpensa, airport_orio } = await req.json();
+    const { action, phone, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier, basePrice, settingKey, settingValue, customerGroup, base_price, price_per_km, price_per_min, discount_short, discount_long, night_surcharge, airport_malpensa, airport_orio, latitude, longitude } = await req.json();
 
     // Verify admin access
     const { data: isAdmin } = await supabase.rpc("is_admin", { check_phone: phone });
@@ -236,6 +236,38 @@ const handler = async (req: Request): Promise<Response> => {
 
       return new Response(
         JSON.stringify({ success: true, message: `Tariffe ${customerGroup} aggiornate` }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (action === "update_admin_location") {
+      if (latitude === undefined || longitude === undefined) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Coordinate mancanti" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      const now = new Date().toISOString();
+
+      // Update lat, lon, and timestamp
+      await supabase
+        .from("app_settings")
+        .update({ value: latitude.toString(), updated_at: now })
+        .eq("key", "admin_lat");
+
+      await supabase
+        .from("app_settings")
+        .update({ value: longitude.toString(), updated_at: now })
+        .eq("key", "admin_lon");
+
+      await supabase
+        .from("app_settings")
+        .update({ value: now, updated_at: now })
+        .eq("key", "admin_location_updated_at");
+
+      return new Response(
+        JSON.stringify({ success: true, message: "Posizione aggiornata" }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }

@@ -1,4 +1,5 @@
 // Edge function for route calculation
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,8 +9,8 @@ const corsHeaders = {
 
 const ORS_BASE_URL = "https://api.openrouteservice.org";
 
-// Base location (driver's starting point)
-const BASE_LOCATION = "Via Manfredo Fanti 2, Milano, Italia";
+// Fallback base location (driver's starting point)
+const FALLBACK_BASE_LOCATION = "Via Manfredo Fanti 2, Milano, Italia";
 const ETA_BUFFER_MINUTES = 3; // Buffer time to add to ETA
 
 // Fixed airport prices
@@ -399,22 +400,43 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Geocode base location for ETA calculation
-    console.log(`Geocoding base location: "${BASE_LOCATION}"`);
-    const baseCoords = await geocodeAddressMilan(BASE_LOCATION, OPENROUTE_API_KEY);
-
-    // Calculate route from pickup to destination
-    console.log(`Calculating route from [${pickupCoords}] to [${destCoords}]`);
-    const route = await calculateRoute(pickupCoords, destCoords, OPENROUTE_API_KEY);
-
-    if (!route) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Impossibile calcolare il percorso tra gli indirizzi specificati." 
-        }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    // Get admin GPS position from database, fallback to fixed address
+    let baseCoords: [number, number] | null = null;
+    
+    try {
+      const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+      const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      
+      // Fetch admin GPS position from app_settings
+      const { data: latData } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "admin_lat")
+        .single();
+      
+      const { data: lonData } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "admin_lon")
+        .single();
+      
+      if (latData?.value && lonData?.value) {
+        const lat = parseFloat(latData.value);
+        const lon = parseFloat(lonData.value);
+        if (!isNaN(lat) && !isNaN(lon)) {
+          baseCoords = [lon, lat]; // ORS uses [lon, lat]
+          console.log(`Using admin GPS position: [${lon}, ${lat}]`);
+        }
+      }
+    } catch (e) {
+      console.error("Error fetching admin GPS position:", e);
+    }
+    
+    // Fallback to geocoding fixed address
+    if (!baseCoords) {
+      console.log(`Geocoding fallback base location: "${FALLBACK_BASE_LOCATION}"`);
+      baseCoords = await geocodeAddressMilan(FALLBACK_BASE_LOCATION, OPENROUTE_API_KEY);
     }
 
     // Calculate ETA from base to pickup (driver arrival time)

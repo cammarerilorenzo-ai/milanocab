@@ -200,29 +200,24 @@ function IOSInstructions() {
       <div className="space-y-4">
         <InstructionStep
           number={1}
-          icon={<Share className="w-5 h-5" />}
-          text="Tocca l'icona Condividi in basso"
+          icon={<MoreVertical className="w-5 h-5" />}
+          text="Tocca i 3 puntini in basso a destra (Safari)"
         />
         <InstructionStep
           number={2}
+          icon={<Share className="w-5 h-5" />}
+          text="Tocca l'icona Condividi"
+        />
+        <InstructionStep
+          number={3}
           icon={<ChevronDown className="w-5 h-5" />}
           text="Scorri verso il basso"
         />
         <InstructionStep
-          number={3}
+          number={4}
           icon={<Plus className="w-5 h-5" />}
-          text='Tocca "Aggiungi alla schermata Home"'
+          text='"Aggiungi alla schermata Home"'
         />
-      </div>
-
-      <div className="flex justify-center">
-        <motion.div
-          animate={{ y: [0, 5, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-          className="p-3 bg-muted rounded-xl"
-        >
-          <Share className="w-6 h-6 text-primary" />
-        </motion.div>
       </div>
     </div>
   );
@@ -251,16 +246,6 @@ function AndroidInstructions() {
           icon={<CheckCircle2 className="w-5 h-5" />}
           text="Conferma l'installazione"
         />
-      </div>
-
-      <div className="flex justify-center">
-        <motion.div
-          animate={{ y: [0, 5, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-          className="p-3 bg-muted rounded-xl"
-        >
-          <MoreVertical className="w-6 h-6 text-primary" />
-        </motion.div>
       </div>
     </div>
   );

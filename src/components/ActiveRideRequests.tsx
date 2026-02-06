@@ -8,6 +8,8 @@ interface RideRequest {
   pickup: string;
   destination: string;
   customer_phone: string;
+  customer_name?: string | null;
+  referral_name?: string | null;
   date_time: string;
   estimated_price: number;
   estimated_km: number;

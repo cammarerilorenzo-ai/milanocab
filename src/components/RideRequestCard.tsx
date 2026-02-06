@@ -10,6 +10,8 @@ interface RideRequest {
   pickup: string;
   destination: string;
   customer_phone: string;
+  customer_name?: string | null;
+  referral_name?: string | null;
   date_time: string;
   estimated_price: number;
   estimated_km: number;
@@ -224,11 +226,20 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
           </div>
         )}
 
-        {/* Admin phone info */}
+        {/* Admin customer info */}
         {isAdmin && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Phone className="h-3.5 w-3.5" />
-            <span>{ride.customer_phone}</span>
+          <div className="space-y-1 text-xs border-t border-border pt-2">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Phone className="h-3.5 w-3.5" />
+              <span className="font-medium">{ride.customer_name || "—"}</span>
+              <span className="text-muted-foreground/70">({ride.customer_phone})</span>
+            </div>
+            {ride.referral_name && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded">REF</span>
+                <span>{ride.referral_name}</span>
+              </div>
+            )}
           </div>
         )}
 

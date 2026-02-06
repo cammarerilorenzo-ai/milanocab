@@ -328,16 +328,16 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      // Only allow cancelling pending rides
+      // Allow cancelling pending or confirmed rides
       const { data: ride } = await supabase
         .from("ride_requests")
         .select("status")
         .eq("id", rideId)
         .single();
 
-      if (!ride || ride.status !== "pending") {
+      if (!ride || (ride.status !== "pending" && ride.status !== "confirmed")) {
         return new Response(
-          JSON.stringify({ success: false, error: "Solo le corse in attesa possono essere cancellate" }),
+          JSON.stringify({ success: false, error: "Solo le corse in attesa o confermate possono essere cancellate" }),
           { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }

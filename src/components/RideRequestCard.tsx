@@ -497,12 +497,14 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
           </Button>
         )}
 
-        {/* User cancel button for pending rides */}
-        {!isAdmin && ride.status === "pending" && (
+        {/* User cancel button for pending/confirmed rides */}
+        {!isAdmin && (ride.status === "pending" || ride.status === "confirmed") && (
           <div className="flex flex-col gap-2 pt-2">
-            <p className="text-xs text-center text-muted-foreground">
-              In attesa di conferma...
-            </p>
+            {ride.status === "pending" && (
+              <p className="text-xs text-center text-muted-foreground">
+                In attesa di conferma...
+              </p>
+            )}
             <Button
               size="sm"
               variant="destructive"

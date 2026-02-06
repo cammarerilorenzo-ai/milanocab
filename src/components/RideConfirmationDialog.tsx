@@ -70,58 +70,48 @@ export function RideConfirmationDialog({
     return () => clearInterval(interval);
   }, [open, etaMin]);
 
-  // Realtime subscription per aggiornamenti automatici
+  // Poll for status updates every 10 seconds (realtime may not fire due to RLS)
   useEffect(() => {
     if (!open || !rideId) return;
 
-    const channel = supabase
-      .channel(`ride-status-${rideId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'ride_requests',
-          filter: `id=eq.${rideId}`
-        },
-        (payload) => {
-          const newStatus = payload.new.status as string;
-          const newEta = payload.new.eta_min as number;
+    const pollStatus = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("admin-settings", {
+          body: { action: "get_ride_status", rideId }
+        });
+        if (!error && data?.success && data.ride) {
+          const newStatus = data.ride.status as string;
+          const newEta = data.ride.eta_min as number;
           
-          // Aggiorna lo stato locale
-          setRideStatus(newStatus);
-          
-          // Mostra messaggio in base al nuovo stato
-          if (newStatus === "confirmed") {
-            setRemainingMinutes((newEta || etaMin) + 2);
-            toast({
-              title: "🚗 Autista in arrivo!",
-              description: `La tua corsa è stata confermata. Arrivo tra ~${newEta || etaMin} minuti`,
-            });
-          } else if (newStatus === "picked_up") {
-            toast({
-              title: "🎉 Sei a bordo!",
-              description: "Buon viaggio!",
-            });
-          } else if (newStatus === "completed") {
-            toast({
-              title: "✅ Corsa completata",
-              description: "Grazie per aver viaggiato con noi!",
-            });
-          } else if (newStatus === "cancelled") {
-            toast({
-              title: "Corsa annullata",
-              description: "L'autista non è disponibile al momento",
-              variant: "destructive"
-            });
-          }
+          setRideStatus(prev => {
+            if (prev !== newStatus) {
+              if (newStatus === "confirmed") {
+                setRemainingMinutes((newEta || etaMin) + 2);
+                toast({
+                  title: "🚗 Autista in arrivo!",
+                  description: `La tua corsa è stata confermata. Arrivo tra ~${newEta || etaMin} minuti`,
+                });
+              } else if (newStatus === "picked_up") {
+                toast({ title: "🎉 Sei a bordo!", description: "Buon viaggio!" });
+              } else if (newStatus === "completed") {
+                toast({ title: "✅ Corsa completata", description: "Grazie per aver viaggiato con noi!" });
+              } else if (newStatus === "cancelled") {
+                toast({ title: "Corsa annullata", description: "L'autista non è disponibile al momento", variant: "destructive" });
+              }
+            }
+            return newStatus;
+          });
         }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
+      } catch (err) {
+        console.error("Poll status error:", err);
+      }
     };
+
+    // Initial check
+    pollStatus();
+    const interval = setInterval(pollStatus, 10000);
+
+    return () => clearInterval(interval);
   }, [open, rideId, etaMin, toast]);
 
   const checkRideStatus = async () => {

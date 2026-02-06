@@ -5,9 +5,10 @@ import { useToast } from "@/hooks/use-toast";
 
 interface AdminGpsTrackerProps {
   userPhone: string;
+  adminPassword?: string;
 }
 
-export function AdminGpsTracker({ userPhone }: AdminGpsTrackerProps) {
+export function AdminGpsTracker({ userPhone, adminPassword }: AdminGpsTrackerProps) {
   const { toast } = useToast();
   const [isTracking, setIsTracking] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -62,6 +63,7 @@ export function AdminGpsTracker({ userPhone }: AdminGpsTrackerProps) {
         body: {
           action: "update_admin_location",
           phone: userPhone,
+          adminPassword,
           latitude,
           longitude
         }

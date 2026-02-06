@@ -16,18 +16,27 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, phone, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier, basePrice, settingKey, settingValue, customerGroup, base_price, price_per_km, price_per_min, discount_short, discount_long, night_surcharge, airport_malpensa, airport_orio, latitude, longitude, rideId, status, etaMin } = await req.json();
+    const { action, phone, adminPassword: providedPassword, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier, basePrice, settingKey, settingValue, customerGroup, base_price, price_per_km, price_per_min, discount_short, discount_long, night_surcharge, airport_malpensa, airport_orio, latitude, longitude, rideId, status, etaMin } = await req.json();
 
     // Actions that don't require admin verification
     const publicActions = ["get_ride_status", "cancel_ride_user"];
     
     if (!publicActions.includes(action)) {
-      // Verify admin access for protected actions
-      const { data: isAdmin } = await supabase.rpc("is_admin", { check_phone: phone || "" });
+      // Verify phone-based admin access
+      const { data: isAdminUser } = await supabase.rpc("is_admin", { check_phone: phone || "" });
       
-      if (!isAdmin) {
+      if (!isAdminUser) {
         return new Response(
           JSON.stringify({ success: false, error: "Accesso non autorizzato" }),
+          { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      // Verify admin password
+      const expectedPassword = Deno.env.get("ADMIN_PASSWORD");
+      if (expectedPassword && expectedPassword !== providedPassword) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Password admin non valida" }),
           { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }

@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Car, Loader2, Settings, ShieldCheck, Plus, Trash2, Upload, X } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Car, Loader2, Settings, ShieldCheck, Plus, Trash2, Upload, X, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PricingConfigPanel } from "@/components/PricingConfigPanel";
 import { GroupPricingPanel } from "@/components/GroupPricingPanel";
@@ -40,12 +41,16 @@ const Admin = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [vehicles, setVehicles] = useState<VehicleSetting[]>([]);
   const [updating, setUpdating] = useState<string | null>(null);
   const [serviceEnabled, setServiceEnabled] = useState(true);
   const [updatingService, setUpdatingService] = useState(false);
+  // Admin password state
+  const [adminPassword, setAdminPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
   // Add vehicle dialog state
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newVehicleType, setNewVehicleType] = useState("");
@@ -57,29 +62,23 @@ const Admin = () => {
   const [isAdding, setIsAdding] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    checkAdminAndLoadSettings();
-  }, [user]);
-
-  const checkAdminAndLoadSettings = async () => {
+  const checkAdminAndLoadSettings = async (password: string) => {
     if (!user?.phone) {
       navigate("/");
       return;
     }
 
+    setIsVerifying(true);
+    setPasswordError("");
+
     try {
       const { data, error } = await supabase.functions.invoke("admin-settings", {
-        body: { action: "get_settings", phone: user.phone }
+        body: { action: "get_settings", phone: user.phone, adminPassword: password }
       });
 
       if (error || !data.success) {
+        setPasswordError(data?.error || "Accesso negato");
         setIsAdmin(false);
-        toast({
-          title: "Accesso negato",
-          description: "Non hai i permessi per accedere a questa pagina",
-          variant: "destructive"
-        });
-        navigate("/");
         return;
       }
 
@@ -88,10 +87,19 @@ const Admin = () => {
       setServiceEnabled(data.serviceEnabled ?? true);
     } catch (error) {
       console.error("Error checking admin:", error);
-      navigate("/");
+      setPasswordError("Errore di connessione");
     } finally {
-      setIsLoading(false);
+      setIsVerifying(false);
     }
+  };
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminPassword.trim()) {
+      setPasswordError("Inserisci la password");
+      return;
+    }
+    checkAdminAndLoadSettings(adminPassword);
   };
 
   const toggleVehicle = async (vehicleName: string, currentValue: boolean) => {
@@ -103,6 +111,7 @@ const Admin = () => {
         body: {
           action: "update_vehicle",
           phone: user.phone,
+          adminPassword,
           vehicleType: vehicleName,
           isAvailable: !currentValue
         }
@@ -143,6 +152,7 @@ const Admin = () => {
         body: {
           action: "update_app_setting",
           phone: user.phone,
+          adminPassword,
           settingKey: "service_enabled",
           settingValue: newValue.toString()
         }
@@ -225,6 +235,7 @@ const Admin = () => {
         body: {
           action: "add_vehicle",
           phone: user.phone,
+          adminPassword,
           vehicleType: newVehicleType.toLowerCase().replace(/\s+/g, "_"),
           displayName: newDisplayName,
           description: newDescription,
@@ -271,6 +282,7 @@ const Admin = () => {
         body: {
           action: "delete_vehicle",
           phone: user.phone,
+          adminPassword,
           vehicleType: vehicleName
         }
       });
@@ -304,6 +316,7 @@ const Admin = () => {
       body: {
         action: "update_pricing",
         phone: user.phone,
+        adminPassword,
         vehicleType,
         priceMultiplier: multiplier,
         basePrice
@@ -339,16 +352,59 @@ const Admin = () => {
     return null;
   };
 
-  if (isLoading) {
+  if (!isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-sm">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <img src={logo} alt="Milano Cab" className="h-16" />
+            </div>
+            <CardTitle className="flex items-center justify-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              Accesso Admin
+            </CardTitle>
+            <CardDescription>Inserisci la password di sicurezza</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="admin-password">Password</Label>
+                <Input
+                  id="admin-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  disabled={isVerifying}
+                  autoFocus
+                />
+              </div>
+              {passwordError && (
+                <div className="flex items-center gap-2 text-destructive text-sm">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>{passwordError}</span>
+                </div>
+              )}
+              <Button type="submit" className="w-full" disabled={isVerifying}>
+                {isVerifying ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Verifica...
+                  </>
+                ) : (
+                  "Accedi"
+                )}
+              </Button>
+              <Button variant="ghost" className="w-full" onClick={() => navigate("/")}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Torna alla home
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     );
-  }
-
-  if (!isAdmin) {
-    return null;
   }
 
   return (
@@ -373,7 +429,7 @@ const Admin = () => {
 
         {/* GPS Tracker */}
         <div className="mb-4">
-          <AdminGpsTracker userPhone={user?.phone || ""} />
+          <AdminGpsTracker userPhone={user?.phone || ""} adminPassword={adminPassword} />
         </div>
 
         {/* Service Toggle */}
@@ -474,7 +530,7 @@ const Admin = () => {
 
         {/* Group Pricing */}
         <div className="mt-6">
-          <GroupPricingPanel userPhone={user?.phone || ""} />
+          <GroupPricingPanel userPhone={user?.phone || ""} adminPassword={adminPassword} />
         </div>
       </main>
 

@@ -92,6 +92,16 @@ export function RideConfirmationDialog({
             title: "Corsa confermata! 🎉",
             description: `L'autista è in arrivo tra ~${data.ride.eta_min} minuti`
           });
+        } else if (data.ride.status === "picked_up") {
+          toast({
+            title: "Sei a bordo! 🚗",
+            description: "Buon viaggio!"
+          });
+        } else if (data.ride.status === "completed") {
+          toast({
+            title: "Corsa completata ✅",
+            description: "Grazie per aver viaggiato con noi!"
+          });
         } else if (data.ride.status === "cancelled") {
           toast({
             title: "Corsa annullata",

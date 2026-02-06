@@ -50,7 +50,7 @@ const PRICING = {
   basePrice: 5.0,      // € prezzo minimo
   pricePerKm: 1.5,     // € per km
   pricePerMin: 0.3,    // € per minuto
-  discountUnder5km: 0.95,  // 5% sconto sotto i 5km
+  discountUnder5km: 0.80,  // 20% sconto sotto i 5km
   discountOver5km: 0.85,   // 15% sconto sopra i 5km
   distanceThreshold: 5,    // km soglia per sconto maggiore
   premiumEtaExtra: 4,      // minuti extra ETA per premium (7 - 3 = 4)

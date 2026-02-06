@@ -31,7 +31,7 @@ const fallbackImages: Record<string, string> = {
 const vehicleImageStyles: Record<string, string> = {
   fiat500: "h-14 w-28",
   vwtroc: "h-20 w-40",
-  peugeot108: "h-14 w-28",
+  peugeot108: "h-20 w-40",
 };
 
 export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProps) {

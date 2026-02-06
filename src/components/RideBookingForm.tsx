@@ -385,7 +385,13 @@ export function RideBookingForm() {
       if (error) throw error;
 
       if (data && !data.success) {
-        throw new Error(data.error || "Errore sconosciuto");
+        toast({
+          title: "Prenotazione non possibile",
+          description: data.error || "Errore sconosciuto",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
       }
 
       // Save confirmed ride data and show confirmation dialog

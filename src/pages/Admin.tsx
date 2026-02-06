@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Car, Loader2, Settings, ShieldCheck, Plus, Trash2, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PricingConfigPanel } from "@/components/PricingConfigPanel";
+import { GroupPricingPanel } from "@/components/GroupPricingPanel";
 import logo from "@/assets/logo.png";
 import fiat500Image from "@/assets/fiat500.png";
 import trocCabrioImage from "@/assets/troc-cabrio.png";
@@ -415,6 +416,11 @@ const Admin = () => {
             vehicles={vehicles} 
             onUpdatePricing={handleUpdatePricing}
           />
+        </div>
+
+        {/* Group Pricing */}
+        <div className="mt-6">
+          <GroupPricingPanel userPhone={user?.phone || ""} />
         </div>
       </main>
 

@@ -397,8 +397,8 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
               </>
             ) : (
               <p className="text-sm text-green-700 font-medium w-full text-center">
-                {ride.eta_min > 0
-                  ? `🚗 In arrivo tra ~${ride.eta_min} min`
+                {(remainingMinutes ?? ride.eta_min ?? 0) > 0
+                  ? `🚗 In arrivo tra ~${remainingMinutes ?? ride.eta_min} min`
                   : "🚗 In arrivo!"}
               </p>
             )}

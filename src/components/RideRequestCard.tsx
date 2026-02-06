@@ -57,7 +57,7 @@ function getStatusColor(status: string): string {
     case "picked_up":
       return "bg-blue-500/20 text-blue-700 border-blue-500/30";
     case "completed":
-      return "bg-primary/20 text-primary border-primary/30";
+      return "bg-primary/20 text-primary border-primary/30 hover:bg-yellow-400/30";
     case "cancelled":
       return "bg-red-500/20 text-red-700 border-red-500/30";
     default:

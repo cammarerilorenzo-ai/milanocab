@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { RideBookingForm } from "@/components/RideBookingForm";
 import { ServiceUnavailable } from "@/components/ServiceUnavailable";
+import { ActiveRideRequests } from "@/components/ActiveRideRequests";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { LogOut, UserPlus, Loader2 } from "lucide-react";
@@ -113,6 +114,9 @@ const Index = () => {
             Prenota la tua corsa in pochi secondi
           </p>
         </div>
+
+        {/* Active Ride Requests */}
+        <ActiveRideRequests isAdmin={isAdmin} userPhone={user?.phone} />
 
         {/* Booking Form */}
         <div className="bg-card/90 backdrop-blur-md rounded-2xl border border-border p-6 shadow-2xl">

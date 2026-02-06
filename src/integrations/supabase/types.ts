@@ -41,6 +41,7 @@ export type Database = {
       authorized_phones: {
         Row: {
           created_at: string
+          customer_group: Database["public"]["Enums"]["customer_group"] | null
           id: string
           name: string | null
           phone: string
@@ -48,6 +49,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          customer_group?: Database["public"]["Enums"]["customer_group"] | null
           id?: string
           name?: string | null
           phone: string
@@ -55,6 +57,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          customer_group?: Database["public"]["Enums"]["customer_group"] | null
           id?: string
           name?: string | null
           phone?: string

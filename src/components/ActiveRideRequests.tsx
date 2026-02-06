@@ -59,7 +59,10 @@ export function ActiveRideRequests({ isAdmin, userPhone }: ActiveRideRequestsPro
   useEffect(() => {
     fetchRides();
 
-    // Subscribe to realtime changes
+    // Poll every 10 seconds to pick up ETA changes and status updates
+    const pollInterval = setInterval(fetchRides, 10000);
+
+    // Also subscribe to realtime as a bonus (may not fire due to RLS)
     const channel = supabase
       .channel("ride_requests_changes")
       .on(
@@ -69,14 +72,14 @@ export function ActiveRideRequests({ isAdmin, userPhone }: ActiveRideRequestsPro
           schema: "public",
           table: "ride_requests"
         },
-        (payload) => {
-          console.log("Ride request change:", payload);
+        () => {
           fetchRides();
         }
       )
       .subscribe();
 
     return () => {
+      clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
   }, [isAdmin, userPhone]);

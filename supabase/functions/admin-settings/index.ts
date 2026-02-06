@@ -16,7 +16,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, phone, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier, basePrice, settingKey, settingValue, customerGroup, base_price, price_per_km, price_per_min, discount_short, discount_long, night_surcharge, airport_malpensa, airport_orio, latitude, longitude } = await req.json();
+    const { action, phone, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier, basePrice, settingKey, settingValue, customerGroup, base_price, price_per_km, price_per_min, discount_short, discount_long, night_surcharge, airport_malpensa, airport_orio, latitude, longitude, rideId, status } = await req.json();
 
     // Verify admin access
     const { data: isAdmin } = await supabase.rpc("is_admin", { check_phone: phone });
@@ -268,6 +268,27 @@ const handler = async (req: Request): Promise<Response> => {
 
       return new Response(
         JSON.stringify({ success: true, message: "Posizione aggiornata" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (action === "update_ride_status") {
+      if (!rideId || !status) {
+        return new Response(
+          JSON.stringify({ success: false, error: "ID corsa e stato richiesti" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      const { error } = await supabase
+        .from("ride_requests")
+        .update({ status, confirmed_at: status === "cancelled" ? new Date().toISOString() : null })
+        .eq("id", rideId);
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, message: `Stato corsa aggiornato a ${status}` }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }

@@ -1,0 +1,146 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { RideRequestCard } from "./RideRequestCard";
+import { Loader2 } from "lucide-react";
+
+interface RideRequest {
+  id: string;
+  pickup: string;
+  destination: string;
+  customer_phone: string;
+  date_time: string;
+  estimated_price: number;
+  estimated_km: number;
+  estimated_min: number;
+  status: string;
+  pickup_lat: number;
+  pickup_lon: number;
+  dest_lat: number;
+  dest_lon: number;
+  confirmation_token: string;
+  created_at: string;
+  eta_min?: number | null;
+}
+
+interface ActiveRideRequestsProps {
+  isAdmin: boolean;
+  userPhone?: string;
+}
+
+export function ActiveRideRequests({ isAdmin, userPhone }: ActiveRideRequestsProps) {
+  const [rides, setRides] = useState<RideRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchRides = async () => {
+    try {
+      let query = supabase
+        .from("ride_requests")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (isAdmin) {
+        // Admin sees all pending and recent confirmed/cancelled
+        query = query.in("status", ["pending", "confirmed", "cancelled"]);
+      } else if (userPhone) {
+        // User sees only their own rides
+        const cleanPhone = userPhone.replace(/\D/g, "");
+        query = query.or(`customer_phone.ilike.%${cleanPhone}%,customer_phone.ilike.%${cleanPhone.slice(-10)}%`);
+      }
+
+      const { data, error } = await query.limit(10);
+
+      if (error) {
+        console.error("Error fetching rides:", error);
+        return;
+      }
+
+      // Filter for user's rides more precisely on client side
+      let filteredRides = data || [];
+      if (!isAdmin && userPhone) {
+        const cleanPhone = userPhone.replace(/\D/g, "");
+        const phoneDigits = cleanPhone.slice(-10);
+        filteredRides = filteredRides.filter(ride => {
+          const ridePhone = ride.customer_phone.replace(/\D/g, "");
+          return ridePhone.includes(phoneDigits) || phoneDigits.includes(ridePhone.slice(-10));
+        });
+      }
+
+      setRides(filteredRides);
+    } catch (error) {
+      console.error("Error in fetchRides:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRides();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel("ride_requests_changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "ride_requests"
+        },
+        (payload) => {
+          console.log("Ride request change:", payload);
+          fetchRides();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin, userPhone]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-4">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (rides.length === 0) {
+    return null;
+  }
+
+  // Filter active rides (pending or recently confirmed)
+  const activeRides = rides.filter(ride => {
+    if (ride.status === "pending") return true;
+    if (ride.status === "confirmed") {
+      // Show confirmed rides for 30 minutes
+      const confirmedTime = ride.created_at ? new Date(ride.created_at).getTime() : 0;
+      return Date.now() - confirmedTime < 30 * 60 * 1000;
+    }
+    return false;
+  });
+
+  if (activeRides.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-sm font-medium text-muted-foreground px-1">
+        {isAdmin ? "Richieste corse" : "Le tue corse"}
+      </h3>
+      <div className="space-y-3">
+        {activeRides.map((ride) => (
+          <RideRequestCard
+            key={ride.id}
+            ride={ride}
+            isAdmin={isAdmin}
+            userPhone={userPhone}
+            onStatusChange={fetchRides}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

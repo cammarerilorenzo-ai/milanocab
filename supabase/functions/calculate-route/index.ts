@@ -128,6 +128,10 @@ interface GeocodingResult {
     };
     properties: {
       label: string;
+      name?: string;
+      street?: string;
+      housenumber?: string;
+      layer?: string; // "address", "street", "venue", "locality", etc.
     };
   }>;
 }
@@ -169,51 +173,177 @@ function normalizeAddressLombardy(address: string): string {
   return `${normalized}, Lombardia, Italia`;
 }
 
-// Geocode an address to coordinates (restricted to Milan - for pickup)
-async function geocodeAddressMilan(address: string, apiKey: string): Promise<[number, number] | null> {
-  const normalizedAddress = normalizeAddressMilan(address);
+// Extract street part from address (remove city/country suffixes)
+function extractStreetPart(address: string): string {
+  // Remove ", Milano", ", Italia", etc.
+  return address.trim().replace(/,\s*(milano|milan|italia|lombardia|mi|it).*$/i, '').trim();
+}
+
+// Extract street name keywords from user input for matching
+function extractStreetKeywords(address: string): string[] {
+  const streetPart = extractStreetPart(address).toLowerCase();
+  const cleaned = streetPart.replace(/\d+/g, '').trim();
+  return cleaned.split(/\s+/).filter(w => w.length > 2 && !['via', 'viale', 'corso', 'piazza', 'piazzale', 'largo', 'vicolo', 'strada'].includes(w));
+}
+
+// Check if a geocoding result matches the searched street
+function resultMatchesStreet(feature: GeocodingResult['features'][0], keywords: string[]): boolean {
+  const label = feature.properties.label.toLowerCase();
+  const name = (feature.properties.name || '').toLowerCase();
+  const street = (feature.properties.street || '').toLowerCase();
+  const layer = feature.properties.layer || '';
   
-  // Usa focus.point per prioritizzare risultati vicino al centro di Milano
-  const milanCenterLat = 45.4642;
-  const milanCenterLon = 9.1900;
+  const isStreetLevel = ['address', 'street', 'venue'].includes(layer);
   
-  const url = `${ORS_BASE_URL}/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(normalizedAddress)}&boundary.country=IT&boundary.rect.min_lon=${MILAN_BOUNDS.minLon}&boundary.rect.min_lat=${MILAN_BOUNDS.minLat}&boundary.rect.max_lon=${MILAN_BOUNDS.maxLon}&boundary.rect.max_lat=${MILAN_BOUNDS.maxLat}&focus.point.lat=${milanCenterLat}&focus.point.lon=${milanCenterLon}&size=10`;
+  const matchCount = keywords.filter(kw => 
+    label.includes(kw) || name.includes(kw) || street.includes(kw)
+  ).length;
+  
+  return isStreetLevel && matchCount > 0;
+}
+
+// Common Milan street name corrections (joined words that should be separated)
+const STREET_NAME_CORRECTIONS: Record<string, string> = {
+  'montenero': 'Monte Nero',
+  'montegrappa': 'Monte Grappa',
+  'montenapoleone': 'Monte Napoleone',
+  'monterosa': 'Monte Rosa',
+  'monteceneri': 'Monte Ceneri',
+  'montebianco': 'Monte Bianco',
+  'montesanto': 'Monte Santo',
+  'santagostino': "Sant'Agostino",
+  'santambrogio': "Sant'Ambrogio",
+  'santangelo': "Sant'Angelo",
+  'portaromana': 'Porta Romana',
+  'portavenezia': 'Porta Venezia',
+  'portagenova': 'Porta Genova',
+  'portanuova': 'Porta Nuova',
+  'portagaribaldi': 'Porta Garibaldi',
+  'portaticinese': 'Porta Ticinese',
+  'portavigentina': 'Porta Vigentina',
+  'portavolta': 'Porta Volta',
+  'buonosaires': 'Buenos Aires',
+  'buenosaires': 'Buenos Aires',
+};
+
+// Fix common street name misspellings/joined words
+function fixStreetName(address: string): string {
+  let fixed = address;
+  const addressLower = address.toLowerCase();
+  
+  for (const [wrong, correct] of Object.entries(STREET_NAME_CORRECTIONS)) {
+    if (addressLower.includes(wrong)) {
+      const regex = new RegExp(wrong, 'gi');
+      fixed = fixed.replace(regex, correct);
+    }
+  }
+  
+  return fixed;
+}
+
+// Text-based geocoding
+async function geocodeText(
+  searchText: string,
+  apiKey: string,
+  bounds: { minLat: number; maxLat: number; minLon: number; maxLon: number },
+  focusLat?: number,
+  focusLon?: number
+): Promise<GeocodingResult | null> {
+  let url = `${ORS_BASE_URL}/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(searchText)}&boundary.country=IT&boundary.rect.min_lon=${bounds.minLon}&boundary.rect.min_lat=${bounds.minLat}&boundary.rect.max_lon=${bounds.maxLon}&boundary.rect.max_lat=${bounds.maxLat}&size=10`;
+  
+  if (focusLat !== undefined && focusLon !== undefined) {
+    url += `&focus.point.lat=${focusLat}&focus.point.lon=${focusLon}`;
+  }
   
   const response = await fetch(url);
   if (!response.ok) {
-    console.error(`Geocoding failed for "${address}": ${response.status}`);
+    console.error(`Text geocoding failed: ${response.status}`);
     return null;
   }
   
-  const data: GeocodingResult = await response.json();
+  return await response.json();
+}
+
+// Pick best result from geocoding data
+function pickBestResult(
+  data: GeocodingResult,
+  keywords: string[],
+  boundsCheck: (lon: number, lat: number) => boolean,
+  label: string
+): [number, number] | null {
+  if (!data.features || data.features.length === 0) return null;
   
-  if (data.features && data.features.length > 0) {
-    // Prima cerca risultati esplicitamente a Milano
-    for (const feature of data.features) {
-      const [lon, lat] = feature.geometry.coordinates;
-      const label = feature.properties.label.toLowerCase();
-      
-      if (isInMilan(lon, lat) && label.includes("milan")) {
-        console.log(`Found address "${address}" at [${lon}, ${lat}] - ${feature.properties.label}`);
-        return [lon, lat];
-      }
+  console.log(`${label}: ${data.features.length} results, keywords: [${keywords.join(', ')}]`);
+  
+  for (const f of data.features) {
+    console.log(`  - [${f.geometry.coordinates}] layer=${f.properties.layer} name="${f.properties.name}" label="${f.properties.label}"`);
+  }
+  
+  // Priority 1: street-level match with keyword match
+  for (const feature of data.features) {
+    const [lon, lat] = feature.geometry.coordinates;
+    if (boundsCheck(lon, lat) && resultMatchesStreet(feature, keywords)) {
+      console.log(`${label}: SELECTED street match at [${lon}, ${lat}] - ${feature.properties.label}`);
+      return [lon, lat];
     }
-    
-    // Se non trova "milan" nel label, prendi il primo risultato dentro i bounds di Milano
-    for (const feature of data.features) {
-      const [lon, lat] = feature.geometry.coordinates;
-      
-      if (isInMilan(lon, lat)) {
-        console.log(`Found address "${address}" at [${lon}, ${lat}] (in Milan bounds) - ${feature.properties.label}`);
-        return [lon, lat];
-      }
+  }
+  
+  // Priority 2: any address/street layer result
+  for (const feature of data.features) {
+    const [lon, lat] = feature.geometry.coordinates;
+    const layer = feature.properties.layer || '';
+    if (boundsCheck(lon, lat) && ['address', 'street', 'venue'].includes(layer)) {
+      console.log(`${label}: SELECTED layer=${layer} at [${lon}, ${lat}] - ${feature.properties.label}`);
+      return [lon, lat];
     }
-    
-    console.error(`No Milan location found for "${address}". Results were outside Milan bounds.`);
-    return null;
   }
   
   return null;
+}
+
+// Geocode with retry: first try corrected name, then original
+async function geocodeWithRetry(
+  address: string,
+  locality: string,
+  apiKey: string,
+  bounds: { minLat: number; maxLat: number; minLon: number; maxLon: number },
+  boundsCheck: (lon: number, lat: number) => boolean,
+  logPrefix: string
+): Promise<[number, number] | null> {
+  const fixedAddress = fixStreetName(address);
+  const keywords = extractStreetKeywords(fixedAddress);
+  
+  // Try with corrected name + locality
+  const searchText1 = `${fixedAddress.trim()}, ${locality}, Italia`;
+  console.log(`${logPrefix}: trying "${searchText1}"`);
+  const data1 = await geocodeText(searchText1, apiKey, bounds, 45.4642, 9.1900);
+  if (data1) {
+    const result = pickBestResult(data1, keywords, boundsCheck, `${logPrefix} corrected`);
+    if (result) return result;
+  }
+  
+  // If the address was corrected, also try original
+  if (fixedAddress !== address) {
+    const originalKeywords = extractStreetKeywords(address);
+    const searchText2 = `${address.trim()}, ${locality}, Italia`;
+    console.log(`${logPrefix}: trying original "${searchText2}"`);
+    const data2 = await geocodeText(searchText2, apiKey, bounds, 45.4642, 9.1900);
+    if (data2) {
+      const result = pickBestResult(data2, originalKeywords, boundsCheck, `${logPrefix} original`);
+      if (result) return result;
+    }
+  }
+  
+  return null;
+}
+
+// Geocode an address to coordinates (restricted to Milan - for pickup)
+async function geocodeAddressMilan(address: string, apiKey: string): Promise<[number, number] | null> {
+  const result = await geocodeWithRetry(address, 'Milano', apiKey, MILAN_BOUNDS, isInMilan, 'Pickup');
+  if (!result) {
+    console.error(`No Milan street-level result for pickup "${address}".`);
+  }
+  return result;
 }
 
 // Check if destination contains a specific non-Milan location
@@ -223,73 +353,18 @@ function hasNonMilanLocation(address: string): boolean {
   return nonMilanLocations.some(loc => addressLower.includes(loc));
 }
 
-// Geocode an address to coordinates (restricted to Lombardy - for destination)
+// Geocode an address to coordinates (destination)
 async function geocodeAddressLombardy(address: string, apiKey: string): Promise<[number, number] | null> {
   const isNonMilan = hasNonMilanLocation(address);
-  
-  // Default: treat as Milan address unless a specific other city is mentioned
-  const normalizedAddress = isNonMilan 
-    ? normalizeAddressLombardy(address)
-    : `${address.trim()}, Milano, Italia`;
-  
-  const milanCenterLat = 45.4642;
-  const milanCenterLon = 9.1900;
-  
-  // For Milan addresses, use Milan bounds; for others, use Lombardy bounds
   const bounds = isNonMilan ? LOMBARDY_BOUNDS : MILAN_BOUNDS;
+  const boundsCheck = isNonMilan ? isInLombardy : isInMilan;
+  const locality = isNonMilan ? 'Lombardia' : 'Milano';
   
-  const url = `${ORS_BASE_URL}/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(normalizedAddress)}&boundary.country=IT&boundary.rect.min_lon=${bounds.minLon}&boundary.rect.min_lat=${bounds.minLat}&boundary.rect.max_lon=${bounds.maxLon}&boundary.rect.max_lat=${bounds.maxLat}&focus.point.lat=${milanCenterLat}&focus.point.lon=${milanCenterLon}&size=10`;
-  
-  const response = await fetch(url);
-  if (!response.ok) {
-    console.error(`Geocoding failed for "${address}": ${response.status}`);
-    return null;
+  const result = await geocodeWithRetry(address, locality, apiKey, bounds, boundsCheck, 'Dest');
+  if (!result) {
+    console.error(`No location found for destination "${address}".`);
   }
-  
-  const data: GeocodingResult = await response.json();
-  
-  if (data.features && data.features.length > 0) {
-    if (!isNonMilan) {
-      // For Milan: strictly prefer results within Milan bounds with "milan" in label
-      for (const feature of data.features) {
-        const [lon, lat] = feature.geometry.coordinates;
-        const label = feature.properties.label.toLowerCase();
-        
-        if (isInMilan(lon, lat) && label.includes("milan")) {
-          console.log(`Found destination "${address}" at [${lon}, ${lat}] (Milan match) - ${feature.properties.label}`);
-          return [lon, lat];
-        }
-      }
-      
-      // Fallback: first result within Milan bounds
-      for (const feature of data.features) {
-        const [lon, lat] = feature.geometry.coordinates;
-        
-        if (isInMilan(lon, lat)) {
-          console.log(`Found destination "${address}" at [${lon}, ${lat}] (in Milan bounds) - ${feature.properties.label}`);
-          return [lon, lat];
-        }
-      }
-      
-      console.error(`No Milan location found for destination "${address}". Results were outside Milan bounds.`);
-      return null;
-    }
-    
-    // For non-Milan: take first result in Lombardy
-    for (const feature of data.features) {
-      const [lon, lat] = feature.geometry.coordinates;
-      
-      if (isInLombardy(lon, lat)) {
-        console.log(`Found destination "${address}" at [${lon}, ${lat}] - ${feature.properties.label}`);
-        return [lon, lat];
-      }
-    }
-    
-    console.error(`No Lombardy location found for "${address}". Results were outside Lombardy bounds.`);
-    return null;
-  }
-  
-  return null;
+  return result;
 }
 
 // Calculate route between two coordinate pairs

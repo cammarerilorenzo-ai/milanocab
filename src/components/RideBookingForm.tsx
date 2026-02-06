@@ -577,9 +577,7 @@ export function RideBookingForm() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">
-                {routeEstimate.isFixedPrice 
-                  ? (routeEstimate.isNightRate ? "Tariffa aeroporto + notturna" : "Tariffa fissa aeroporto")
-                  : (routeEstimate.isNightRate ? "Prezzo stimato + notturno" : "Prezzo stimato")}
+                {routeEstimate.isFixedPrice ? "Tariffa fissa aeroporto" : "Prezzo"}
               </p>
               <p className="text-2xl font-bold text-green-600">€{routeEstimate.price.toFixed(2)}</p>
               {routeEstimate.isNightRate && (

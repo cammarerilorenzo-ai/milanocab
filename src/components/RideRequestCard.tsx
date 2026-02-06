@@ -31,7 +31,6 @@ interface RideRequestCardProps {
   ride: RideRequest;
   isAdmin: boolean;
   userPhone?: string;
-  adminPassword?: string;
   onStatusChange?: () => void;
 }
 
@@ -82,7 +81,7 @@ function getStatusLabel(status: string): string {
   }
 }
 
-export function RideRequestCard({ ride, isAdmin, userPhone, adminPassword, onStatusChange }: RideRequestCardProps) {
+export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: RideRequestCardProps) {
   const { toast } = useToast();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
@@ -181,7 +180,6 @@ export function RideRequestCard({ ride, isAdmin, userPhone, adminPassword, onSta
         body: {
           action: "update_ride_status",
           phone: userPhone,
-          adminPassword,
           rideId: ride.id,
           status: "cancelled"
         }
@@ -213,7 +211,6 @@ export function RideRequestCard({ ride, isAdmin, userPhone, adminPassword, onSta
         body: {
           action: "update_ride_status",
           phone: userPhone,
-          adminPassword,
           rideId: ride.id,
           status: "picked_up"
         }
@@ -245,7 +242,6 @@ export function RideRequestCard({ ride, isAdmin, userPhone, adminPassword, onSta
         body: {
           action: "update_ride_status",
           phone: userPhone,
-          adminPassword,
           rideId: ride.id,
           status: "completed"
         }
@@ -280,7 +276,6 @@ export function RideRequestCard({ ride, isAdmin, userPhone, adminPassword, onSta
         body: {
           action: "update_eta",
           phone: userPhone,
-          adminPassword,
           rideId: ride.id,
           etaMin: newEta
         }

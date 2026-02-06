@@ -26,7 +26,7 @@ import {
 
 interface VehicleSetting {
   id: string;
-  vehicle_type: string;
+  vehicle_name: string;
   is_available: boolean;
   updated_at: string;
   display_name: string | null;
@@ -94,16 +94,16 @@ const Admin = () => {
     }
   };
 
-  const toggleVehicle = async (vehicleType: string, currentValue: boolean) => {
+  const toggleVehicle = async (vehicleName: string, currentValue: boolean) => {
     if (!user?.phone) return;
 
-    setUpdating(vehicleType);
+    setUpdating(vehicleName);
     try {
       const { data, error } = await supabase.functions.invoke("admin-settings", {
         body: {
           action: "update_vehicle",
           phone: user.phone,
-          vehicleType,
+          vehicleType: vehicleName,
           isAvailable: !currentValue
         }
       });
@@ -113,13 +113,13 @@ const Admin = () => {
       }
 
       setVehicles(prev => prev.map(v => 
-        v.vehicle_type === vehicleType ? { ...v, is_available: !currentValue } : v
+        v.vehicle_name === vehicleName ? { ...v, is_available: !currentValue } : v
       ));
 
-      const vehicle = vehicles.find(v => v.vehicle_type === vehicleType);
+      const vehicle = vehicles.find(v => v.vehicle_name === vehicleName);
       toast({
         title: "Impostazione aggiornata",
-        description: `${vehicle?.display_name || vehicleType} ${!currentValue ? "attivato" : "disattivato"}`
+        description: `${vehicle?.display_name || vehicleName} ${!currentValue ? "attivato" : "disattivato"}`
       });
     } catch (error) {
       console.error("Error updating vehicle:", error);
@@ -210,7 +210,7 @@ const Admin = () => {
     }
 
     // Check if vehicle type already exists
-    if (vehicles.some(v => v.vehicle_type === newVehicleType.toLowerCase().replace(/\s+/g, "_"))) {
+    if (vehicles.some(v => v.vehicle_name === newVehicleType.toLowerCase().replace(/\s+/g, "_"))) {
       toast({
         title: "Errore",
         description: "Esiste già un veicolo con questo identificativo",
@@ -257,21 +257,21 @@ const Admin = () => {
     }
   };
 
-  const handleDeleteVehicle = async (vehicleType: string) => {
+  const handleDeleteVehicle = async (vehicleName: string) => {
     if (!user?.phone) return;
 
-    const vehicle = vehicles.find(v => v.vehicle_type === vehicleType);
-    if (!confirm(`Sei sicuro di voler eliminare "${vehicle?.display_name || vehicleType}"?`)) {
+    const vehicle = vehicles.find(v => v.vehicle_name === vehicleName);
+    if (!confirm(`Sei sicuro di voler eliminare "${vehicle?.display_name || vehicleName}"?`)) {
       return;
     }
 
-    setUpdating(vehicleType);
+    setUpdating(vehicleName);
     try {
       const { data, error } = await supabase.functions.invoke("admin-settings", {
         body: {
           action: "delete_vehicle",
           phone: user.phone,
-          vehicleType
+          vehicleType: vehicleName
         }
       });
 
@@ -279,11 +279,11 @@ const Admin = () => {
         throw new Error(data?.error || "Errore nell'eliminazione");
       }
 
-      setVehicles(prev => prev.filter(v => v.vehicle_type !== vehicleType));
+      setVehicles(prev => prev.filter(v => v.vehicle_name !== vehicleName));
 
       toast({
         title: "Veicolo eliminato",
-        description: `${vehicle?.display_name || vehicleType} è stato rimosso`
+        description: `${vehicle?.display_name || vehicleName} è stato rimosso`
       });
     } catch (error) {
       console.error("Error deleting vehicle:", error);
@@ -316,7 +316,7 @@ const Admin = () => {
 
     // Update local state
     setVehicles(prev => prev.map(v => 
-      v.vehicle_type === vehicleType ? { ...v, price_multiplier: multiplier, base_price: basePrice } : v
+      v.vehicle_name === vehicleType ? { ...v, price_multiplier: multiplier, base_price: basePrice } : v
     ));
   };
 
@@ -334,8 +334,8 @@ const Admin = () => {
 
   const getVehicleImage = (vehicle: VehicleSetting) => {
     if (vehicle.image_url) return vehicle.image_url;
-    if (vehicle.vehicle_type === "economy") return fiat500Image;
-    if (vehicle.vehicle_type === "premium") return trocCabrioImage;
+    if (vehicle.vehicle_name === "fiat500") return fiat500Image;
+    if (vehicle.vehicle_name === "vwtroc") return trocCabrioImage;
     return null;
   };
 
@@ -414,13 +414,13 @@ const Admin = () => {
                     {image && (
                       <img 
                         src={image} 
-                        alt={vehicle.display_name || vehicle.vehicle_type} 
+                        alt={vehicle.display_name || vehicle.vehicle_name} 
                         className="h-12 w-24 object-contain"
                       />
                     )}
                     <div>
                       <p className="font-medium text-foreground">
-                        {vehicle.display_name || vehicle.vehicle_type}
+                        {vehicle.display_name || vehicle.vehicle_name}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {vehicle.description || "Nessuna descrizione"}
@@ -431,22 +431,22 @@ const Admin = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    {updating === vehicle.vehicle_type ? (
+                    {updating === vehicle.vehicle_name ? (
                       <Loader2 className="h-5 w-5 animate-spin text-primary" />
                     ) : (
                       <>
-                        <Label htmlFor={vehicle.vehicle_type} className="text-sm text-muted-foreground">
+                        <Label htmlFor={vehicle.vehicle_name} className="text-sm text-muted-foreground">
                           {vehicle.is_available ? "Attivo" : "Disattivo"}
                         </Label>
                         <Switch
-                          id={vehicle.vehicle_type}
+                          id={vehicle.vehicle_name}
                           checked={vehicle.is_available}
-                          onCheckedChange={() => toggleVehicle(vehicle.vehicle_type, vehicle.is_available)}
+                          onCheckedChange={() => toggleVehicle(vehicle.vehicle_name, vehicle.is_available)}
                         />
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDeleteVehicle(vehicle.vehicle_type)}
+                          onClick={() => handleDeleteVehicle(vehicle.vehicle_name)}
                           className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />

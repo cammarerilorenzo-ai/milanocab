@@ -38,7 +38,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: vehicles, error } = await supabase
         .from("vehicle_settings")
         .select("*")
-        .order("vehicle_type");
+        .order("vehicle_name");
 
       if (error) throw error;
 
@@ -85,7 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { error } = await supabase
         .from("vehicle_settings")
         .update({ is_available: isAvailable, updated_at: new Date().toISOString() })
-        .eq("vehicle_type", vehicleType);
+        .eq("vehicle_name", vehicleType);
 
       if (error) throw error;
 
@@ -135,7 +135,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: newVehicle, error } = await supabase
         .from("vehicle_settings")
         .insert({
-          vehicle_type: vehicleType,
+          vehicle_name: vehicleType,
           display_name: displayName,
           description: description,
           image_url: imageUrl,
@@ -172,7 +172,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { error } = await supabase
         .from("vehicle_settings")
         .update(updateData)
-        .eq("vehicle_type", vehicleType);
+        .eq("vehicle_name", vehicleType);
 
       if (error) throw error;
 
@@ -187,7 +187,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: vehicle } = await supabase
         .from("vehicle_settings")
         .select("image_url")
-        .eq("vehicle_type", vehicleType)
+        .eq("vehicle_name", vehicleType)
         .single();
 
       if (vehicle?.image_url) {
@@ -200,7 +200,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { error } = await supabase
         .from("vehicle_settings")
         .delete()
-        .eq("vehicle_type", vehicleType);
+        .eq("vehicle_name", vehicleType);
 
       if (error) throw error;
 

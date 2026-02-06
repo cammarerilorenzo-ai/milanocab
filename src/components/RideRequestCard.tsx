@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MapPin, Navigation, Clock, Route, Check, X, Loader2, Phone } from "lucide-react";
+import { MapPin, Navigation, Clock, Route, Check, X, Loader2, Phone, UserCheck, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +53,10 @@ function getStatusColor(status: string): string {
       return "bg-yellow-500/20 text-yellow-700 border-yellow-500/30";
     case "confirmed":
       return "bg-green-500/20 text-green-700 border-green-500/30";
+    case "picked_up":
+      return "bg-blue-500/20 text-blue-700 border-blue-500/30";
+    case "completed":
+      return "bg-primary/20 text-primary border-primary/30";
     case "cancelled":
       return "bg-red-500/20 text-red-700 border-red-500/30";
     default:
@@ -66,6 +70,10 @@ function getStatusLabel(status: string): string {
       return "In attesa";
     case "confirmed":
       return "Confermata";
+    case "picked_up":
+      return "In corso";
+    case "completed":
+      return "Completata";
     case "cancelled":
       return "Rifiutata";
     default:
@@ -77,6 +85,8 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
   const { toast } = useToast();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
+  const [isPickingUp, setIsPickingUp] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const [remainingMinutes, setRemainingMinutes] = useState<number | null>(null);
 
   // Countdown timer for ETA
@@ -193,8 +203,72 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
     }
   };
 
+  const handlePickUp = async () => {
+    setIsPickingUp(true);
+    try {
+      const { error } = await supabase.functions.invoke("admin-settings", {
+        body: {
+          action: "update_ride_status",
+          phone: userPhone,
+          rideId: ride.id,
+          status: "picked_up"
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Cliente a bordo",
+        description: "Corsa in corso"
+      });
+      onStatusChange?.();
+    } catch (error) {
+      console.error("Error picking up:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile aggiornare lo stato",
+        variant: "destructive"
+      });
+    } finally {
+      setIsPickingUp(false);
+    }
+  };
+
+  const handleComplete = async () => {
+    setIsCompleting(true);
+    try {
+      const { error } = await supabase.functions.invoke("admin-settings", {
+        body: {
+          action: "update_ride_status",
+          phone: userPhone,
+          rideId: ride.id,
+          status: "completed"
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Corsa completata",
+        description: "La corsa è stata terminata con successo"
+      });
+      onStatusChange?.();
+    } catch (error) {
+      console.error("Error completing ride:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile completare la corsa",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
   const isUserRide = userPhone && ride.customer_phone.includes(userPhone.replace(/\D/g, ""));
   const showAdminControls = isAdmin && ride.status === "pending";
+  const showPickUpButton = isAdmin && ride.status === "confirmed";
+  const showCompleteButton = isAdmin && ride.status === "picked_up";
 
   return (
     <Card className="overflow-hidden border-border bg-card/95 backdrop-blur-sm">
@@ -303,6 +377,44 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
               )}
             </Button>
           </div>
+        )}
+
+        {/* Pick Up Button - for confirmed rides */}
+        {showPickUpButton && (
+          <Button
+            size="sm"
+            className="w-full bg-blue-600 hover:bg-blue-700"
+            onClick={handlePickUp}
+            disabled={isPickingUp}
+          >
+            {isPickingUp ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <UserCheck className="h-4 w-4 mr-1" />
+                Conferma Pick-up
+              </>
+            )}
+          </Button>
+        )}
+
+        {/* Complete Ride Button - for picked up rides */}
+        {showCompleteButton && (
+          <Button
+            size="sm"
+            className="w-full"
+            onClick={handleComplete}
+            disabled={isCompleting}
+          >
+            {isCompleting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Flag className="h-4 w-4 mr-1" />
+                Termina Corsa
+              </>
+            )}
+          </Button>
         )}
 
         {/* User waiting message */}

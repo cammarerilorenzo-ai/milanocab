@@ -217,6 +217,30 @@ export type Database = {
         }
         Relationships: []
       }
+      ride_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          ride_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          ride_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          ride_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

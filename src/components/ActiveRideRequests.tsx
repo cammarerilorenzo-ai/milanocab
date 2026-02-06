@@ -45,9 +45,10 @@ export function ActiveRideRequests({ isAdmin, userPhone, adminPassword }: Active
         // Admin sees all pending, confirmed, and picked_up rides
         query = query.in("status", ["pending", "confirmed", "picked_up"]);
       } else if (userPhone) {
-        // User sees only their own rides
+        // Phone is redacted in DB as ***XXXX (last 4 digits)
         const cleanPhone = userPhone.replace(/\D/g, "");
-        query = query.or(`customer_phone.ilike.%${cleanPhone}%,customer_phone.ilike.%${cleanPhone.slice(-10)}%`);
+        const last4 = cleanPhone.slice(-4);
+        query = query.ilike("customer_phone", `%${last4}`);
       }
 
       const { data, error } = await query.limit(10);
@@ -57,18 +58,7 @@ export function ActiveRideRequests({ isAdmin, userPhone, adminPassword }: Active
         return;
       }
 
-      // Filter for user's rides more precisely on client side
-      let filteredRides = data || [];
-      if (!isAdmin && userPhone) {
-        const cleanPhone = userPhone.replace(/\D/g, "");
-        const phoneDigits = cleanPhone.slice(-10);
-        filteredRides = filteredRides.filter(ride => {
-          const ridePhone = ride.customer_phone.replace(/\D/g, "");
-          return ridePhone.includes(phoneDigits) || phoneDigits.includes(ridePhone.slice(-10));
-        });
-      }
-
-      setRides(filteredRides);
+      setRides(data || []);
     } catch (error) {
       console.error("Error in fetchRides:", error);
     } finally {

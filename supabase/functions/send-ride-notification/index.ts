@@ -95,6 +95,12 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Missing required fields");
     }
 
+    // Validate phone number (at least 9 digits)
+    const phoneDigits = customerPhone.replace(/\D/g, "");
+    if (phoneDigits.length < 9 || phoneDigits.length > 15) {
+      throw new Error("Invalid phone number format");
+    }
+
     // Check if customer already has an active ride (pending, confirmed, or picked_up)
     const last4 = phoneDigits.slice(-4);
     const { data: activeRides, error: activeError } = await supabase
@@ -109,12 +115,6 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ success: false, error: "Hai già una corsa attiva. Attendi che venga completata o annullala prima di prenotarne un'altra." }),
         { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
-    }
-
-    // Validate phone number (at least 9 digits)
-    const phoneDigits = customerPhone.replace(/\D/g, "");
-    if (phoneDigits.length < 9 || phoneDigits.length > 15) {
-      throw new Error("Invalid phone number format");
     }
 
     // Validate field lengths

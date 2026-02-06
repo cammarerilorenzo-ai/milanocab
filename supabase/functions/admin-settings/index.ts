@@ -365,7 +365,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       const { error } = await supabase
         .from("ride_requests")
-        .update({ eta_min: etaMin, confirmed_at: new Date().toISOString() })
+        .update({ eta_min: etaMin })
         .eq("id", rideId);
 
       if (error) throw error;

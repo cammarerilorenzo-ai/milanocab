@@ -117,7 +117,8 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
             />
           )}
           <div>
-            <p className="font-medium text-foreground">{vehicle.description || vehicle.display_name || vehicle.vehicle_name}</p>
+            <p className="font-medium text-foreground">{vehicle.display_name || vehicle.vehicle_name}</p>
+            <p className="text-xs text-muted-foreground">{vehicle.description || ""}</p>
           </div>
         </div>
       </div>
@@ -157,7 +158,10 @@ export function VehicleTypeSelector({ value, onChange }: VehicleTypeSelectorProp
               </div>
               <div className="text-left sm:text-center flex-1 sm:flex-none sm:min-h-[32px] flex flex-col justify-center">
                 <p className="font-medium text-foreground text-sm sm:text-xs">
-                  {vehicle.description || vehicle.display_name || vehicle.vehicle_name}
+                  {vehicle.display_name || vehicle.vehicle_name}
+                </p>
+                <p className="text-xs sm:text-[10px] text-muted-foreground line-clamp-2">
+                  {vehicle.description || ""}
                 </p>
               </div>
               {isSelected && (

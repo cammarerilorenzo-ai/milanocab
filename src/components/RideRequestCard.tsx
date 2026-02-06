@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MapPin, Navigation, Clock, Route, Check, X, Loader2, Phone, UserCheck, Flag } from "lucide-react";
+import { MapPin, Navigation, Clock, Route, Check, X, Loader2, Phone, UserCheck, Flag, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,6 +87,7 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
   const [isRejecting, setIsRejecting] = useState(false);
   const [isPickingUp, setIsPickingUp] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isAdjustingEta, setIsAdjustingEta] = useState(false);
   const [remainingMinutes, setRemainingMinutes] = useState<number | null>(null);
 
   // Countdown timer for ETA
@@ -265,6 +266,36 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
     }
   };
 
+  const adjustEta = async (delta: number) => {
+    if (!remainingMinutes && remainingMinutes !== 0) return;
+    const newEta = Math.max(0, remainingMinutes + delta);
+    
+    setIsAdjustingEta(true);
+    try {
+      const { error } = await supabase.functions.invoke("admin-settings", {
+        body: {
+          action: "update_eta",
+          phone: userPhone,
+          rideId: ride.id,
+          etaMin: newEta
+        }
+      });
+
+      if (error) throw error;
+
+      setRemainingMinutes(newEta);
+    } catch (error) {
+      console.error("Error adjusting ETA:", error);
+      toast({
+        title: "Errore",
+        description: "Impossibile aggiornare l'ETA",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAdjustingEta(false);
+    }
+  };
+
   const isUserRide = userPhone && ride.customer_phone.includes(userPhone.replace(/\D/g, ""));
   const showAdminControls = isAdmin && ride.status === "pending";
   const showPickUpButton = isAdmin && ride.status === "confirmed";
@@ -316,12 +347,38 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
 
         {/* ETA for confirmed rides with countdown */}
         {ride.status === "confirmed" && remainingMinutes !== null && (
-          <div className="text-center py-2 bg-green-500/10 rounded-lg">
-            <p className="text-sm text-green-700 font-medium">
-              {remainingMinutes > 0 
-                ? `🚗 In arrivo tra ~${remainingMinutes} minuti`
-                : "🚗 In arrivo!"}
-            </p>
+          <div className="flex items-center justify-between py-2 px-3 bg-green-500/10 rounded-lg">
+            {isAdmin ? (
+              <>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8"
+                  onClick={() => adjustEta(-1)}
+                  disabled={isAdjustingEta || remainingMinutes <= 0}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <p className="text-sm text-green-700 font-medium">
+                  🚗 ~{remainingMinutes} min
+                </p>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8"
+                  onClick={() => adjustEta(1)}
+                  disabled={isAdjustingEta}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <p className="text-sm text-green-700 font-medium w-full text-center">
+                {remainingMinutes > 0 
+                  ? `🚗 In arrivo tra ~${remainingMinutes} minuti`
+                  : "🚗 In arrivo!"}
+              </p>
+            )}
           </div>
         )}
 

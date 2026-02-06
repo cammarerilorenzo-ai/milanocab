@@ -140,10 +140,6 @@ export function GroupPricingPanel({ userPhone }: GroupPricingPanelProps) {
           )}
         </Button>
       </div>
-
-      <p className="text-xs text-muted-foreground">
-        1.00 = tariffa base, 1.15 = +15%, 0.85 = -15%
-      </p>
     </div>
   );
 }

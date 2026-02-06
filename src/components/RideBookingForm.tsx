@@ -485,7 +485,7 @@ export function RideBookingForm() {
         </Label>
         <textarea
           id="note"
-          placeholder="Es: Citofono Rossi, porto 2 valigie, numero civico difficile da trovare..."
+          placeholder="Es: Siamo in due e portiamo delle valigie, ho il telefono scarico e indosso un cappello giallo"
           value={formData.note}
           onChange={e => setFormData({ ...formData, note: e.target.value })}
           className="w-full px-4 py-3 bg-card border border-border rounded-xl text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring/30"

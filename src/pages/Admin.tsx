@@ -483,7 +483,7 @@ const Admin = () => {
                       <p className="text-xs text-muted-foreground">
                         {vehicle.description || "Nessuna descrizione"}
                         {vehicle.price_multiplier && vehicle.price_multiplier !== 1 && (
-                          <span className="ml-1">(+{Math.round((vehicle.price_multiplier - 1) * 100)}%)</span>
+                          <span className="ml-1">({Math.round((vehicle.price_multiplier - 1) * 100)}%)</span>
                         )}
                       </p>
                     </div>

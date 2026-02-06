@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route, LocateFixed } from "lucide-react";
+import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route, LocateFixed, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -25,6 +25,7 @@ interface RideFormData {
   isScheduled: boolean;
   scheduledDate: string;
   scheduledTime: string;
+  note: string;
 }
 interface RouteEstimate {
   distanceKm: number;
@@ -89,7 +90,8 @@ export function RideBookingForm() {
     destination: "",
     isScheduled: false,
     scheduledDate: "",
-    scheduledTime: ""
+    scheduledTime: "",
+    note: ""
   });
   const [vehicleType, setVehicleType] = useState<string>("economy");
   const [vehicleMultipliers, setVehicleMultipliers] = useState<Record<string, number>>({});
@@ -345,7 +347,8 @@ export function RideBookingForm() {
           estimatedMin: routeEstimate.durationMin,
           mapsLink: routeEstimate.mapsLink,
           pickupCoords: routeEstimate.pickupCoords,
-          destCoords: routeEstimate.destCoords
+          destCoords: routeEstimate.destCoords,
+          note: formData.note.trim() || undefined
         }
       });
       if (error) throw error;
@@ -364,7 +367,8 @@ export function RideBookingForm() {
         destination: "",
         isScheduled: false,
         scheduledDate: "",
-        scheduledTime: ""
+        scheduledTime: "",
+        note: ""
       });
       setRouteEstimate(null);
     } catch (error) {
@@ -471,6 +475,24 @@ export function RideBookingForm() {
       {routeError && <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive animate-in fade-in">
           {routeError}
         </div>}
+
+      {/* Note Field */}
+      <div className="space-y-2">
+        <Label htmlFor="note" className="text-sm font-medium text-foreground flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-yellow-500" />
+          Nota per l'autista
+          <span className="text-xs text-muted-foreground font-normal">(opzionale)</span>
+        </Label>
+        <textarea
+          id="note"
+          placeholder="Es: Citofono Rossi, porto 2 valigie, numero civico difficile da trovare..."
+          value={formData.note}
+          onChange={e => setFormData({ ...formData, note: e.target.value })}
+          className="w-full px-4 py-3 bg-card border border-border rounded-xl text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring/30"
+          rows={2}
+          maxLength={300}
+        />
+      </div>
 
       {/* Schedule Toggle */}
       <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">

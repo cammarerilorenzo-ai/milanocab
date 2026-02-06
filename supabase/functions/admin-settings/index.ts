@@ -16,7 +16,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, phone, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier, basePrice } = await req.json();
+    const { action, phone, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier, basePrice, settingKey, settingValue } = await req.json();
 
     // Verify admin access
     const { data: isAdmin } = await supabase.rpc("is_admin", { check_phone: phone });
@@ -37,8 +37,40 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (error) throw error;
 
+      // Get service status
+      const { data: serviceStatus } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "service_enabled")
+        .single();
+
       return new Response(
-        JSON.stringify({ success: true, vehicles }),
+        JSON.stringify({ 
+          success: true, 
+          vehicles,
+          serviceEnabled: serviceStatus?.value === "true"
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (action === "update_app_setting") {
+      if (!settingKey || settingValue === undefined) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Parametri mancanti" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      const { error } = await supabase
+        .from("app_settings")
+        .update({ value: settingValue, updated_at: new Date().toISOString() })
+        .eq("key", settingKey);
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, message: `Impostazione ${settingKey} aggiornata` }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }

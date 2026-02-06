@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { RideBookingForm } from "@/components/RideBookingForm";
+import { ServiceUnavailable } from "@/components/ServiceUnavailable";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, UserPlus } from "lucide-react";
+import { LogOut, UserPlus, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
@@ -10,9 +11,20 @@ import logo from "@/assets/logo.png";
 const Index = () => {
   const { user, logout } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [serviceEnabled, setServiceEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const checkAdmin = async () => {
+    const checkAdminAndService = async () => {
+      // Check service status
+      const { data: serviceData } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "service_enabled")
+        .single();
+      
+      setServiceEnabled(serviceData?.value === "true");
+
+      // Check admin status
       if (!user?.phone) return;
       
       try {
@@ -23,8 +35,22 @@ const Index = () => {
       }
     };
     
-    checkAdmin();
+    checkAdminAndService();
   }, [user]);
+
+  // Loading state
+  if (serviceEnabled === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Service unavailable (admins can still see the form)
+  if (!serviceEnabled && !isAdmin) {
+    return <ServiceUnavailable />;
+  }
 
   return (
     <div className="min-h-screen relative">

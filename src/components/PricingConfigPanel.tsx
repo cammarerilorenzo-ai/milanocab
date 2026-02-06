@@ -19,12 +19,12 @@ const DEFAULT_PRICING = {
 interface PricingConfigPanelProps {
   vehicles: Array<{
     id: string;
-    vehicle_type: string;
+    vehicle_name: string;
     display_name: string | null;
     price_multiplier: number | null;
     base_price: number | null;
   }>;
-  onUpdatePricing: (vehicleType: string, multiplier: number, basePrice: number) => Promise<void>;
+  onUpdatePricing: (vehicleName: string, multiplier: number, basePrice: number) => Promise<void>;
 }
 
 export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigPanelProps) {
@@ -41,8 +41,8 @@ export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigP
     const multipliers: Record<string, string> = {};
     const basePrices: Record<string, string> = {};
     vehicles.forEach(v => {
-      multipliers[v.vehicle_type] = (v.price_multiplier ?? 1).toString();
-      basePrices[v.vehicle_type] = (v.base_price ?? 5).toString();
+      multipliers[v.vehicle_name] = (v.price_multiplier ?? 1).toString();
+      basePrices[v.vehicle_name] = (v.base_price ?? 5).toString();
     });
     setVehicleMultipliers(multipliers);
     setVehicleBasePrices(basePrices);
@@ -57,9 +57,9 @@ export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigP
     return Math.floor(discountedPrice * multiplier * 2) / 2;
   };
 
-  const handleSavePricing = async (vehicleType: string) => {
-    const multiplierStr = vehicleMultipliers[vehicleType];
-    const basePriceStr = vehicleBasePrices[vehicleType];
+  const handleSavePricing = async (vehicleName: string) => {
+    const multiplierStr = vehicleMultipliers[vehicleName];
+    const basePriceStr = vehicleBasePrices[vehicleName];
     const multiplier = parseFloat(multiplierStr);
     const basePrice = parseFloat(basePriceStr);
     
@@ -83,10 +83,10 @@ export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigP
 
     setIsSaving(true);
     try {
-      await onUpdatePricing(vehicleType, multiplier, basePrice);
+      await onUpdatePricing(vehicleName, multiplier, basePrice);
       toast({
         title: "Salvato",
-        description: `Prezzi aggiornati per ${vehicleType}`
+        description: `Prezzi aggiornati per ${vehicleName}`
       });
     } catch (error) {
       toast({
@@ -117,12 +117,12 @@ export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigP
         const currentBasePrice = vehicle.base_price ?? 5;
         const newMultiplier = Math.round(currentMultiplier * factor * 100) / 100;
 
-        await onUpdatePricing(vehicle.vehicle_type, newMultiplier, currentBasePrice);
+        await onUpdatePricing(vehicle.vehicle_name, newMultiplier, currentBasePrice);
 
         // Update local state
         setVehicleMultipliers(prev => ({
           ...prev,
-          [vehicle.vehicle_type]: newMultiplier.toString()
+          [vehicle.vehicle_name]: newMultiplier.toString()
         }));
       }
 
@@ -303,8 +303,8 @@ export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigP
         
         <div className="space-y-3">
           {vehicles.map((vehicle) => {
-            const multiplier = parseFloat(vehicleMultipliers[vehicle.vehicle_type] || "1");
-            const basePrice = parseFloat(vehicleBasePrices[vehicle.vehicle_type] || "5");
+            const multiplier = parseFloat(vehicleMultipliers[vehicle.vehicle_name] || "1");
+            const basePrice = parseFloat(vehicleBasePrices[vehicle.vehicle_name] || "5");
             const examplePrice = calculateExamplePrice(multiplier);
             
             return (
@@ -314,7 +314,7 @@ export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigP
               >
                 <div className="flex items-center justify-between">
                   <p className="font-medium text-foreground truncate">
-                    {vehicle.display_name || vehicle.vehicle_type}
+                    {vehicle.display_name || vehicle.vehicle_name}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Esempio 10km/15min: <span className="font-semibold text-foreground">€{examplePrice.toFixed(2)}</span>
@@ -328,10 +328,10 @@ export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigP
                       type="number"
                       step="0.5"
                       min="0"
-                      value={vehicleBasePrices[vehicle.vehicle_type] || "5"}
+                      value={vehicleBasePrices[vehicle.vehicle_name] || "5"}
                       onChange={(e) => setVehicleBasePrices(prev => ({
                         ...prev,
-                        [vehicle.vehicle_type]: e.target.value
+                        [vehicle.vehicle_name]: e.target.value
                       }))}
                       className="h-8 w-20 text-center"
                     />
@@ -344,10 +344,10 @@ export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigP
                       step="0.05"
                       min="0.1"
                       max="5"
-                      value={vehicleMultipliers[vehicle.vehicle_type] || "1"}
+                      value={vehicleMultipliers[vehicle.vehicle_name] || "1"}
                       onChange={(e) => setVehicleMultipliers(prev => ({
                         ...prev,
-                        [vehicle.vehicle_type]: e.target.value
+                        [vehicle.vehicle_name]: e.target.value
                       }))}
                       className="h-8 w-20 text-center"
                     />
@@ -359,7 +359,7 @@ export function PricingConfigPanel({ vehicles, onUpdatePricing }: PricingConfigP
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleSavePricing(vehicle.vehicle_type)}
+                    onClick={() => handleSavePricing(vehicle.vehicle_name)}
                     disabled={isSaving}
                     className="h-8 w-8 p-0 hover:bg-yellow-400/20"
                   >

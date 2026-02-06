@@ -53,7 +53,7 @@ const PRICING = {
   discountUnder5km: 0.80,  // 20% sconto sotto i 5km
   discountOver5km: 0.85,   // 15% sconto sopra i 5km
   distanceThreshold: 5,    // km soglia per sconto maggiore
-  premiumEtaExtra: 4,      // minuti extra ETA per premium (7 - 3 = 4)
+  vwtrocEtaExtra: 4,       // minuti extra ETA per vwtroc (7 - 3 = 4)
   nightSurcharge: 1.30,    // +30% supplemento notturno
   nightStartHour: 22,      // inizio fascia notturna (22:00)
   nightEndHour: 6          // fine fascia notturna (06:00)
@@ -113,7 +113,7 @@ export function RideBookingForm() {
     scheduledTime: "",
     note: ""
   });
-  const [vehicleType, setVehicleType] = useState<string>("economy");
+  const [vehicleType, setVehicleType] = useState<string>("fiat500");
   const [vehicleMultipliers, setVehicleMultipliers] = useState<Record<string, number>>({});
 
   // Fetch vehicle multipliers from database
@@ -121,13 +121,13 @@ export function RideBookingForm() {
     const fetchMultipliers = async () => {
       const { data, error } = await supabase
         .from("vehicle_settings")
-        .select("vehicle_type, price_multiplier")
+        .select("vehicle_name, price_multiplier")
         .eq("is_available", true);
       
       if (!error && data) {
         const multipliers: Record<string, number> = {};
         data.forEach(v => {
-          multipliers[v.vehicle_type] = v.price_multiplier ?? 1;
+          multipliers[v.vehicle_name] = v.price_multiplier ?? 1;
         });
         setVehicleMultipliers(multipliers);
       }
@@ -280,9 +280,9 @@ export function RideBookingForm() {
         // Round down to nearest 50 cents
         const price = Math.floor(rawPrice * 2) / 2;
         
-        // Calcola ETA con extra per SUV premium (7 min invece di 3)
-        const etaMin = vehicleType === "premium" 
-          ? data.etaMin + PRICING.premiumEtaExtra 
+        // Calcola ETA con extra per SUV vwtroc (7 min invece di 3)
+        const etaMin = vehicleType === "vwtroc" 
+          ? data.etaMin + PRICING.vwtrocEtaExtra 
           : data.etaMin;
         
         setRouteEstimate({

@@ -227,7 +227,7 @@ export type Database = {
           is_available: boolean
           price_multiplier: number | null
           updated_at: string
-          vehicle_type: string
+          vehicle_name: string
         }
         Insert: {
           base_price?: number | null
@@ -238,7 +238,7 @@ export type Database = {
           is_available?: boolean
           price_multiplier?: number | null
           updated_at?: string
-          vehicle_type: string
+          vehicle_name: string
         }
         Update: {
           base_price?: number | null
@@ -249,7 +249,7 @@ export type Database = {
           is_available?: boolean
           price_multiplier?: number | null
           updated_at?: string
-          vehicle_type?: string
+          vehicle_name?: string
         }
         Relationships: []
       }

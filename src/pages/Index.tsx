@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { RideBookingForm } from "@/components/RideBookingForm";
 import { ServiceUnavailable } from "@/components/ServiceUnavailable";
 import { ActiveRideRequests } from "@/components/ActiveRideRequests";
+import { CompletedRides } from "@/components/CompletedRides";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { LogOut, UserPlus, Loader2 } from "lucide-react";
@@ -123,6 +124,10 @@ const Index = () => {
           <RideBookingForm />
         </div>
 
+        {/* Completed Rides History (client only) */}
+        {!isAdmin && user && (
+          <CompletedRides userPhone={user.phone} />
+        )}
 
         {/* Features */}
         <div className="mt-8 grid grid-cols-3 gap-4 text-center">

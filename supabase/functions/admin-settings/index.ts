@@ -19,7 +19,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { action, phone, vehicleType, isAvailable, displayName, description, imageBase64, priceMultiplier, basePrice, settingKey, settingValue, customerGroup, base_price, price_per_km, price_per_min, discount_short, discount_long, night_surcharge, airport_malpensa, airport_orio, latitude, longitude, rideId, status, etaMin } = await req.json();
 
     // Actions that don't require admin verification
-    const publicActions = ["get_ride_status", "cancel_ride_user", "get_active_rides"];
+    const publicActions = ["get_ride_status", "cancel_ride_user", "get_active_rides", "get_completed_rides"];
     
     if (!publicActions.includes(action)) {
       // Verify phone-based admin access
@@ -396,6 +396,33 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       const { data: rides, error } = await query;
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, rides: rides || [] }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (action === "get_completed_rides") {
+      if (!phone) {
+        return new Response(
+          JSON.stringify({ success: true, rides: [] }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      const cleanPhone = phone.replace(/\D/g, "");
+      const last4 = cleanPhone.slice(-4);
+
+      const { data: rides, error } = await supabase
+        .from("ride_requests")
+        .select("*")
+        .eq("status", "completed")
+        .ilike("customer_phone", `%${last4}`)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
       if (error) throw error;
 
       return new Response(

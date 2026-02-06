@@ -173,6 +173,52 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    if (action === "update_group_pricing") {
+      const { 
+        customerGroup, 
+        base_price, 
+        price_per_km, 
+        price_per_min, 
+        discount_short, 
+        discount_long, 
+        night_surcharge, 
+        airport_malpensa, 
+        airport_orio 
+      } = await req.json().catch(() => ({}));
+
+      if (!customerGroup) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Gruppo cliente mancante" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      const updateData: Record<string, unknown> = {
+        updated_at: new Date().toISOString()
+      };
+
+      if (base_price !== undefined) updateData.base_price = base_price;
+      if (price_per_km !== undefined) updateData.price_per_km = price_per_km;
+      if (price_per_min !== undefined) updateData.price_per_min = price_per_min;
+      if (discount_short !== undefined) updateData.discount_short = discount_short;
+      if (discount_long !== undefined) updateData.discount_long = discount_long;
+      if (night_surcharge !== undefined) updateData.night_surcharge = night_surcharge;
+      if (airport_malpensa !== undefined) updateData.airport_malpensa = airport_malpensa;
+      if (airport_orio !== undefined) updateData.airport_orio = airport_orio;
+
+      const { error } = await supabase
+        .from("group_pricing")
+        .update(updateData)
+        .eq("customer_group", customerGroup);
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, message: `Tariffe ${customerGroup} aggiornate` }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ success: false, error: "Azione non valida" }),
       { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }

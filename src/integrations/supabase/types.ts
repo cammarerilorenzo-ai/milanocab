@@ -70,6 +70,54 @@ export type Database = {
           },
         ]
       }
+      group_pricing: {
+        Row: {
+          airport_malpensa: number | null
+          airport_orio: number | null
+          base_price: number | null
+          customer_group: Database["public"]["Enums"]["customer_group"]
+          discount_long: number | null
+          discount_short: number | null
+          display_name: string
+          id: string
+          is_active: boolean | null
+          night_surcharge: number | null
+          price_per_km: number | null
+          price_per_min: number | null
+          updated_at: string
+        }
+        Insert: {
+          airport_malpensa?: number | null
+          airport_orio?: number | null
+          base_price?: number | null
+          customer_group: Database["public"]["Enums"]["customer_group"]
+          discount_long?: number | null
+          discount_short?: number | null
+          display_name: string
+          id?: string
+          is_active?: boolean | null
+          night_surcharge?: number | null
+          price_per_km?: number | null
+          price_per_min?: number | null
+          updated_at?: string
+        }
+        Update: {
+          airport_malpensa?: number | null
+          airport_orio?: number | null
+          base_price?: number | null
+          customer_group?: Database["public"]["Enums"]["customer_group"]
+          discount_long?: number | null
+          discount_short?: number | null
+          display_name?: string
+          id?: string
+          is_active?: boolean | null
+          night_surcharge?: number | null
+          price_per_km?: number | null
+          price_per_min?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ride_requests: {
         Row: {
           admin_lat: number | null
@@ -205,6 +253,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      customer_group: "private" | "business"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -333,6 +382,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      customer_group: ["private", "business"],
     },
   },
 } as const

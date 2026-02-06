@@ -34,6 +34,7 @@ interface RouteEstimate {
   mapsLink: string;
   price: number;
   isFixedPrice: boolean;
+  isNightRate: boolean;
   pickupCoords: {
     lat: number;
     lon: number;
@@ -52,8 +53,26 @@ const PRICING = {
   discountUnder5km: 0.95,  // 5% sconto sotto i 5km
   discountOver5km: 0.85,   // 15% sconto sopra i 5km
   distanceThreshold: 5,    // km soglia per sconto maggiore
-  premiumEtaExtra: 4       // minuti extra ETA per premium (7 - 3 = 4)
+  premiumEtaExtra: 4,      // minuti extra ETA per premium (7 - 3 = 4)
+  nightSurcharge: 1.30,    // +30% supplemento notturno
+  nightStartHour: 22,      // inizio fascia notturna (22:00)
+  nightEndHour: 6          // fine fascia notturna (06:00)
 };
+
+// Check if time is in night hours (22:00 - 06:00)
+function isNightTime(scheduledTime?: string): boolean {
+  let hour: number;
+  
+  if (scheduledTime) {
+    // Parse scheduled time (format: "HH:MM")
+    hour = parseInt(scheduledTime.split(":")[0], 10);
+  } else {
+    // Use current time for immediate rides
+    hour = new Date().getHours();
+  }
+  
+  return hour >= PRICING.nightStartHour || hour < PRICING.nightEndHour;
+}
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -248,6 +267,15 @@ export function RideBookingForm() {
           rawPrice = rawPrice * multiplier;
         }
         
+        // Controlla se è fascia notturna (22:00 - 06:00)
+        const scheduledTime = formData.isScheduled ? formData.scheduledTime : undefined;
+        const isNightRate = isNightTime(scheduledTime);
+        
+        // Applica supplemento notturno +30% (anche su tariffe fisse aeroporto)
+        if (isNightRate) {
+          rawPrice = rawPrice * PRICING.nightSurcharge;
+        }
+        
         // Round down to nearest 50 cents
         const price = Math.floor(rawPrice * 2) / 2;
         
@@ -263,6 +291,7 @@ export function RideBookingForm() {
           mapsLink: data.mapsLink,
           price,
           isFixedPrice,
+          isNightRate,
           pickupCoords: data.pickupCoords,
           destCoords: data.destCoords
         });
@@ -278,7 +307,7 @@ export function RideBookingForm() {
     } finally {
       setIsCalculating(false);
     }
-  }, [debouncedPickup, debouncedDestination, vehicleType, vehicleMultipliers]);
+  }, [debouncedPickup, debouncedDestination, vehicleType, vehicleMultipliers, formData.isScheduled, formData.scheduledTime]);
   useEffect(() => {
     calculateRoute();
   }, [calculateRoute]);
@@ -548,9 +577,14 @@ export function RideBookingForm() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">
-                {routeEstimate.isFixedPrice ? "Tariffa fissa aeroporto" : "Prezzo stimato"}
+                {routeEstimate.isFixedPrice 
+                  ? (routeEstimate.isNightRate ? "Tariffa aeroporto + notturna" : "Tariffa fissa aeroporto")
+                  : (routeEstimate.isNightRate ? "Prezzo stimato + notturno" : "Prezzo stimato")}
               </p>
               <p className="text-2xl font-bold text-green-600">€{routeEstimate.price.toFixed(2)}</p>
+              {routeEstimate.isNightRate && (
+                <p className="text-xs text-yellow-600 font-medium">🌙 +30% fascia 22:00-06:00</p>
+              )}
             </div>
             <div className="text-right text-sm text-muted-foreground">
               <div className="flex items-center gap-1 justify-end">

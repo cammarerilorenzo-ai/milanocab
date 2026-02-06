@@ -92,7 +92,7 @@ export function RideBookingForm() {
     toast
   } = useToast();
   const {
-    user
+    user, sessionToken
   } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -368,6 +368,7 @@ export function RideBookingForm() {
         error
       } = await supabase.functions.invoke("send-ride-notification", {
         body: {
+          sessionToken,
           customerPhone: user.phone.replace(/\D/g, ""),
           pickup: formData.pickup.trim(),
           destination: formData.destination.trim(),

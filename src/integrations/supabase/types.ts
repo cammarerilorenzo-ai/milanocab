@@ -38,6 +38,27 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          phone: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          phone: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          phone?: string
+          token?: string
+        }
+        Relationships: []
+      }
       authorized_phones: {
         Row: {
           created_at: string

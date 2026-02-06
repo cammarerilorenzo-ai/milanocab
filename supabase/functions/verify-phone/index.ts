@@ -98,6 +98,23 @@ Deno.serve(async (req) => {
     const sessionToken = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
 
+    // Store session server-side for validation
+    const { error: sessionError } = await supabase
+      .from("auth_sessions")
+      .insert({
+        token: sessionToken,
+        phone: data.phone,
+        expires_at: expiresAt,
+      });
+
+    if (sessionError) {
+      console.error("Failed to store session:", sessionError);
+      return new Response(
+        JSON.stringify({ success: false, error: "Failed to create session" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     console.log(`Phone verified successfully for: ${data.name || normalizedPhone}`);
 
     return new Response(

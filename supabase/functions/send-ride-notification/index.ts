@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 interface RideNotificationRequest {
+  sessionToken: string;
   customerPhone: string;
   pickup: string;
   destination: string;
@@ -45,6 +46,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const { 
+      sessionToken: clientSessionToken,
       customerPhone,
       pickup, 
       destination, 
@@ -56,6 +58,37 @@ const handler = async (req: Request): Promise<Response> => {
       pickupCoords,
       destCoords
     }: RideNotificationRequest = await req.json();
+
+    // Validate session token server-side
+    if (!clientSessionToken) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Sessione non valida. Effettua di nuovo il login." }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const { data: session, error: sessionError } = await supabase
+      .from("auth_sessions")
+      .select("phone, expires_at")
+      .eq("token", clientSessionToken)
+      .maybeSingle();
+
+    if (sessionError || !session) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Sessione non valida. Effettua di nuovo il login." }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Check if session is expired
+    if (new Date(session.expires_at) < new Date()) {
+      // Clean up expired session
+      await supabase.from("auth_sessions").delete().eq("token", clientSessionToken);
+      return new Response(
+        JSON.stringify({ success: false, error: "Sessione scaduta. Effettua di nuovo il login." }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     // Validate required fields
     if (!customerPhone || !pickup || !destination || !dateTime || !pickupCoords || !destCoords) {
@@ -234,19 +267,8 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResult = await emailResponse.json();
     console.log("Ride notification email sent successfully:", emailResult);
 
-    // Redact phone number after email is sent for privacy
-    const lastFourDigits = phoneDigits.slice(-4);
-    const { error: redactError } = await supabase
-      .from("ride_requests")
-      .update({ customer_phone: `***${lastFourDigits}` })
-      .eq("confirmation_token", rideRequest.confirmation_token);
-
-    if (redactError) {
-      console.error("Failed to redact phone number:", redactError);
-      // Don't fail the request, email was already sent successfully
-    } else {
-      console.log("Phone number redacted successfully");
-    }
+    // Phone is now automatically redacted by database trigger on insert
+    // No manual redaction needed
 
     return new Response(JSON.stringify({ success: true, emailId: emailResult.id, rideId: rideRequest.id }), {
       status: 200,

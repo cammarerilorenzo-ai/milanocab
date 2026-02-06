@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MapPin, Navigation, Clock, Route, CheckCircle, Loader2, X, RefreshCw, XCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -53,25 +53,33 @@ export function RideConfirmationDialog({
   const [rideStatus, setRideStatus] = useState<string>("pending");
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-  const [lastKnownEta, setLastKnownEta] = useState<number | null>(null);
+  // Timestamp-based countdown: store ETA value and when it was set
+  const [etaRef, setEtaRef] = useState<{ value: number; setAt: number } | null>(null);
+  const lastKnownEtaRef = useRef<number | null>(null);
 
-  // Reset remaining minutes when dialog opens
+  // Reset when dialog opens
   useEffect(() => {
     if (!open) return;
+    const now = Date.now();
+    setEtaRef({ value: etaMin + 2, setAt: now });
+    lastKnownEtaRef.current = null;
     setRemainingMinutes(etaMin + 2);
-    setLastKnownEta(null);
   }, [open, etaMin]);
 
-  // Local countdown: decrement every 60 seconds
+  // Smooth countdown: recalculate remaining every 10 seconds based on timestamp
   useEffect(() => {
-    if (!open) return;
+    if (!open || !etaRef) return;
 
-    const interval = setInterval(() => {
-      setRemainingMinutes(prev => (prev <= 0 ? 0 : prev - 1));
-    }, 60000);
+    const update = () => {
+      const elapsed = (Date.now() - etaRef.setAt) / 60000; // minutes elapsed
+      const remaining = Math.max(0, Math.round(etaRef.value - elapsed));
+      setRemainingMinutes(remaining);
+    };
 
+    update();
+    const interval = setInterval(update, 10000);
     return () => clearInterval(interval);
-  }, [open]);
+  }, [open, etaRef]);
 
   // Poll for status updates every 10 seconds
   useEffect(() => {
@@ -86,10 +94,10 @@ export function RideConfirmationDialog({
           const newStatus = data.ride.status as string;
           const newEta = data.ride.eta_min as number;
           
-          // Only reset countdown when admin actually changed the ETA
-          if (newEta != null && newEta !== lastKnownEta) {
-            setLastKnownEta(newEta);
-            setRemainingMinutes(newEta);
+          // Reset countdown only when admin changed ETA
+          if (newEta != null && newEta !== lastKnownEtaRef.current) {
+            lastKnownEtaRef.current = newEta;
+            setEtaRef({ value: newEta, setAt: Date.now() });
           }
           
           setRideStatus(prev => {
@@ -119,7 +127,7 @@ export function RideConfirmationDialog({
     const interval = setInterval(pollStatus, 10000);
 
     return () => clearInterval(interval);
-  }, [open, rideId, etaMin, toast, lastKnownEta]);
+  }, [open, rideId, etaMin, toast]);
 
   const checkRideStatus = async () => {
     if (!rideId) return;

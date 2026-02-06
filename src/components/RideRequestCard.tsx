@@ -146,6 +146,7 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
       const { error } = await supabase.functions.invoke("admin-settings", {
         body: {
           action: "update_ride_status",
+          phone: userPhone,
           rideId: ride.id,
           status: "cancelled"
         }

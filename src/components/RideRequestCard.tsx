@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MapPin, Navigation, Clock, Route, Check, X, Loader2, Phone, UserCheck, Flag, Plus, Minus, Star } from "lucide-react";
 import { format } from "date-fns";
 import { RideReviewDialog } from "./RideReviewDialog";
@@ -110,25 +110,40 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
     }
   }, [ride.status, ride.confirmed_at, ride.created_at]);
 
-  // Countdown timer for ETA
+  // Track last known ETA from database to avoid resetting countdown on polling
+  const lastKnownEtaRef = useRef<number | null>(null);
+  const countdownBaseRef = useRef<number>(Date.now());
+
+  // Countdown timer for ETA — only resets when eta_min actually changes
   useEffect(() => {
-    if (ride.status === "confirmed" && ride.eta_min) {
-      // Calculate remaining minutes based on confirmed_at time
-      const confirmedAt = ride.confirmed_at ? new Date(ride.confirmed_at).getTime() : Date.now();
-      const elapsedMinutes = Math.floor((Date.now() - confirmedAt) / 60000);
-      const initialRemaining = Math.max(0, ride.eta_min - elapsedMinutes);
-      setRemainingMinutes(initialRemaining);
-
-      const interval = setInterval(() => {
-        setRemainingMinutes(prev => {
-          if (prev === null || prev <= 0) return 0;
-          return prev - 1;
-        });
-      }, 60000); // Update every minute
-
-      return () => clearInterval(interval);
+    if (ride.status === "confirmed" && ride.eta_min != null) {
+      const etaChanged = lastKnownEtaRef.current !== ride.eta_min;
+      
+      if (etaChanged) {
+        lastKnownEtaRef.current = ride.eta_min;
+        // When ETA changes (admin update or first load), recalculate from confirmed_at
+        const confirmedAt = ride.confirmed_at ? new Date(ride.confirmed_at).getTime() : Date.now();
+        const elapsed = Math.floor((Date.now() - confirmedAt) / 60000);
+        const initial = Math.max(0, ride.eta_min - elapsed);
+        setRemainingMinutes(initial);
+        countdownBaseRef.current = Date.now();
+      }
     }
   }, [ride.status, ride.eta_min, ride.confirmed_at]);
+
+  // Separate interval for decrementing the countdown every minute
+  useEffect(() => {
+    if (ride.status !== "confirmed" || remainingMinutes === null) return;
+
+    const interval = setInterval(() => {
+      setRemainingMinutes(prev => {
+        if (prev === null || prev <= 0) return 0;
+        return prev - 1;
+      });
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [ride.status, remainingMinutes === null]);
 
   const handleConfirm = async () => {
     if (!navigator.geolocation) {
@@ -287,8 +302,8 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
   };
 
   const adjustEta = async (delta: number) => {
-    if (!remainingMinutes && remainingMinutes !== 0) return;
-    const newEta = Math.max(0, remainingMinutes + delta);
+    const current = remainingMinutes ?? ride.eta_min ?? 0;
+    const newEta = Math.max(0, current + delta);
     
     setIsAdjustingEta(true);
     try {

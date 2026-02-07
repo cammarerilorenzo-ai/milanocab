@@ -45,12 +45,14 @@ export function ActiveRideRequests({ isAdmin, userPhone }: ActiveRideRequestsPro
 
       if (error) {
         console.error("Error fetching rides:", error);
+        // Keep previous data on error instead of clearing
         return;
       }
 
       setRides(data?.rides || []);
     } catch (error) {
       console.error("Error in fetchRides:", error);
+      // Keep previous data on network errors
     } finally {
       setIsLoading(false);
     }

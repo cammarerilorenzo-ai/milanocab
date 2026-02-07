@@ -392,7 +392,8 @@ const handler = async (req: Request): Promise<Response> => {
       } else if (phone) {
         const cleanPhone = phone.replace(/\D/g, "");
         const last4 = cleanPhone.slice(-4);
-        query = query.ilike("customer_phone", `%${last4}`);
+        query = query.ilike("customer_phone", `%${last4}`)
+          .in("status", ["pending", "confirmed", "picked_up"]);
       }
 
       const { data: rides, error } = await query;

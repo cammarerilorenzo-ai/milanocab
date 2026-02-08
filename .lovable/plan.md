@@ -1,47 +1,20 @@
 
+# Prezzo sotto la destinazione e pulsanti aeroporto dinamici
 
-# Fix errore durante prenotazione e countdown ETA
+## Cosa cambia
 
-## Problema identificato
+1. **Prezzo visualizzato subito sotto il campo destinazione**: Il blocco "Price Estimate" (attualmente in fondo al form, linee 583-617) viene spostato subito dopo il campo destinazione (dopo linea 504), cosi' l'utente vede immediatamente il prezzo calcolato.
 
-Ho trovato diversi problemi collegati:
+2. **Pulsanti aeroporto visibili solo prima di scegliere la destinazione**: I pulsanti "Malpensa" e "Bergamo Orio" (linee 489-503) vengono nascosti quando la destinazione e' gia' stata inserita (cioe' quando `formData.destination.trim().length > 0`). Rimangono visibili quando il campo destinazione e' vuoto.
 
-1. **Errore 500 intermittente**: La funzione backend `admin-settings` a volte fallisce durante l'avvio (errore runtime), causando uno schermo bianco momentaneo
-2. **Countdown ETA statico**: Ogni 10 secondi il sistema ri-carica le corse attive, e questo resetta il countdown perche' l'effetto che calcola il tempo rimanente si riavvia con lo stesso valore dal database
-3. **Bug nel calcolo ETA**: Se l'admin prova a modificare l'ETA prima che il countdown si inizializzi, il sistema invia un valore non valido (`NaN`) al backend
-
-## Soluzione
-
-### 1. Rendere il componente ActiveRideRequests resistente agli errori
-- Aggiungere un error boundary per evitare lo schermo bianco se il caricamento fallisce
-- Gestire meglio gli errori di rete senza bloccare l'interfaccia
-
-### 2. Fixare il countdown ETA nel RideRequestCard
-- Separare il valore dal database (`ride.eta_min`) dal countdown locale
-- Usare un `useRef` per tracciare l'ultimo valore noto dell'ETA dal database
-- Aggiornare il countdown locale solo quando l'admin modifica effettivamente l'ETA (valore diverso dal precedente)
-- Countdown basato su timestamp per precisione
-
-### 3. Fixare il bug NaN in adjustEta
-- Inizializzare `remainingMinutes` dal valore del database se null prima di calcolare
-
-### 4. Ottimizzare la query get_active_rides
-- Aggiungere filtro per status anche per utenti non-admin, per evitare di caricare corse completate/cancellate inutilmente
+3. **Anche il loader "Calcolo percorso" e l'errore di route** vengono spostati subito sotto la destinazione, prima della nota.
 
 ## Dettagli tecnici
 
-### File: `src/components/RideRequestCard.tsx`
-- Aggiungere `lastKnownEtaRef` (useRef) per tracciare l'ultimo `eta_min` dal database
-- Modificare l'useEffect del countdown per:
-  - Inizializzare il countdown solo al primo mount o quando l'ETA cambia realmente
-  - Usare `setInterval` ogni 60 secondi per decrementare
-  - Non resettare quando il parent ri-renderizza con lo stesso `eta_min`
-- Fixare `adjustEta`: usare `(remainingMinutes ?? ride.eta_min ?? 0) + delta`
+### File: `src/components/RideBookingForm.tsx`
 
-### File: `src/components/ActiveRideRequests.tsx`
-- Wrappare il rendering in un try-catch per evitare crash
-- Se il fetch fallisce, mantenere i dati precedenti invece di mostrare errore
-
-### File: `supabase/functions/admin-settings/index.ts`
-- Nella sezione `get_active_rides` per utenti non-admin, aggiungere `.in("status", ["pending", "confirmed", "picked_up"])` al filtro della query
-
+**Spostamento blocchi** (linee 488-514 e 583-617):
+- I pulsanti aeroporto (linee 489-503) vengono wrappati in una condizione: `{!formData.destination.trim() && (<div className="flex flex-wrap gap-2">...</div>)}`
+- Il blocco "Route Calculation Status" (loader + errore, linee 506-514) resta subito dopo i pulsanti aeroporto
+- Il blocco "Price Estimate" (linee 583-617) viene spostato subito dopo il blocco errore/loader, quindi ancora dentro la sezione destinazione
+- Le sezioni nota, programma corsa, data/ora e submit restano nell'ordine attuale ma senza il price estimate duplicato in fondo

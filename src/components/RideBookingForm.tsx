@@ -485,33 +485,69 @@ export function RideBookingForm() {
         </div>
         <p className="text-xs text-muted-foreground mb-2">Qualsiasi destinazione in Lombardia</p>
         
-        {/* Airport suggestions */}
-        <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => setFormData({
-          ...formData,
-          destination: "Aeroporto Malpensa"
-        })} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-yellow-400/20 hover:bg-yellow-400/30 text-foreground rounded-full border border-yellow-400/30 transition-colors">
-            ✈️ Malpensa <span className="line-through text-muted-foreground">€75</span> <span className="font-semibold" style={{ color: '#4A6082' }}>€65</span>
-          </button>
-          <button type="button" onClick={() => setFormData({
-          ...formData,
-          destination: "Aeroporto Orio al Serio"
-        })} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-yellow-400/20 hover:bg-yellow-400/30 text-foreground rounded-full border border-yellow-400/30 transition-colors">
-            ✈️ Bergamo Orio <span className="line-through text-muted-foreground">€75</span> <span className="font-semibold" style={{ color: '#4A6082' }}>€65</span>
-          </button>
-          
-        </div>
+        {/* Airport suggestions - hidden when destination is set */}
+        {!formData.destination.trim() && (
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => setFormData({
+            ...formData,
+            destination: "Aeroporto Malpensa"
+          })} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-yellow-400/20 hover:bg-yellow-400/30 text-foreground rounded-full border border-yellow-400/30 transition-colors">
+              ✈️ Malpensa <span className="line-through text-muted-foreground">€75</span> <span className="font-semibold" style={{ color: '#4A6082' }}>€65</span>
+            </button>
+            <button type="button" onClick={() => setFormData({
+            ...formData,
+            destination: "Aeroporto Orio al Serio"
+          })} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-yellow-400/20 hover:bg-yellow-400/30 text-foreground rounded-full border border-yellow-400/30 transition-colors">
+              ✈️ Bergamo Orio <span className="line-through text-muted-foreground">€75</span> <span className="font-semibold" style={{ color: '#4A6082' }}>€65</span>
+            </button>
+          </div>
+        )}
+
+        {/* Route Calculation Status */}
+        {isCalculating && <div className="flex items-center gap-2 text-sm text-muted-foreground animate-in fade-in">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Calcolo percorso in corso...</span>
+          </div>}
+
+        {routeError && <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive animate-in fade-in">
+            {routeError}
+          </div>}
+
+        {/* Price Estimate - shown right after destination */}
+        {routeEstimate && <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border border-primary/20 animate-in fade-in">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  {routeEstimate.isFixedPrice ? "Tariffa fissa aeroporto" : "Prezzo"}
+                </p>
+                <p className="text-2xl font-bold text-green-600">€{routeEstimate.price.toFixed(2)}</p>
+                {routeEstimate.isNightRate && (
+                  <p className="text-xs text-yellow-600 font-medium">🌙 Tariffa notturna</p>
+                )}
+              </div>
+              <div className="text-right text-sm text-muted-foreground">
+                <div className="flex items-center gap-1 justify-end">
+                  <Route className="h-4 w-4" />
+                  <span>{routeEstimate.distanceKm} km</span>
+                </div>
+                <div className="flex items-center gap-1 justify-end">
+                  <Clock className="h-4 w-4" />
+                  <span>{routeEstimate.durationMin} min</span>
+                </div>
+                <div className={`flex items-center gap-1 justify-end mt-1 font-medium ${
+                  routeEstimate.etaMin < 10 
+                    ? 'text-green-600' 
+                    : routeEstimate.etaMin <= 20 
+                      ? 'text-yellow-600' 
+                      : 'text-red-600'
+                }`}>
+                  <Car className="h-4 w-4" />
+                  <span>Arrivo in ~{routeEstimate.etaMin} min</span>
+                </div>
+              </div>
+            </div>
+          </div>}
       </div>
-
-      {/* Route Calculation Status */}
-      {isCalculating && <div className="flex items-center gap-2 text-sm text-muted-foreground animate-in fade-in">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Calcolo percorso in corso...</span>
-        </div>}
-
-      {routeError && <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive animate-in fade-in">
-          {routeError}
-        </div>}
 
       {/* Note Field */}
       <div className="space-y-2">
@@ -578,42 +614,6 @@ export function RideBookingForm() {
               </div>
             </div>
           </div>
-        </div>}
-
-      {/* Price Estimate */}
-      {routeEstimate && <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border border-primary/20 animate-in fade-in">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">
-                {routeEstimate.isFixedPrice ? "Tariffa fissa aeroporto" : "Prezzo"}
-              </p>
-              <p className="text-2xl font-bold text-green-600">€{routeEstimate.price.toFixed(2)}</p>
-              {routeEstimate.isNightRate && (
-                <p className="text-xs text-yellow-600 font-medium">🌙 Tariffa notturna</p>
-              )}
-            </div>
-            <div className="text-right text-sm text-muted-foreground">
-              <div className="flex items-center gap-1 justify-end">
-                <Route className="h-4 w-4" />
-                <span>{routeEstimate.distanceKm} km</span>
-              </div>
-              <div className="flex items-center gap-1 justify-end">
-                <Clock className="h-4 w-4" />
-                <span>{routeEstimate.durationMin} min</span>
-              </div>
-              <div className={`flex items-center gap-1 justify-end mt-1 font-medium ${
-                routeEstimate.etaMin < 10 
-                  ? 'text-green-600' 
-                  : routeEstimate.etaMin <= 20 
-                    ? 'text-yellow-600' 
-                    : 'text-red-600'
-              }`}>
-                <Car className="h-4 w-4" />
-                <span>Arrivo in ~{routeEstimate.etaMin} min</span>
-              </div>
-            </div>
-          </div>
-          
         </div>}
 
       {/* Submit Button */}

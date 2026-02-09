@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { X, Share, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import safariStep1 from "@/assets/safari-step1.png";
 import safariStep2 from "@/assets/safari-step2.png";
@@ -15,8 +15,7 @@ const steps = [
 
 function isIOSBrowser(): boolean {
   const ua = navigator.userAgent;
-  const isIOS = /iPad|iPhone|iPod/.test(ua);
-  return isIOS;
+  return /iPad|iPhone|iPod/.test(ua);
 }
 
 function isStandalone(): boolean {
@@ -27,6 +26,8 @@ function isStandalone(): boolean {
 export default function SafariInstallBanner() {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
   useEffect(() => {
     const standalone = isStandalone();
@@ -38,12 +39,26 @@ export default function SafariInstallBanner() {
     return () => clearTimeout(t);
   }, []);
 
-  const dismiss = () => {
-    setModalOpen(false);
+  const dismiss = () => setModalOpen(false);
+  const goTo = (step: number) => setCurrentStep(Math.max(0, Math.min(steps.length - 1, step)));
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
   };
 
-  const prev = () => setCurrentStep((s) => Math.max(0, s - 1));
-  const next = () => setCurrentStep((s) => Math.min(steps.length - 1, s + 1));
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    touchEndX.current = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX.current;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        // Swipe left → next
+        goTo(currentStep + 1);
+      } else {
+        // Swipe right → prev
+        goTo(currentStep - 1);
+      }
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -77,8 +92,12 @@ export default function SafariInstallBanner() {
               {steps[currentStep].label}
             </p>
 
-            {/* Image */}
-            <div className="relative bg-muted">
+            {/* Swipeable Image */}
+            <div
+              className="relative bg-muted"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
               <AnimatePresence mode="wait">
                 <motion.img
                   key={currentStep}
@@ -93,42 +112,24 @@ export default function SafariInstallBanner() {
               </AnimatePresence>
             </div>
 
-            {/* Navigation */}
-            <div className="flex items-center justify-between p-4">
-              <button
-                onClick={prev}
-                disabled={currentStep === 0}
-                className="flex items-center gap-1 text-sm font-medium text-primary disabled:text-muted-foreground disabled:opacity-50"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Indietro
-              </button>
-
-              {/* Dots */}
+            {/* Dots + action */}
+            <div className="flex flex-col items-center gap-3 p-4">
               <div className="flex gap-1.5">
                 {steps.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrentStep(i)}
-                    className={`w-2 h-2 rounded-full transition-colors ${
+                    className={`w-2.5 h-2.5 rounded-full transition-colors ${
                       i === currentStep ? "bg-primary" : "bg-muted-foreground/30"
                     }`}
                   />
                 ))}
               </div>
 
-              {currentStep < steps.length - 1 ? (
-                <button
-                  onClick={next}
-                  className="flex items-center gap-1 text-sm font-medium text-primary"
-                >
-                  Avanti
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              ) : (
+              {currentStep === steps.length - 1 && (
                 <button
                   onClick={dismiss}
-                  className="text-sm font-medium text-primary"
+                  className="text-sm font-semibold text-primary"
                 >
                   Ho capito!
                 </button>

@@ -54,31 +54,47 @@ export default function SafariInstallBanner() {
               <X className="w-4 h-4" />
             </button>
 
-            <div className="flex items-start gap-3 pr-6">
-              {/* Icon */}
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Share className="w-5 h-5 text-primary" />
-              </div>
+            <div className="pr-6 space-y-3">
+              <p className="text-sm font-semibold text-foreground">
+                Salva Milano Cab sulla Home
+              </p>
 
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-foreground">
-                  Salva Milano Cab sulla Home
-                </p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Tocca i <strong>⋯</strong> in basso a destra, poi <strong>"Aggiungi alla schermata Home"</strong> per un accesso rapido!
-                </p>
+              <div className="space-y-2">
+                {/* Step 1 */}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold flex-shrink-0">1</span>
+                  <span>Tocca i <strong className="text-foreground">⋯</strong> in basso a destra</span>
+                </div>
+                {/* Step 2 */}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold flex-shrink-0">2</span>
+                  <span>Tocca <Share className="inline w-3.5 h-3.5 text-primary -mt-0.5" /> <strong className="text-foreground">Condividi</strong></span>
+                </div>
+                {/* Step 3 */}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold flex-shrink-0">3</span>
+                  <span><strong className="text-foreground">Aggiungi alla schermata Home</strong></span>
+                </div>
               </div>
             </div>
 
             {/* Arrow pointing down-right toward the "..." button */}
-            <div className="flex justify-end mt-2 mr-2">
-              <svg width="40" height="30" viewBox="0 0 40 30" fill="none" className="text-primary">
+            <div className="flex justify-end mt-1">
+              <svg width="50" height="40" viewBox="0 0 50 40" fill="none">
                 <path
-                  d="M5 5 C15 5, 25 8, 32 20 L30 17 M32 20 L28 22"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
+                  d="M8 4 C20 6, 32 14, 40 32"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+                <path
+                  d="M36 26 L40 32 L33 30"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  fill="none"
                 />
               </svg>
             </div>

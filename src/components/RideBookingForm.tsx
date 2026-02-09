@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route, LocateFixed, MessageSquare } from "lucide-react";
+import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route, LocateFixed, MessageSquare, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -8,6 +8,17 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VehicleTypeSelector } from "@/components/VehicleTypeSelector";
+import { RoutePreviewMap } from "@/components/RoutePreviewMap";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Funzione per capitalizzare correttamente gli indirizzi (title case)
 function capitalizeAddress(address: string): string {
@@ -109,6 +120,7 @@ export function RideBookingForm() {
   });
   const [vehicleType, setVehicleType] = useState<string>("fiat500");
   const [vehicleMultipliers, setVehicleMultipliers] = useState<Record<string, number>>({});
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Fetch vehicle multipliers from database
   useEffect(() => {
@@ -312,59 +324,43 @@ export function RideBookingForm() {
   }, [calculateRoute]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Validate, then show confirmation dialog
     if (!user?.phone) {
-      toast({
-        title: "Errore",
-        description: "Devi essere autenticato per prenotare una corsa",
-        variant: "destructive"
-      });
+      toast({ title: "Errore", description: "Devi essere autenticato per prenotare una corsa", variant: "destructive" });
       return;
     }
     if (!formData.pickup.trim() || !formData.destination.trim()) {
-      toast({
-        title: "Campi obbligatori",
-        description: "Inserisci punto di partenza e destinazione",
-        variant: "destructive"
-      });
+      toast({ title: "Campi obbligatori", description: "Inserisci punto di partenza e destinazione", variant: "destructive" });
       return;
     }
     if (formData.isScheduled) {
       if (!formData.scheduledDate || !formData.scheduledTime) {
-        toast({
-          title: "Data e ora richieste",
-          description: "Inserisci data e ora della corsa programmata",
-          variant: "destructive"
-        });
+        toast({ title: "Data e ora richieste", description: "Inserisci data e ora della corsa programmata", variant: "destructive" });
         return;
       }
-
-      // Validate minimum 30 minutes advance booking for scheduled rides
       const scheduledDateTime = new Date(`${formData.scheduledDate}T${formData.scheduledTime}`);
       const minBookingTime = new Date(Date.now() + 30 * 60 * 1000);
       if (scheduledDateTime < minBookingTime) {
-        toast({
-          title: "Orario non valido",
-          description: "La prenotazione deve essere almeno 30 minuti in anticipo",
-          variant: "destructive"
-        });
+        toast({ title: "Orario non valido", description: "La prenotazione deve essere almeno 30 minuti in anticipo", variant: "destructive" });
         return;
       }
     }
     if (!routeEstimate) {
-      toast({
-        title: "Percorso non calcolato",
-        description: "Attendi il calcolo del percorso o verifica gli indirizzi",
-        variant: "destructive"
-      });
+      toast({ title: "Percorso non calcolato", description: "Attendi il calcolo del percorso o verifica gli indirizzi", variant: "destructive" });
       return;
     }
+    // Show confirmation dialog
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmRide = async () => {
+    setShowConfirmDialog(false);
+    if (!user?.phone || !routeEstimate) return;
+    
     setIsLoading(true);
     try {
       const rideDateTime = formData.isScheduled ? `${formData.scheduledDate} - ${formData.scheduledTime}` : "Immediata";
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke("send-ride-notification", {
+      const { data, error } = await supabase.functions.invoke("send-ride-notification", {
         body: {
           sessionToken,
           customerPhone: user.phone.replace(/\D/g, ""),
@@ -383,38 +379,17 @@ export function RideBookingForm() {
       if (error) throw error;
 
       if (data && !data.success) {
-        toast({
-          title: "Prenotazione non possibile",
-          description: data.error || "Errore sconosciuto",
-          variant: "destructive"
-        });
+        toast({ title: "Prenotazione non possibile", description: data.error || "Errore sconosciuto", variant: "destructive" });
         setIsLoading(false);
         return;
       }
 
-      // Show success toast
-      toast({
-        title: "✅ Corsa richiesta con successo!",
-        description: "Puoi seguire lo stato della tua corsa qui sotto.",
-      });
-
-      // Reset form
-      setFormData({
-        pickup: "",
-        destination: "",
-        isScheduled: false,
-        scheduledDate: "",
-        scheduledTime: "",
-        note: ""
-      });
+      toast({ title: "✅ Corsa richiesta con successo!", description: "Puoi seguire lo stato della tua corsa qui sotto." });
+      setFormData({ pickup: "", destination: "", isScheduled: false, scheduledDate: "", scheduledTime: "", note: "" });
       setRouteEstimate(null);
     } catch (error) {
       console.error("Error submitting ride request:", error);
-      toast({
-        title: "Errore",
-        description: "Impossibile inviare la richiesta. Riprova.",
-        variant: "destructive"
-      });
+      toast({ title: "Errore", description: "Impossibile inviare la richiesta. Riprova.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -547,6 +522,18 @@ export function RideBookingForm() {
               </div>
             </div>
           </div>}
+
+        {/* Route Map Preview */}
+        {routeEstimate && (
+          <RoutePreviewMap
+            pickupCoords={routeEstimate.pickupCoords}
+            destCoords={routeEstimate.destCoords}
+            pickup={formData.pickup}
+            destination={formData.destination}
+            distanceKm={routeEstimate.distanceKm}
+            durationMin={routeEstimate.durationMin}
+          />
+        )}
       </div>
 
       {/* Note Field */}
@@ -626,6 +613,48 @@ export function RideBookingForm() {
             Richiedi corsa
           </>}
       </Button>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-primary" />
+              Conferma itinerario
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>Vuoi confermare la richiesta di corsa?</p>
+                {routeEstimate && (
+                  <div className="p-3 bg-muted/50 rounded-lg space-y-2 text-sm text-foreground">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="truncate">{capitalizeAddress(formData.pickup)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Navigation className="h-4 w-4 text-accent flex-shrink-0" />
+                      <span className="truncate">{capitalizeAddress(formData.destination)}</span>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
+                      <span className="flex items-center gap-1 text-muted-foreground">
+                        <Route className="h-3.5 w-3.5" /> {routeEstimate.distanceKm} km · {routeEstimate.durationMin} min
+                      </span>
+                      <span className="font-bold text-green-600">€{routeEstimate.price.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRide} className="bg-primary hover:bg-primary/90">
+              <Car className="mr-2 h-4 w-4" />
+              Conferma corsa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </form>;
 }

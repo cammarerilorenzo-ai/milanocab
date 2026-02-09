@@ -29,9 +29,13 @@ export default function SafariInstallBanner() {
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
-    if (isStandalone()) return;
-    if (localStorage.getItem(DISMISSED_KEY)) return;
-    if (!isIOSBrowser()) return;
+    const standalone = isStandalone();
+    const dismissed = !!localStorage.getItem(DISMISSED_KEY);
+    const ios = isIOSBrowser();
+    console.log("[SafariInstallBanner]", { standalone, dismissed, ios, ua: navigator.userAgent });
+    if (standalone) return;
+    if (dismissed) return;
+    if (!ios) return;
     const t = setTimeout(() => setModalOpen(true), 800);
     return () => clearTimeout(t);
   }, []);

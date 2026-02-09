@@ -30,11 +30,9 @@ export default function SafariInstallBanner() {
 
   useEffect(() => {
     const standalone = isStandalone();
-    const dismissed = !!localStorage.getItem(DISMISSED_KEY);
     const ios = isIOSBrowser();
-    console.log("[SafariInstallBanner]", { standalone, dismissed, ios, ua: navigator.userAgent });
+    console.log("[SafariInstallBanner]", { standalone, ios, ua: navigator.userAgent });
     if (standalone) return;
-    if (dismissed) return;
     if (!ios) return;
     const t = setTimeout(() => setModalOpen(true), 800);
     return () => clearTimeout(t);
@@ -42,7 +40,6 @@ export default function SafariInstallBanner() {
 
   const dismiss = () => {
     setModalOpen(false);
-    localStorage.setItem(DISMISSED_KEY, "1");
   };
 
   const prev = () => setCurrentStep((s) => Math.max(0, s - 1));

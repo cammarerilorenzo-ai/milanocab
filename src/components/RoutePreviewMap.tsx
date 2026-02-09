@@ -41,7 +41,7 @@ export function RoutePreviewMap({
           title="Anteprima percorso"
         />
         {/* Logo overlay to cover Google's itinerary box */}
-        <div className="absolute top-0 left-0 bg-white/95 backdrop-blur-sm rounded-br-lg p-1.5 pr-4 shadow-md">
+        <div className="absolute top-0 left-0 bg-white/95 backdrop-blur-sm rounded-br-lg p-1.5 pr-12 shadow-md">
           <img src={logo} alt="Milano Cab" className="h-14 w-auto" />
         </div>
       </div>

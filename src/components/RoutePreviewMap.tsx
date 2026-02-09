@@ -25,7 +25,7 @@ export function RoutePreviewMap({
   distanceKm,
   durationMin,
 }: RoutePreviewMapProps) {
-  const mapsEmbedUrl = `https://www.google.com/maps/embed/v1/directions?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&origin=${pickupCoords.lat},${pickupCoords.lon}&destination=${destCoords.lat},${destCoords.lon}&mode=driving&zoom=13`;
+  const mapsEmbedUrl = `https://www.google.com/maps/embed/v1/directions?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&origin=${pickupCoords.lat},${pickupCoords.lon}&destination=${destCoords.lat},${destCoords.lon}&mode=driving&maptype=satellite&zoom=13`;
 
   return (
     <div className="rounded-xl overflow-hidden border border-border animate-in fade-in slide-in-from-bottom-2 duration-300">

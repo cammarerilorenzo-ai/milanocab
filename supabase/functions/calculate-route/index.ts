@@ -208,6 +208,7 @@ const STREET_NAME_CORRECTIONS: Record<string, string> = {
   'montegrappa': 'Monte Grappa',
   'montenapoleone': 'Monte Napoleone',
   'monterosa': 'Monte Rosa',
+  'monteverdi': 'Monte Verdi',
   'monteceneri': 'Monte Ceneri',
   'montebianco': 'Monte Bianco',
   'montesanto': 'Monte Santo',
@@ -294,6 +295,15 @@ function pickBestResult(
     const layer = feature.properties.layer || '';
     if (boundsCheck(lon, lat) && ['address', 'street', 'venue'].includes(layer)) {
       console.log(`${label}: SELECTED layer=${layer} at [${lon}, ${lat}] - ${feature.properties.label}`);
+      return [lon, lat];
+    }
+  }
+  
+  // Priority 3 (fallback): accept any result within bounds
+  for (const feature of data.features) {
+    const [lon, lat] = feature.geometry.coordinates;
+    if (boundsCheck(lon, lat)) {
+      console.log(`${label}: FALLBACK at [${lon}, ${lat}] layer=${feature.properties.layer} - ${feature.properties.label}`);
       return [lon, lat];
     }
   }

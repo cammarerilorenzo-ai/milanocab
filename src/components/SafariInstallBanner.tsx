@@ -13,11 +13,10 @@ const steps = [
   { image: safariStep3, label: "\"Aggiungi alla schermata Home\"" },
 ];
 
-function isSafariBrowser(): boolean {
+function isIOSBrowser(): boolean {
   const ua = navigator.userAgent;
-  const isSafari = /Safari/i.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS|Chrome/i.test(ua);
   const isIOS = /iPad|iPhone|iPod/.test(ua);
-  return isIOS && isSafari;
+  return isIOS;
 }
 
 function isStandalone(): boolean {
@@ -33,7 +32,7 @@ export default function SafariInstallBanner() {
   useEffect(() => {
     if (isStandalone()) return;
     if (localStorage.getItem(DISMISSED_KEY)) return;
-    if (!isSafariBrowser()) return;
+    if (!isIOSBrowser()) return;
     const t = setTimeout(() => setShow(true), 800);
     return () => clearTimeout(t);
   }, []);

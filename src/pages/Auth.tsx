@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Phone, Loader2, AlertCircle, UserPlus } from "lucide-react";
 import logo from "@/assets/logo.png";
+import SafariInstallBanner from "@/components/SafariInstallBanner";
 
 export default function Auth() {
   const [phone, setPhone] = useState("");
@@ -96,6 +97,7 @@ export default function Auth() {
           </form>
         </CardContent>
       </Card>
+      <SafariInstallBanner />
     </div>
   );
 }

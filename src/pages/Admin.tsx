@@ -11,6 +11,7 @@ import { ArrowLeft, Car, Loader2, Settings, ShieldCheck, Plus, Trash2, Upload, X
 import { useToast } from "@/hooks/use-toast";
 import { PricingConfigPanel } from "@/components/PricingConfigPanel";
 import { GroupPricingPanel } from "@/components/GroupPricingPanel";
+import { DiscountLogicPanel } from "@/components/DiscountLogicPanel";
 import { ServiceToggle } from "@/components/ServiceToggle";
 import { AdminGpsTracker } from "@/components/AdminGpsTracker";
 import logo from "@/assets/logo.png";
@@ -468,6 +469,11 @@ const Admin = () => {
         {/* Group Pricing */}
         <div className="mt-6">
           <GroupPricingPanel userPhone={user?.phone || ""} />
+        </div>
+
+        {/* Discount Logic */}
+        <div className="mt-6">
+          <DiscountLogicPanel userPhone={user?.phone || ""} />
         </div>
       </main>
 

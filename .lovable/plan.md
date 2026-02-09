@@ -1,20 +1,17 @@
 
-# Prezzo sotto la destinazione e pulsanti aeroporto dinamici
 
-## Cosa cambia
+## Rendere il campo "Nome" obbligatorio
 
-1. **Prezzo visualizzato subito sotto il campo destinazione**: Il blocco "Price Estimate" (attualmente in fondo al form, linee 583-617) viene spostato subito dopo il campo destinazione (dopo linea 504), cosi' l'utente vede immediatamente il prezzo calcolato.
+### Modifiche
 
-2. **Pulsanti aeroporto visibili solo prima di scegliere la destinazione**: I pulsanti "Malpensa" e "Bergamo Orio" (linee 489-503) vengono nascosti quando la destinazione e' gia' stata inserita (cioe' quando `formData.destination.trim().length > 0`). Rimangono visibili quando il campo destinazione e' vuoto.
+**File: `src/pages/Referral.tsx`**
+- Rimuovere la scritta "(opzionale)" dalla label del campo nome, cambiandola da "Il tuo nome (opzionale)" a "Il tuo nome"
+- Aggiungere validazione: se `newName` e' vuoto, mostrare errore "Inserisci il tuo nome" prima di procedere con l'invio
 
-3. **Anche il loader "Calcolo percorso" e l'errore di route** vengono spostati subito sotto la destinazione, prima della nota.
+### Dettagli tecnici
 
-## Dettagli tecnici
+Nel file `src/pages/Referral.tsx`:
+1. Modificare la Label da `"Il tuo nome (opzionale)"` a `"Il tuo nome"` (riga ~109)
+2. Aggiungere un controllo di validazione nel metodo `handleSubmit`, dopo il check su `newPhone`, per verificare che `newName.trim()` non sia vuoto
+3. Nel body della richiesta, passare `newName.trim()` direttamente invece di `newName.trim() || null`
 
-### File: `src/components/RideBookingForm.tsx`
-
-**Spostamento blocchi** (linee 488-514 e 583-617):
-- I pulsanti aeroporto (linee 489-503) vengono wrappati in una condizione: `{!formData.destination.trim() && (<div className="flex flex-wrap gap-2">...</div>)}`
-- Il blocco "Route Calculation Status" (loader + errore, linee 506-514) resta subito dopo i pulsanti aeroporto
-- Il blocco "Price Estimate" (linee 583-617) viene spostato subito dopo il blocco errore/loader, quindi ancora dentro la sezione destinazione
-- Le sezioni nota, programma corsa, data/ora e submit restano nell'ordine attuale ma senza il price estimate duplicato in fondo

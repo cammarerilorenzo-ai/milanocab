@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route, LocateFixed, MessageSquare, CheckCircle } from "lucide-react";
+import { Calendar, Clock, MapPin, Navigation, Car, Loader2, Route, LocateFixed, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -9,16 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { VehicleTypeSelector } from "@/components/VehicleTypeSelector";
 import { RoutePreviewMap } from "@/components/RoutePreviewMap";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 // Funzione per capitalizzare correttamente gli indirizzi (title case)
 function capitalizeAddress(address: string): string {
@@ -120,7 +110,7 @@ export function RideBookingForm() {
   });
   const [vehicleType, setVehicleType] = useState<string>("fiat500");
   const [vehicleMultipliers, setVehicleMultipliers] = useState<Record<string, number>>({});
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  
 
   // Fetch vehicle multipliers from database
   useEffect(() => {
@@ -349,12 +339,11 @@ export function RideBookingForm() {
       toast({ title: "Percorso non calcolato", description: "Attendi il calcolo del percorso o verifica gli indirizzi", variant: "destructive" });
       return;
     }
-    // Show confirmation dialog
-    setShowConfirmDialog(true);
+    // Submit directly
+    await handleConfirmRide();
   };
 
   const handleConfirmRide = async () => {
-    setShowConfirmDialog(false);
     if (!user?.phone || !routeEstimate) return;
     
     setIsLoading(true);
@@ -614,47 +603,6 @@ export function RideBookingForm() {
           </>}
       </Button>
 
-      {/* Confirmation Dialog */}
-      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-primary" />
-              Conferma itinerario
-            </AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3">
-                <p>Vuoi confermare la richiesta di corsa?</p>
-                {routeEstimate && (
-                  <div className="p-3 bg-muted/50 rounded-lg space-y-2 text-sm text-foreground">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                      <span className="truncate">{capitalizeAddress(formData.pickup)}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Navigation className="h-4 w-4 text-accent flex-shrink-0" />
-                      <span className="truncate">{capitalizeAddress(formData.destination)}</span>
-                    </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-border">
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Route className="h-3.5 w-3.5" /> {routeEstimate.distanceKm} km · {routeEstimate.durationMin} min
-                      </span>
-                      <span className="font-bold text-green-600">€{routeEstimate.price.toFixed(2)}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annulla</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmRide} className="bg-primary hover:bg-primary/90">
-              <Car className="mr-2 h-4 w-4" />
-              Conferma corsa
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
     </form>;
 }

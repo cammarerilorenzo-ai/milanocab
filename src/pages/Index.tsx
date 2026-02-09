@@ -9,7 +9,6 @@ import { LogOut, UserPlus, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
-import SafariInstallBanner from "@/components/SafariInstallBanner";
 
 const Index = () => {
   const { user, logout } = useAuth();
@@ -153,7 +152,6 @@ const Index = () => {
           © 2025 Milano Cab - Tutti i diritti riservati
         </p>
       </footer>
-      <SafariInstallBanner />
     </div>
   );
 };

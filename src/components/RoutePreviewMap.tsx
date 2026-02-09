@@ -1,4 +1,5 @@
 import { MapPin, Navigation, Route, Clock, Car } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 interface RoutePreviewMapProps {
   pickupCoords: { lat: number; lon: number };
@@ -39,6 +40,10 @@ export function RoutePreviewMap({
           referrerPolicy="no-referrer-when-downgrade"
           title="Anteprima percorso"
         />
+        {/* Logo overlay to cover Google's itinerary box */}
+        <div className="absolute bottom-0 left-0 bg-white/95 backdrop-blur-sm rounded-tr-lg p-1.5 shadow-md">
+          <img src={logo} alt="Milano Cab" className="h-10 w-auto" />
+        </div>
       </div>
 
       {/* Route details overlay */}

@@ -30,6 +30,11 @@ export default function Referral() {
       return;
     }
 
+    if (!newName.trim()) {
+      setError("Inserisci il tuo nome");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -44,7 +49,7 @@ export default function Referral() {
           body: JSON.stringify({
             referralPhone,
             newPhone,
-            newName: newName.trim() || null,
+            newName: newName.trim(),
           }),
         }
       );
@@ -114,7 +119,7 @@ export default function Referral() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="newName">Il tuo nome (opzionale)</Label>
+              <Label htmlFor="newName">Il tuo nome</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input

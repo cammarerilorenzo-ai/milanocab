@@ -45,35 +45,33 @@ interface RouteEstimate {
   };
 }
 
-// Pricing configuration
-const PRICING = {
-  basePrice: 5.0,      // € prezzo minimo
-  pricePerKm: 1.5,     // € per km
-  pricePerMin: 0.3,    // € per minuto
-  discountUnder3km: 0.80,   // 20% sconto sotto i 3km
-  discount3to5km: 0.92,     // 8% sconto da 3 a 5km
-  discountOver5km: 0.85,    // 15% sconto sopra i 5km
-  distanceThresholdLow: 3,  // km soglia bassa
-  distanceThresholdHigh: 5, // km soglia alta
-  vwtrocEtaExtra: 4,       // minuti extra ETA per vwtroc (7 - 3 = 4)
-  nightSurcharge: 1.30,    // +30% supplemento notturno
-  nightStartHour: 22,      // inizio fascia notturna (22:00)
-  nightEndHour: 6          // fine fascia notturna (06:00)
+// Default pricing configuration (overridden by DB values)
+const DEFAULT_PRICING = {
+  basePrice: 5.0,
+  pricePerKm: 1.5,
+  pricePerMin: 0.3,
+  discountUnder3km: 0.80,
+  discount3to5km: 0.92,
+  discountOver5km: 0.85,
+  distanceThresholdLow: 3,
+  distanceThresholdHigh: 5,
+  vwtrocEtaExtra: 4,
+  nightSurcharge: 1.30,
+  nightStartHour: 22,
+  nightEndHour: 6,
 };
 
-// Check if time is in night hours (22:00 - 06:00)
-function isNightTime(scheduledTime?: string): boolean {
+// Check if time is in night hours
+function isNightTime(scheduledTime: string | undefined, startHour: number, endHour: number): boolean {
   let hour: number;
   
   if (scheduledTime) {
-    // Parse scheduled time (format: "HH:MM")
     hour = parseInt(scheduledTime.split(":")[0], 10);
   } else {
-    // Use current time for immediate rides
     hour = new Date().getHours();
   }
   
-  return hour >= PRICING.nightStartHour || hour < PRICING.nightEndHour;
+  return hour >= startHour || hour < endHour;
 }
 
 // Debounce hook
@@ -110,25 +108,55 @@ export function RideBookingForm() {
   });
   const [vehicleType, setVehicleType] = useState<string>("fiat500");
   const [vehicleMultipliers, setVehicleMultipliers] = useState<Record<string, number>>({});
-  
+  const [pricing, setPricing] = useState(DEFAULT_PRICING);
 
-  // Fetch vehicle multipliers from database
+  // Fetch vehicle multipliers and pricing settings from database
   useEffect(() => {
-    const fetchMultipliers = async () => {
-      const { data, error } = await supabase
+    const fetchData = async () => {
+      // Fetch vehicle multipliers
+      const { data: vehicles, error: vErr } = await supabase
         .from("vehicle_settings")
         .select("vehicle_name, price_multiplier")
         .eq("is_available", true);
       
-      if (!error && data) {
+      if (!vErr && vehicles) {
         const multipliers: Record<string, number> = {};
-        data.forEach(v => {
+        vehicles.forEach(v => {
           multipliers[v.vehicle_name] = v.price_multiplier ?? 1;
         });
         setVehicleMultipliers(multipliers);
       }
+
+      // Fetch pricing settings from app_settings
+      const pricingKeys = [
+        "discount_under_3km", "discount_3to5km", "discount_over_5km",
+        "distance_threshold_low", "distance_threshold_high",
+        "night_start_hour", "night_end_hour", "night_surcharge_multiplier",
+        "vwtroc_eta_extra"
+      ];
+      const { data: settings, error: sErr } = await supabase
+        .from("app_settings")
+        .select("key, value")
+        .in("key", pricingKeys);
+
+      if (!sErr && settings) {
+        const vals: Record<string, string> = {};
+        settings.forEach((s: { key: string; value: string }) => { vals[s.key] = s.value; });
+        setPricing({
+          ...DEFAULT_PRICING,
+          discountUnder3km: parseFloat(vals.discount_under_3km) || DEFAULT_PRICING.discountUnder3km,
+          discount3to5km: parseFloat(vals.discount_3to5km) || DEFAULT_PRICING.discount3to5km,
+          discountOver5km: parseFloat(vals.discount_over_5km) || DEFAULT_PRICING.discountOver5km,
+          distanceThresholdLow: parseFloat(vals.distance_threshold_low) || DEFAULT_PRICING.distanceThresholdLow,
+          distanceThresholdHigh: parseFloat(vals.distance_threshold_high) || DEFAULT_PRICING.distanceThresholdHigh,
+          nightStartHour: parseInt(vals.night_start_hour) || DEFAULT_PRICING.nightStartHour,
+          nightEndHour: parseInt(vals.night_end_hour) || DEFAULT_PRICING.nightEndHour,
+          nightSurcharge: parseFloat(vals.night_surcharge_multiplier) || DEFAULT_PRICING.nightSurcharge,
+          vwtrocEtaExtra: parseInt(vals.vwtroc_eta_extra) || DEFAULT_PRICING.vwtrocEtaExtra,
+        });
+      }
     };
-    fetchMultipliers();
+    fetchData();
   }, []);
 
   // Geolocation state
@@ -253,13 +281,13 @@ export function RideBookingForm() {
       if (data.success) {
         // Use fixed price if available, otherwise calculate
         const isFixedPrice = data.fixedPrice !== null && data.fixedPrice !== undefined;
-        const calculatedPrice = PRICING.basePrice + data.distanceKm * PRICING.pricePerKm + data.durationMin * PRICING.pricePerMin;
+        const calculatedPrice = pricing.basePrice + data.distanceKm * pricing.pricePerKm + data.durationMin * pricing.pricePerMin;
         // Applica sconto 50% se oltre 5km, altrimenti 5%
-        const discount = data.distanceKm > PRICING.distanceThresholdHigh
-          ? PRICING.discountOver5km
-          : data.distanceKm > PRICING.distanceThresholdLow
-            ? PRICING.discount3to5km
-            : PRICING.discountUnder3km;
+        const discount = data.distanceKm > pricing.distanceThresholdHigh
+          ? pricing.discountOver5km
+          : data.distanceKm > pricing.distanceThresholdLow
+            ? pricing.discount3to5km
+            : pricing.discountUnder3km;
         let rawPrice = isFixedPrice ? data.fixedPrice : calculatedPrice * discount;
         
         // Applica moltiplicatore veicolo dal database (solo se NON è tariffa fissa aeroporto)
@@ -270,11 +298,11 @@ export function RideBookingForm() {
         
         // Controlla se è fascia notturna (22:00 - 06:00)
         const scheduledTime = formData.isScheduled ? formData.scheduledTime : undefined;
-        const isNightRate = isNightTime(scheduledTime);
+        const isNightRate = isNightTime(scheduledTime, pricing.nightStartHour, pricing.nightEndHour);
         
         // Applica supplemento notturno +30% (anche su tariffe fisse aeroporto)
         if (isNightRate) {
-          rawPrice = rawPrice * PRICING.nightSurcharge;
+          rawPrice = rawPrice * pricing.nightSurcharge;
         }
         
         // Round down to nearest 50 cents
@@ -282,7 +310,7 @@ export function RideBookingForm() {
         
         // Calcola ETA con extra per SUV vwtroc (7 min invece di 3)
         const etaMin = vehicleType === "vwtroc" 
-          ? data.etaMin + PRICING.vwtrocEtaExtra 
+          ? data.etaMin + pricing.vwtrocEtaExtra 
           : data.etaMin;
         
         setRouteEstimate({
@@ -308,7 +336,7 @@ export function RideBookingForm() {
     } finally {
       setIsCalculating(false);
     }
-  }, [debouncedPickup, debouncedDestination, vehicleType, vehicleMultipliers, formData.isScheduled, formData.scheduledTime]);
+  }, [debouncedPickup, debouncedDestination, vehicleType, vehicleMultipliers, pricing, formData.isScheduled, formData.scheduledTime]);
   useEffect(() => {
     calculateRoute();
   }, [calculateRoute]);

@@ -1,5 +1,6 @@
 // Edge function for route calculation
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -561,6 +562,41 @@ const handler = async (req: Request): Promise<Response> => {
     const mapsLink = `https://www.google.com/maps/dir/?api=1&origin=${pickupCoords[1]},${pickupCoords[0]}&destination=${destCoords[1]},${destCoords[0]}`;
 
     console.log(`Route calculated: ${distanceKm}km, ${durationMin}min, ETA: ${etaMin}min${fixedPrice ? `, Fixed airport price: €${fixedPrice}` : ''}`);
+
+    // Fire-and-forget: send email notification to admin
+    try {
+      const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+      const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL");
+      if (RESEND_API_KEY && ADMIN_EMAIL) {
+        const resend = new Resend(RESEND_API_KEY);
+        const now = new Date().toLocaleString("it-IT", { timeZone: "Europe/Rome" });
+        resend.emails.send({
+          from: "MilanoCab <noreply@milanocab.com>",
+          to: [ADMIN_EMAIL],
+          subject: `🗺️ Itinerario: ${pickup} → ${destination}`,
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f8f9fa;border-radius:12px;">
+              <h2 style="color:#1a1a2e;margin-top:0;">🗺️ Nuovo itinerario calcolato</h2>
+              <p style="color:#666;font-size:13px;margin-bottom:16px;">${now}</p>
+              <table style="width:100%;border-collapse:collapse;">
+                <tr><td style="padding:8px 0;color:#888;width:130px;">Partenza</td><td style="padding:8px 0;font-weight:600;">${pickup}</td></tr>
+                <tr><td style="padding:8px 0;color:#888;">Destinazione</td><td style="padding:8px 0;font-weight:600;">${destination}</td></tr>
+                <tr><td style="padding:8px 0;color:#888;">Distanza</td><td style="padding:8px 0;">${distanceKm} km</td></tr>
+                <tr><td style="padding:8px 0;color:#888;">Durata</td><td style="padding:8px 0;">${durationMin} min</td></tr>
+                <tr><td style="padding:8px 0;color:#888;">ETA arrivo</td><td style="padding:8px 0;">${etaMin} min</td></tr>
+                ${fixedPrice ? `<tr><td style="padding:8px 0;color:#888;">Prezzo fisso</td><td style="padding:8px 0;font-weight:600;color:#e63946;">€${fixedPrice}</td></tr>` : ''}
+              </table>
+              <div style="margin-top:20px;">
+                <a href="${mapsLink}" style="display:inline-block;background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;">📍 Apri in Google Maps</a>
+              </div>
+              <p style="color:#aaa;font-size:11px;margin-top:24px;">Questo è un calcolo itinerario, non una richiesta di corsa.</p>
+            </div>
+          `,
+        }).catch((e: unknown) => console.error("Email send error:", e));
+      }
+    } catch (emailErr) {
+      console.error("Route email notification error:", emailErr);
+    }
 
     return new Response(
       JSON.stringify({

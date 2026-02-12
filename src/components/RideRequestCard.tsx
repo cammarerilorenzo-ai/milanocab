@@ -34,6 +34,22 @@ interface RideRequestCardProps {
   isAdmin: boolean;
   userPhone?: string;
   onStatusChange?: () => void;
+  adminCoords?: { lat: number; lon: number } | null;
+}
+
+// Haversine distance in km
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Calculate ACI cost: 10L/100km at €1.82/L
+function calcAci(totalKm: number): number {
+  return Math.round(totalKm * 10 / 100 * 1.82 * 100) / 100;
 }
 
 function capitalizeAddress(address: string): string {
@@ -83,7 +99,7 @@ function getStatusLabel(status: string): string {
   }
 }
 
-export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: RideRequestCardProps) {
+export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange, adminCoords }: RideRequestCardProps) {
   const { toast } = useToast();
   const [isConfirming, setIsConfirming] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
@@ -382,6 +398,24 @@ export function RideRequestCard({ ride, isAdmin, userPhone, onStatusChange }: Ri
           </div>
           <span className="font-bold text-green-600">€{Number(ride.estimated_price).toFixed(2)}</span>
         </div>
+
+        {/* ACI Cost for admin */}
+        {isAdmin && adminCoords && (
+          (() => {
+            const approachKm = haversineKm(adminCoords.lat, adminCoords.lon, ride.pickup_lat, ride.pickup_lon) * 1.3; // 30% road factor
+            const totalKm = Math.round((approachKm + Number(ride.estimated_km)) * 10) / 10;
+            const aci = calcAci(totalKm);
+            return (
+              <div className="flex items-center justify-between text-xs bg-amber-500/10 rounded-lg p-2 border border-amber-500/20">
+                <span className="text-amber-700">⛽ ACI</span>
+                <span className="text-amber-700">
+                  ~{Math.round(approachKm * 10) / 10} + {ride.estimated_km} = {totalKm} km
+                </span>
+                <span className="font-bold text-amber-700">€{aci.toFixed(2)}</span>
+              </div>
+            );
+          })()
+        )}
 
         {/* ETA for confirmed rides */}
         {ride.status === "confirmed" && ride.eta_min != null && (

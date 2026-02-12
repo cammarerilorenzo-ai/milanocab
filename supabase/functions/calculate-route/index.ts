@@ -568,8 +568,8 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate Google Maps link
     const mapsLink = `https://www.google.com/maps/dir/?api=1&origin=${pickupCoords[1]},${pickupCoords[0]}&destination=${destCoords[1]},${destCoords[0]}`;
 
-    // ACI fuel cost: 8L/100km at €1.82/L, on total distance (approach + ride)
-    const aciCost = Math.round(totalKmAci * 8 / 100 * 1.82 * 100) / 100;
+    // ACI fuel cost: 10L/100km at €1.82/L, on total distance (approach + ride)
+    const aciCost = Math.round(totalKmAci * 10 / 100 * 1.82 * 100) / 100;
 
     console.log(`Route calculated: ${distanceKm}km (ride) + ${approachKm}km (approach) = ${totalKmAci}km total ACI, ${durationMin}min, ETA: ${etaMin}min${fixedPrice ? `, Fixed airport price: €${fixedPrice}` : ''}`);
 

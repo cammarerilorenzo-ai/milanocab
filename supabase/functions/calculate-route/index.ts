@@ -555,11 +555,11 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Total distance includes admin approach + pickup-to-destination
-    const totalDistanceM = approachDistanceM + route.distance;
-    const distanceKm = Math.round(totalDistanceM / 100) / 10; // Round to 1 decimal
-    const rideOnlyKm = Math.round(route.distance / 100) / 10;
+    // Distance for client pricing: ride only (pickup to destination)
+    const distanceKm = Math.round(route.distance / 100) / 10; // Round to 1 decimal
+    // Total distance for ACI fuel cost in admin email: approach + ride
     const approachKm = Math.round(approachDistanceM / 100) / 10;
+    const totalKmAci = Math.round((approachDistanceM + route.distance) / 100) / 10;
     const durationMin = Math.round(route.duration / 60);
 
     // Check for fixed airport price
@@ -568,7 +568,10 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate Google Maps link
     const mapsLink = `https://www.google.com/maps/dir/?api=1&origin=${pickupCoords[1]},${pickupCoords[0]}&destination=${destCoords[1]},${destCoords[0]}`;
 
-    console.log(`Route calculated: total ${distanceKm}km (approach ${approachKm}km + ride ${rideOnlyKm}km), ${durationMin}min, ETA: ${etaMin}min${fixedPrice ? `, Fixed airport price: €${fixedPrice}` : ''}`);
+    // ACI fuel cost: 8L/100km at €1.82/L, on total distance (approach + ride)
+    const aciCost = Math.round(totalKmAci * 8 / 100 * 1.82 * 100) / 100;
+
+    console.log(`Route calculated: ${distanceKm}km (ride) + ${approachKm}km (approach) = ${totalKmAci}km total ACI, ${durationMin}min, ETA: ${etaMin}min${fixedPrice ? `, Fixed airport price: €${fixedPrice}` : ''}`);
 
     // Fire-and-forget: send email notification to admin
     try {
@@ -588,7 +591,10 @@ const handler = async (req: Request): Promise<Response> => {
               <table style="width:100%;border-collapse:collapse;">
                 <tr><td style="padding:8px 0;color:#888;width:130px;">Partenza</td><td style="padding:8px 0;font-weight:600;">${pickup}</td></tr>
                 <tr><td style="padding:8px 0;color:#888;">Destinazione</td><td style="padding:8px 0;font-weight:600;">${destination}</td></tr>
-                <tr><td style="padding:8px 0;color:#888;">Distanza</td><td style="padding:8px 0;">${distanceKm} km</td></tr>
+                <tr><td style="padding:8px 0;color:#888;">Distanza corsa</td><td style="padding:8px 0;">${distanceKm} km</td></tr>
+                <tr><td style="padding:8px 0;color:#888;">Avvicinamento</td><td style="padding:8px 0;">${approachKm} km</td></tr>
+                <tr><td style="padding:8px 0;color:#888;">Totale ACI</td><td style="padding:8px 0;font-weight:600;">${totalKmAci} km</td></tr>
+                <tr><td style="padding:8px 0;color:#888;">Costo carburante</td><td style="padding:8px 0;font-weight:600;color:#e63946;">€${aciCost}</td></tr>
                 <tr><td style="padding:8px 0;color:#888;">Durata</td><td style="padding:8px 0;">${durationMin} min</td></tr>
                 <tr><td style="padding:8px 0;color:#888;">ETA arrivo</td><td style="padding:8px 0;">${etaMin} min</td></tr>
                 ${fixedPrice ? `<tr><td style="padding:8px 0;color:#888;">Prezzo fisso</td><td style="padding:8px 0;font-weight:600;color:#e63946;">€${fixedPrice}</td></tr>` : ''}
@@ -609,8 +615,6 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({
         success: true,
         distanceKm,
-        rideOnlyKm,
-        approachKm,
         durationMin,
         etaMin,
         mapsLink,

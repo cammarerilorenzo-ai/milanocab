@@ -526,14 +526,18 @@ const handler = async (req: Request): Promise<Response> => {
       baseCoords = await geocodeAddressMilan(FALLBACK_BASE_LOCATION, OPENROUTE_API_KEY);
     }
 
-    // Calculate ETA from base to pickup (driver arrival time)
+    // Calculate ETA from base to pickup (driver arrival time) + approach distance
     let etaMin = ETA_BUFFER_MINUTES; // Default buffer if base geocoding fails
+    let approachDistanceM = 0; // Distance admin must travel to reach pickup (meters)
+    let approachDurationMin = 0;
     if (baseCoords) {
       console.log(`Calculating ETA from base [${baseCoords}] to pickup [${pickupCoords}]`);
       const etaRoute = await calculateRoute(baseCoords, pickupCoords, OPENROUTE_API_KEY);
       if (etaRoute) {
         etaMin = Math.round(etaRoute.duration / 60) + ETA_BUFFER_MINUTES;
-        console.log(`ETA calculated: ${etaMin} min (including ${ETA_BUFFER_MINUTES} min buffer)`);
+        approachDistanceM = etaRoute.distance;
+        approachDurationMin = Math.round(etaRoute.duration / 60);
+        console.log(`ETA calculated: ${etaMin} min (including ${ETA_BUFFER_MINUTES} min buffer), approach: ${Math.round(approachDistanceM / 100) / 10} km`);
       }
     }
 
@@ -551,8 +555,11 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Convert to km and minutes
-    const distanceKm = Math.round(route.distance / 100) / 10; // Round to 1 decimal
+    // Total distance includes admin approach + pickup-to-destination
+    const totalDistanceM = approachDistanceM + route.distance;
+    const distanceKm = Math.round(totalDistanceM / 100) / 10; // Round to 1 decimal
+    const rideOnlyKm = Math.round(route.distance / 100) / 10;
+    const approachKm = Math.round(approachDistanceM / 100) / 10;
     const durationMin = Math.round(route.duration / 60);
 
     // Check for fixed airport price
@@ -561,7 +568,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate Google Maps link
     const mapsLink = `https://www.google.com/maps/dir/?api=1&origin=${pickupCoords[1]},${pickupCoords[0]}&destination=${destCoords[1]},${destCoords[0]}`;
 
-    console.log(`Route calculated: ${distanceKm}km, ${durationMin}min, ETA: ${etaMin}min${fixedPrice ? `, Fixed airport price: €${fixedPrice}` : ''}`);
+    console.log(`Route calculated: total ${distanceKm}km (approach ${approachKm}km + ride ${rideOnlyKm}km), ${durationMin}min, ETA: ${etaMin}min${fixedPrice ? `, Fixed airport price: €${fixedPrice}` : ''}`);
 
     // Fire-and-forget: send email notification to admin
     try {
@@ -602,6 +609,8 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({
         success: true,
         distanceKm,
+        rideOnlyKm,
+        approachKm,
         durationMin,
         etaMin,
         mapsLink,

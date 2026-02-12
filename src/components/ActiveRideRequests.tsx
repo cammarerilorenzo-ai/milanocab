@@ -33,6 +33,7 @@ interface ActiveRideRequestsProps {
 export function ActiveRideRequests({ isAdmin, userPhone }: ActiveRideRequestsProps) {
   const [rides, setRides] = useState<RideRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [adminCoords, setAdminCoords] = useState<{ lat: number; lon: number } | null>(null);
 
   const fetchRides = async () => {
     try {
@@ -45,14 +46,15 @@ export function ActiveRideRequests({ isAdmin, userPhone }: ActiveRideRequestsPro
 
       if (error) {
         console.error("Error fetching rides:", error);
-        // Keep previous data on error instead of clearing
         return;
       }
 
       setRides(data?.rides || []);
+      if (data?.adminCoords) {
+        setAdminCoords(data.adminCoords);
+      }
     } catch (error) {
       console.error("Error in fetchRides:", error);
-      // Keep previous data on network errors
     } finally {
       setIsLoading(false);
     }
@@ -125,6 +127,7 @@ export function ActiveRideRequests({ isAdmin, userPhone }: ActiveRideRequestsPro
             isAdmin={isAdmin}
             userPhone={userPhone}
             onStatusChange={fetchRides}
+            adminCoords={adminCoords}
           />
         ))}
       </div>

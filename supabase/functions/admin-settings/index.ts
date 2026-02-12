@@ -399,8 +399,24 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: rides, error } = await query;
       if (error) throw error;
 
+      // For admin, also return current admin GPS position for ACI calculation
+      let adminCoords: { lat: number; lon: number } | null = null;
+      if (isAdminUser) {
+        const { data: latData } = await supabase
+          .from("app_settings").select("value").eq("key", "admin_lat").maybeSingle();
+        const { data: lonData } = await supabase
+          .from("app_settings").select("value").eq("key", "admin_lon").maybeSingle();
+        if (latData?.value && lonData?.value) {
+          const lat = parseFloat(latData.value);
+          const lon = parseFloat(lonData.value);
+          if (!isNaN(lat) && !isNaN(lon)) {
+            adminCoords = { lat, lon };
+          }
+        }
+      }
+
       return new Response(
-        JSON.stringify({ success: true, rides: rides || [] }),
+        JSON.stringify({ success: true, rides: rides || [], adminCoords }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }

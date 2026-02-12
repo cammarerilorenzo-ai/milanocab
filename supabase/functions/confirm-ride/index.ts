@@ -114,7 +114,14 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Impossibile calcolare il tempo di arrivo");
     }
 
-    console.log(`ETA calculated: ${route.durationMin} min, ${route.distanceKm} km`);
+    // Calculate total ACI cost: approach (admin→pickup) + ride (pickup→destination)
+    const approachKm = route.distanceKm;
+    const rideKm = rideRequest.estimated_km;
+    const totalKmAci = Math.round((approachKm + rideKm) * 10) / 10;
+    // 10L/100km at €1.82/L
+    const aciCost = Math.round(totalKmAci * 10 / 100 * 1.82 * 100) / 100;
+
+    console.log(`ETA calculated: ${route.durationMin} min, approach: ${route.distanceKm} km, ride: ${rideKm} km, ACI total: ${totalKmAci} km, ACI cost: €${aciCost}`);
 
     // Update ride request in database
     const { error: updateError } = await supabase
@@ -140,6 +147,8 @@ const handler = async (req: Request): Promise<Response> => {
         success: true, 
         etaMin: route.durationMin,
         distanceKm: route.distanceKm,
+        aciCost,
+        totalKmAci,
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );

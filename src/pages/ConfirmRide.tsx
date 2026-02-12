@@ -12,7 +12,8 @@ export default function ConfirmRide() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [etaMin, setEtaMin] = useState<number | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
-  
+  const [aciCost, setAciCost] = useState<number | null>(null);
+  const [totalKmAci, setTotalKmAci] = useState<number | null>(null);
 
   useEffect(() => {
     if (!token) {
@@ -79,6 +80,8 @@ export default function ConfirmRide() {
       if (data.success) {
         setEtaMin(data.etaMin);
         setDistanceKm(data.distanceKm);
+        setAciCost(data.aciCost);
+        setTotalKmAci(data.totalKmAci);
         setStatus("success");
       } else {
         if (data.error?.includes("già confermata") || data.error?.includes("non trovata")) {
@@ -173,6 +176,20 @@ export default function ConfirmRide() {
                     </p>
                   )}
                 </div>
+
+                {aciCost != null && (
+                  <div className="bg-muted/50 p-4 rounded-xl text-center">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                      Costo ACI stimato
+                    </p>
+                    <p className="text-2xl font-bold text-foreground">€{aciCost.toFixed(2)}</p>
+                    {totalKmAci != null && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Distanza totale: {totalKmAci} km (avvicinamento + corsa)
+                      </p>
+                    )}
+                  </div>
+                )}
 
               </div>
             )}

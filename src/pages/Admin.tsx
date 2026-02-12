@@ -14,6 +14,7 @@ import { GroupPricingPanel } from "@/components/GroupPricingPanel";
 import { DiscountLogicPanel } from "@/components/DiscountLogicPanel";
 import { ServiceToggle } from "@/components/ServiceToggle";
 import { AdminGpsTracker } from "@/components/AdminGpsTracker";
+import { ActiveRideRequests } from "@/components/ActiveRideRequests";
 import logo from "@/assets/logo.png";
 import fiat500Image from "@/assets/fiat500.png";
 import trocCabrioImage from "@/assets/troc-cabrio.png";
@@ -377,6 +378,10 @@ const Admin = () => {
             isUpdating={updatingService}
             onToggle={toggleService}
           />
+        </div>
+        {/* Active Rides */}
+        <div className="mb-6">
+          <ActiveRideRequests isAdmin={true} userPhone={user?.phone || ""} />
         </div>
 
         {/* Vehicle Settings */}

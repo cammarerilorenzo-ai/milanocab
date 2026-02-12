@@ -133,21 +133,13 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to update ride request");
     }
 
-    // Generate WhatsApp link for admin to contact customer
-    const customerPhone = rideRequest.customer_phone;
-    const formattedPhone = customerPhone.startsWith("39") ? customerPhone : `39${customerPhone}`;
-    const whatsappMessage = `Ciao! La tua corsa è confermata! 🚗\n\n⏱ Arrivo tra circa ${route.durationMin} minuti\n📍 Ti aspetto a: ${rideRequest.pickup}\n🎯 Destinazione: ${rideRequest.destination}\n💰 Prezzo: €${Number(rideRequest.estimated_price).toFixed(2)}`;
-    const whatsappLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(whatsappMessage)}`;
-
-    console.log("Ride confirmed, WhatsApp link generated for customer contact");
+    console.log("Ride confirmed successfully");
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         etaMin: route.durationMin,
         distanceKm: route.distanceKm,
-        customerPhone: customerPhone,
-        whatsappLink: whatsappLink
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );

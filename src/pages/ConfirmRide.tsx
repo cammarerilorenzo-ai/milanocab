@@ -80,10 +80,6 @@ export default function ConfirmRide() {
         setEtaMin(data.etaMin);
         setDistanceKm(data.distanceKm);
         setStatus("success");
-        // Auto-open WhatsApp
-        if (data.whatsappLink) {
-          window.open(data.whatsappLink, "_blank");
-        }
       } else {
         if (data.error?.includes("già confermata") || data.error?.includes("non trovata")) {
           setStatus("already-confirmed");
@@ -178,9 +174,6 @@ export default function ConfirmRide() {
                   )}
                 </div>
 
-                <p className="text-center text-muted-foreground text-sm">
-                  WhatsApp si è aperto automaticamente per contattare il cliente.
-                </p>
               </div>
             )}
 

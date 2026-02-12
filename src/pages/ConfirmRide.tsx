@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { MapPin, Loader2, CheckCircle, XCircle, Navigation, MessageCircle } from "lucide-react";
+import { MapPin, Loader2, CheckCircle, XCircle, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,7 +12,7 @@ export default function ConfirmRide() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [etaMin, setEtaMin] = useState<number | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
-  const [whatsappLink, setWhatsappLink] = useState<string | null>(null);
+  
 
   useEffect(() => {
     if (!token) {
@@ -79,8 +79,11 @@ export default function ConfirmRide() {
       if (data.success) {
         setEtaMin(data.etaMin);
         setDistanceKm(data.distanceKm);
-        setWhatsappLink(data.whatsappLink);
         setStatus("success");
+        // Auto-open WhatsApp
+        if (data.whatsappLink) {
+          window.open(data.whatsappLink, "_blank");
+        }
       } else {
         if (data.error?.includes("già confermata") || data.error?.includes("non trovata")) {
           setStatus("already-confirmed");
@@ -175,18 +178,8 @@ export default function ConfirmRide() {
                   )}
                 </div>
 
-                {whatsappLink && (
-                  <Button
-                    onClick={() => window.open(whatsappLink, "_blank")}
-                    className="w-full h-14 text-lg font-semibold bg-[#25d366] hover:bg-[#128c7e]"
-                  >
-                    <MessageCircle className="mr-2 h-5 w-5" />
-                    Avvisa il cliente su WhatsApp
-                  </Button>
-                )}
-
                 <p className="text-center text-muted-foreground text-sm">
-                  Clicca il pulsante per inviare la conferma al cliente via WhatsApp.
+                  WhatsApp si è aperto automaticamente per contattare il cliente.
                 </p>
               </div>
             )}

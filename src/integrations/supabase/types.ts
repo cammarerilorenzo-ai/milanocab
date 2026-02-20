@@ -94,6 +94,30 @@ export type Database = {
           },
         ]
       }
+      credit_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          phone: string
+          reason: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          phone: string
+          reason: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          phone?: string
+          reason?: string
+        }
+        Relationships: []
+      }
       group_pricing: {
         Row: {
           airport_malpensa: number | null
@@ -241,6 +265,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_credits: {
+        Row: {
+          balance: number
+          id: string
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          id?: string
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          id?: string
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -307,7 +352,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
-      customer_group: "private" | "business"
+      customer_group: "private" | "business" | "ambassador"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -436,7 +481,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
-      customer_group: ["private", "business"],
+      customer_group: ["private", "business", "ambassador"],
     },
   },
 } as const

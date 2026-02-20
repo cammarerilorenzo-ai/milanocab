@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.reverse-geocode]
 verify_jwt = false
+
+[functions.manage-credits]
+verify_jwt = false

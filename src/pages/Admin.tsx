@@ -15,6 +15,7 @@ import { DiscountLogicPanel } from "@/components/DiscountLogicPanel";
 import { ServiceToggle } from "@/components/ServiceToggle";
 import { AdminGpsTracker } from "@/components/AdminGpsTracker";
 import { ActiveRideRequests } from "@/components/ActiveRideRequests";
+import { CreditManagementPanel } from "@/components/CreditManagementPanel";
 import logo from "@/assets/logo.png";
 import fiat500Image from "@/assets/fiat500.png";
 import trocCabrioImage from "@/assets/troc-cabrio.png";
@@ -479,6 +480,11 @@ const Admin = () => {
         {/* Discount Logic */}
         <div className="mt-6">
           <DiscountLogicPanel userPhone={user?.phone || ""} />
+        </div>
+
+        {/* Credit Management */}
+        <div className="mt-6">
+          <CreditManagementPanel userPhone={user?.phone || ""} />
         </div>
       </main>
 

@@ -4,6 +4,7 @@ interface AuthUser {
   id: string;
   name: string | null;
   phone: string;
+  creditBalance: number;
 }
 
 interface AuthContextType {
@@ -77,11 +78,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const authData: StoredAuth = {
         sessionToken: data.sessionToken,
         expiresAt: data.expiresAt,
-        user: data.user,
+        user: {
+          ...data.user,
+          creditBalance: data.user.creditBalance ?? 0,
+        },
       };
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
 
-      setUser(data.user);
+      setUser({ ...data.user, creditBalance: data.user.creditBalance ?? 0 });
       setSessionToken(data.sessionToken);
 
       return { success: true };

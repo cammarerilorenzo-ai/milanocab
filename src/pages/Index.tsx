@@ -9,6 +9,7 @@ import { LogOut, UserPlus, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
+import { CreditBadge } from "@/components/CreditBadge";
 
 const Index = () => {
   const { user, logout } = useAuth();
@@ -73,13 +74,16 @@ const Index = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border pt-[env(safe-area-inset-top)]">
         <div className="container mx-auto px-4 py-2 flex items-center justify-between">
-          <div className="flex-1 flex justify-start">
+          <div className="flex-1 flex justify-start items-center gap-2">
             {user && (
-              <Button variant="ghost" size="icon" asChild title="Invita un amico" className="hover:bg-yellow-400/30">
-                <Link to="/invita">
-                  <UserPlus className="h-4 w-4 text-primary" />
-                </Link>
-              </Button>
+              <>
+                <CreditBadge />
+                <Button variant="ghost" size="icon" asChild title="Invita un amico" className="hover:bg-yellow-400/30">
+                  <Link to="/invita">
+                    <UserPlus className="h-4 w-4 text-primary" />
+                  </Link>
+                </Button>
+              </>
             )}
           </div>
           {isAdmin ? (
